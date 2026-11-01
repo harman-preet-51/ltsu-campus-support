@@ -1,0 +1,899 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin Portal | LTSU Campus Support</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f5fb;
+    color: #20243a;
+}
+
+button, input, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* LOGIN */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #191331, #38276b, #087b70);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    padding: 35px;
+    border-radius: 22px;
+    box-shadow: 0 15px 45px #0004;
+}
+
+.login-logo {
+    width: 65px;
+    height: 65px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #7657e8, #13b98a);
+    color: white;
+    display: grid;
+    place-items: center;
+    font-size: 27px;
+    margin-bottom: 20px;
+}
+
+.login-card h1 {
+    font-size: 25px;
+    margin-bottom: 8px;
+}
+
+.login-card p {
+    color: #777;
+    line-height: 1.5;
+    margin-bottom: 22px;
+}
+
+.field {
+    margin-bottom: 17px;
+}
+
+.field label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.field input {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    outline: none;
+}
+
+.field input:focus {
+    border-color: #7657e8;
+}
+
+.primary-btn {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    color: white;
+    background: linear-gradient(135deg, #7657e8, #13a987);
+    font-weight: bold;
+}
+
+.login-note {
+    font-size: 11px;
+    text-align: center;
+    margin-top: 17px;
+    color: #888;
+}
+
+/* DASHBOARD */
+
+.dashboard {
+    min-height: 100vh;
+    display: flex;
+}
+
+.sidebar {
+    width: 245px;
+    background: #211b39;
+    color: white;
+    padding: 24px 15px;
+    flex-shrink: 0;
+}
+
+.brand {
+    font-size: 19px;
+    font-weight: bold;
+    padding: 8px 10px 25px;
+}
+
+.brand small {
+    display: block;
+    font-size: 10px;
+    color: #b9b2d2;
+    margin-top: 7px;
+    font-weight: normal;
+}
+
+.sidebar-label {
+    color: #aaa2c4;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    padding: 15px 10px 9px;
+}
+
+.nav-btn {
+    width: 100%;
+    text-align: left;
+    border: none;
+    padding: 13px 12px;
+    margin: 3px 0;
+    border-radius: 9px;
+    color: #d9d4e8;
+    background: transparent;
+    font-size: 13px;
+}
+
+.nav-btn:hover, .nav-btn.active {
+    background: #4b3b76;
+    color: white;
+}
+
+.sidebar-bottom {
+    margin-top: 35px;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    padding: 25px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.topbar h1 {
+    font-size: 24px;
+}
+
+.topbar p {
+    color: #85859a;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.admin-badge {
+    background: #fff0cf;
+    color: #9a6500;
+    padding: 9px 13px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.page-section {
+    display: none;
+}
+
+.page-section.active {
+    display: block;
+}
+
+.welcome-banner {
+    padding: 25px;
+    border-radius: 17px;
+    color: white;
+    background: linear-gradient(110deg, #5941a8, #087e72);
+    margin-bottom: 22px;
+}
+
+.welcome-banner h2 {
+    font-size: 21px;
+    margin-bottom: 9px;
+}
+
+.welcome-banner p {
+    color: #e5e3f4;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 23px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 3px 15px #20243a08;
+}
+
+.stat-card span {
+    color: #85859a;
+    font-size: 12px;
+}
+
+.stat-card h2 {
+    font-size: 28px;
+    margin-top: 12px;
+}
+
+.stat-card small {
+    display: block;
+    color: #159b72;
+    margin-top: 7px;
+}
+
+.panel {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 15px #20243a08;
+}
+
+.panel h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th, td {
+    text-align: left;
+    padding: 13px 10px;
+    border-bottom: 1px solid #eeeef4;
+    font-size: 12px;
+}
+
+th {
+    color: #85859a;
+    font-size: 11px;
+    background: #fafaff;
+}
+
+.status {
+    padding: 6px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.pending { background: #fff0d3; color: #a66a00; }
+.progress { background: #e7eaff; color: #4e58bd; }
+.solved { background: #ddf7e9; color: #16804e; }
+
+.small-btn {
+    border: none;
+    padding: 7px 10px;
+    border-radius: 7px;
+    background: #eeeaff;
+    color: #6345b5;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 17px;
+}
+
+.section-heading h2 {
+    font-size: 19px;
+}
+
+.section-heading select {
+    padding: 9px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 13px;
+}
+
+.info-card h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.info-card p {
+    color: #85859a;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.activity-item {
+    padding: 13px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.activity-item small {
+    display: block;
+    color: #999;
+    margin-top: 5px;
+}
+
+.empty-message {
+    color: #888;
+    text-align: center;
+    padding: 25px;
+    font-size: 13px;
+}
+
+.logout-btn {
+    width: 100%;
+    border: 1px solid #665b83;
+    color: #fff;
+    background: transparent;
+    padding: 11px;
+    border-radius: 9px;
+}
+
+/* AI ASSISTANT */
+
+#sa-ai-button {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 9999;
+    background: linear-gradient(135deg, #7657e8, #13b98a);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 19px;
+    font-weight: bold;
+    box-shadow: 0 5px 20px #0003;
+}
+
+#sa-ai-window {
+    display: none;
+    position: fixed;
+    right: 20px;
+    bottom: 85px;
+    width: min(350px, calc(100vw - 40px));
+    height: 440px;
+    max-height: calc(100vh - 110px);
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px #0003;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.ai-header {
+    background: linear-gradient(135deg, #7657e8, #13a987);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+.ai-header button {
+    color: white;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+}
+
+#sa-ai-messages {
+    height: 320px;
+    overflow-y: auto;
+    padding: 13px;
+    background: #f7f7fc;
+}
+
+.ai-msg {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin: 8px 0;
+    max-width: 88%;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.ai-bot { background: #eae6ff; color: #30264d; }
+.ai-user { background: #d8f8e9; color: #174b37; margin-left: auto; }
+
+.ai-input-row {
+    display: flex;
+    gap: 7px;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+#sa-ai-input {
+    min-width: 0;
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+}
+
+#sa-ai-send {
+    border: none;
+    background: #7657e8;
+    color: white;
+    padding: 0 14px;
+    border-radius: 20px;
+}
+
+.ai-note {
+    font-size: 10px;
+    text-align: center;
+    color: #888;
+    padding: 3px;
+}
+
+@media(max-width: 900px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media(max-width: 650px) {
+    .dashboard { display: block; }
+    .sidebar { width: 100%; padding: 12px; }
+    .brand { padding: 8px 8px 12px; }
+    .sidebar-label { padding-top: 8px; }
+    .nav-btn {
+        display: inline-block;
+        width: auto;
+        padding: 10px;
+        font-size: 11px;
+    }
+    .sidebar-bottom { margin-top: 10px; }
+    .logout-btn { width: auto; padding: 9px 13px; }
+    .main { padding: 16px; }
+    .topbar h1 { font-size: 19px; }
+    .stats { gap: 9px; }
+    .stat-card { padding: 14px; }
+    .stat-card h2 { font-size: 23px; }
+    .info-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-page" id="login-page">
+    <div class="login-card">
+        <div class="login-logo">✦</div>
+        <h1>Super Admin Portal</h1>
+        <p>LTSU Campus Support<br>Complete platform management and monitoring.</p>
+
+        <form id="super-admin-login">
+            <div class="field">
+                <label for="sa-id">Super Admin ID</label>
+                <input id="sa-id" type="text" placeholder="Enter Super Admin ID" required>
+            </div>
+
+            <div class="field">
+                <label for="sa-pin">Security PIN</label>
+                <input id="sa-pin" type="password" placeholder="Enter Security PIN" required>
+            </div>
+
+            <button class="primary-btn" type="submit">Open Demo Dashboard</button>
+        </form>
+
+        <div class="login-note">
+            Frontend demonstration only. Secure authentication is not connected yet.
+        </div>
+    </div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div class="dashboard hidden" id="dashboard">
+
+    <aside class="sidebar">
+        <div class="brand">
+            ✦ LTSU SUPPORT
+            <small>SUPER ADMIN CONTROL CENTER</small>
+        </div>
+
+        <div class="sidebar-label">MAIN MENU</div>
+
+        <button class="nav-btn active" data-page="overview">▦ Dashboard</button>
+        <button class="nav-btn" data-page="complaints">▤ Complaints</button>
+        <button class="nav-btn" data-page="students">♙ Students</button>
+        <button class="nav-btn" data-page="admins">♧ Admin Management</button>
+        <button class="nav-btn" data-page="activity">◷ Activity Log</button>
+        <button class="nav-btn" data-page="settings">⚙ Settings</button>
+
+        <div class="sidebar-bottom">
+            <button class="logout-btn" id="logout-btn">↪ Logout</button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h1 id="page-title">Super Admin Dashboard</h1>
+                <p>Central management of LTSU Campus Support</p>
+            </div>
+            <div class="admin-badge">✦ SUPER ADMIN</div>
+        </div>
+
+        <!-- OVERVIEW -->
+        <section class="page-section active" id="overview">
+            <div class="welcome-banner">
+                <h2>Welcome to the Control Center!</h2>
+                <p>Monitor campus complaints, manage portal access and review platform activity from one place.</p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <span>Total Complaints</span>
+                    <h2 id="total-count">0</h2>
+                    <small>Connected records pending</small>
+                </div>
+                <div class="stat-card">
+                    <span>Pending Complaints</span>
+                    <h2 id="pending-count">0</h2>
+                    <small>Awaiting review</small>
+                </div>
+                <div class="stat-card">
+                    <span>Registered Students</span>
+                    <h2 id="student-count">0</h2>
+                    <small>Connected student records</small>
+                </div>
+                <div class="stat-card">
+                    <span>Admin Accounts</span>
+                    <h2 id="admin-count">0</h2>
+                    <small>Connected admin records</small>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Recent Complaints</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-complaints">
+                            <tr><td colspan="4" class="empty-message">No connected complaint records yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPLAINTS -->
+        <section class="page-section" id="complaints">
+            <div class="section-heading">
+                <h2>Complaint Management</h2>
+                <select id="complaint-filter">
+                    <option value="all">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Solved">Solved</option>
+                </select>
+            </div>
+
+            <div class="panel">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaint-list">
+                            <tr><td colspan="5" class="empty-message">No live complaint database connected yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- STUDENTS -->
+        <section class="page-section" id="students">
+            <div class="section-heading">
+                <h2>Student Management</h2>
+            </div>
+
+            <div class="panel">
+                <h3>Student Records</h3>
+                <p class="empty-message">Student records will appear here after the secure database is connected.</p>
+            </div>
+        </section>
+
+        <!-- ADMINS -->
+        <section class="page-section" id="admins">
+            <div class="section-heading">
+                <h2>Admin Management</h2>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>Admin Accounts</h3>
+                    <p>View and manage authorized university administration accounts.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Access Control</h3>
+                    <p>Review permissions and access levels for administrative users.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Account Approval</h3>
+                    <p>Admin account approval will be enabled after backend integration.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Account Security</h3>
+                    <p>Secure login and account activity monitoring will be connected later.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACTIVITY -->
+        <section class="page-section" id="activity">
+            <div class="section-heading">
+                <h2>Platform Activity Log</h2>
+            </div>
+
+            <div class="panel">
+                <h3>Recent Activity</h3>
+                <div class="activity-item">
+                    Super Admin Portal opened.
+                    <small>Current browser session</small>
+                </div>
+                <div class="activity-item">
+                    Database connection pending.
+                    <small>System information</small>
+                </div>
+                <div class="activity-item">
+                    Student and Admin portal integration pending.
+                    <small>Development status</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="page-section" id="settings">
+            <div class="section-heading">
+                <h2>Platform Settings</h2>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>Platform Name</h3>
+                    <p>LTSU Campus Support</p>
+                </div>
+                <div class="info-card">
+                    <h3>Institution</h3>
+                    <p>Lamrin Tech Skills University Punjab</p>
+                </div>
+                <div class="info-card">
+                    <h3>Website Status</h3>
+                    <p>Frontend demonstration is published on GitHub Pages.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Backend Status</h3>
+                    <p>Database and secure authentication are not connected yet.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- AI ASSISTANT -->
+<button id="sa-ai-button" class="hidden">✦ AI Assistant</button>
+
+<div id="sa-ai-window">
+    <div class="ai-header">
+        <span>✦ LTSU Super Admin Assistant</span>
+        <button id="sa-ai-close" aria-label="Close chat">×</button>
+    </div>
+
+    <div id="sa-ai-messages">
+        <div class="ai-msg ai-bot">
+            Hello, Super Admin! Welcome to the LTSU Control Center.
+            I can guide you about complaints, student management, admin access and platform settings.
+            How can I help?
+        </div>
+    </div>
+
+    <div class="ai-input-row">
+        <input id="sa-ai-input" type="text" placeholder="Type your message...">
+        <button id="sa-ai-send">Send</button>
+    </div>
+    <div class="ai-note">Demo Assistant • Automated replies only</div>
+</div>
+
+<script>
+// DEMO LOGIN
+const loginForm = document.getElementById("super-admin-login");
+const loginPage = document.getElementById("login-page");
+const dashboard = document.getElementById("dashboard");
+const aiButton = document.getElementById("sa-ai-button");
+
+loginForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    loginPage.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+    aiButton.classList.remove("hidden");
+});
+
+// NAVIGATION
+const navButtons = document.querySelectorAll(".nav-btn");
+const sections = document.querySelectorAll(".page-section");
+
+const pageTitles = {
+    overview: "Super Admin Dashboard",
+    complaints: "Complaint Management",
+    students: "Student Management",
+    admins: "Admin Management",
+    activity: "Platform Activity Log",
+    settings: "Platform Settings"
+};
+
+navButtons.forEach(function(button) {
+    button.addEventListener("click", function() {
+        const page = button.dataset.page;
+
+        navButtons.forEach(btn => btn.classList.remove("active"));
+        sections.forEach(section => section.classList.remove("active"));
+
+        button.classList.add("active");
+        document.getElementById(page).classList.add("active");
+        document.getElementById("page-title").textContent = pageTitles[page];
+    });
+});
+
+// LOGOUT
+document.getElementById("logout-btn").addEventListener("click", function() {
+    dashboard.classList.add("hidden");
+    loginPage.classList.remove("hidden");
+    aiButton.classList.add("hidden");
+    document.getElementById("sa-ai-window").style.display = "none";
+});
+
+// AI ASSISTANT
+const aiWindow = document.getElementById("sa-ai-window");
+const aiInput = document.getElementById("sa-ai-input");
+const aiMessages = document.getElementById("sa-ai-messages");
+
+aiButton.addEventListener("click", function() {
+    aiWindow.style.display = "block";
+    aiButton.style.display = "none";
+    aiInput.focus();
+});
+
+document.getElementById("sa-ai-close").addEventListener("click", function() {
+    aiWindow.style.display = "none";
+    aiButton.style.display = "block";
+});
+
+function addAiMessage(message, sender) {
+    const bubble = document.createElement("div");
+    bubble.className = "ai-msg " + (sender === "user" ? "ai-user" : "ai-bot");
+    bubble.textContent = message;
+    aiMessages.appendChild(bubble);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function getAiReply(message) {
+    const text = message.toLowerCase();
+
+    if (text.includes("hello") || text.includes("hi")) {
+        return "Hello! I can guide you through the Super Admin Control Center.";
+    }
+
+    if (text.includes("complaint") || text.includes("problem")) {
+        return "Use Complaint Management to review campus issues. Live complaint records will appear after database integration.";
+    }
+
+    if (text.includes("student")) {
+        return "Student Management will display registered student records after secure database integration.";
+    }
+
+    if (text.includes("admin")) {
+        return "Admin Management is designed for reviewing admin accounts, permissions and access requests.";
+    }
+
+    if (text.includes("status") || text.includes("progress")) {
+        return "Complaint status tracking will be connected when the shared database is ready.";
+    }
+
+    if (text.includes("database") || text.includes("backend")) {
+        return "The current portal is a frontend demonstration. A secure backend and database are still required.";
+    }
+
+    if (text.includes("thank")) {
+        return "You're welcome! Let me know if you need help navigating the portal.";
+    }
+
+    return "I can help with complaint management, student records, admin access, activity logs and platform settings.";
+}
+
+function sendAiMessage() {
+    const message = aiInput.value.trim();
+    if (!message) return;
+
+    addAiMessage(message, "user");
+    aiInput.value = "";
+
+    addAiMessage(getAiReply(message), "bot");
+}
+
+document.getElementById("sa-ai-send").addEventListener("click", sendAiMessage);
+
+aiInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        sendAiMessage();
+    }
+});
+</script>
+
+</body>
+</html>
