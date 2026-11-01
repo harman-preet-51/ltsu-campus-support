@@ -1,0 +1,475 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#071827">
+
+    <title>Student Portal | LTSU Campus Support</title>
+
+    <link rel="stylesheet" href="student.css">
+    <script src="student.js" defer></script>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="student-header">
+        <a href="../index.html" class="brand">
+            LTSU <span>Campus Support</span>
+        </a>
+
+        <a href="../index.html" class="home-link">
+            ← Back to Home
+        </a>
+    </header>
+
+    <!-- WELCOME SECTION -->
+    <main>
+
+        <section class="welcome-section">
+            <span class="welcome-tag">STUDENT PORTAL</span>
+
+            <h1>Your Campus. Your Voice.</h1>
+
+            <p>
+                Welcome to the LTSU Student Support Portal.
+                Register, report campus problems and track
+                your complaints in one place.
+            </p>
+        </section>
+
+        <!-- AUTHENTICATION SECTION -->
+        <section class="auth-section" id="auth-section">
+
+            <div class="auth-tabs">
+                <button type="button"
+                        class="auth-tab active"
+                        id="login-tab">
+                    Student Login
+                </button>
+
+                <button type="button"
+                        class="auth-tab"
+                        id="register-tab">
+                    New Registration
+                </button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <div class="auth-card" id="login-panel">
+
+                <h2>Welcome Back!</h2>
+
+                <p class="section-description">
+                    Login using your Student ID and PIN.
+                </p>
+
+                <form id="student-login-form">
+
+                    <label for="login-student-id">
+                        Student ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="login-student-id"
+                        name="studentId"
+                        placeholder="Enter your Student ID"
+                        required
+                    >
+
+                    <label for="login-pin">
+                        Security PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        id="login-pin"
+                        name="pin"
+                        placeholder="Enter your PIN"
+                        required
+                    >
+
+                    <button type="submit" class="primary-btn">
+                        Login to Student Portal
+                    </button>
+
+                </form>
+
+                <p class="switch-text">
+                    New student?
+                    <button type="button" id="open-register">
+                        Create an account
+                    </button>
+                </p>
+
+                <p class="form-message" id="login-message"
+                   role="status" aria-live="polite"></p>
+
+            </div>
+
+            <!-- REGISTRATION FORM -->
+            <div class="auth-card hidden" id="register-panel">
+
+                <h2>Create Student Account</h2>
+
+                <p class="section-description">
+                    Register once to access campus support services.
+                </p>
+
+                <form id="student-register-form">
+
+                    <label for="student-name">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="student-name"
+                        name="studentName"
+                        placeholder="Enter your full name"
+                        autocomplete="name"
+                        required
+                    >
+
+                    <label for="student-email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="student-email"
+                        name="email"
+                        placeholder="Enter your email address"
+                        autocomplete="email"
+                        required
+                    >
+
+                    <label for="student-mobile">
+                        Mobile Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="student-mobile"
+                        name="mobile"
+                        placeholder="Enter your mobile number"
+                        autocomplete="tel"
+                        required
+                    >
+
+                    <label for="student-course">
+                        Course
+                    </label>
+
+                    <input
+                        type="text"
+                        id="student-course"
+                        name="course"
+                        placeholder="Example: B.Tech AI and ML"
+                        required
+                    >
+
+                    <label for="student-semester">
+                        Semester
+                    </label>
+
+                    <select
+                        id="student-semester"
+                        name="semester"
+                        required
+                    >
+                        <option value="">Select Semester</option>
+                        <option value="1">1st Semester</option>
+                        <option value="2">2nd Semester</option>
+                        <option value="3">3rd Semester</option>
+                        <option value="4">4th Semester</option>
+                        <option value="5">5th Semester</option>
+                        <option value="6">6th Semester</option>
+                        <option value="7">7th Semester</option>
+                        <option value="8">8th Semester</option>
+                    </select>
+
+                    <label for="create-pin">
+                        Create Security PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        id="create-pin"
+                        name="pin"
+                        placeholder="Create your PIN"
+                        minlength="6"
+                        required
+                    >
+
+                    <label for="confirm-pin">
+                        Confirm Security PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirm-pin"
+                        name="confirmPin"
+                        placeholder="Re-enter your PIN"
+                        minlength="6"
+                        required
+                    >
+
+                    <button type="submit" class="primary-btn">
+                        Register as Student
+                    </button>
+
+                </form>
+
+                <p class="switch-text">
+                    Already registered?
+                    <button type="button" id="open-login">
+                        Login here
+                    </button>
+                </p>
+
+                <p class="form-message" id="register-message"
+                   role="status" aria-live="polite"></p>
+
+            </div>
+
+        </section>
+
+        <!-- STUDENT DASHBOARD -->
+        <section class="dashboard hidden" id="student-dashboard">
+
+            <div class="dashboard-heading">
+                <div>
+                    <span class="welcome-tag">STUDENT DASHBOARD</span>
+                    <h2 id="dashboard-student-name">
+                        Welcome, Student
+                    </h2>
+                    <p>Your campus support centre.</p>
+                </div>
+
+                <button type="button" id="logout-btn"
+                        class="logout-btn">
+                    Logout
+                </button>
+            </div>
+
+            <div class="dashboard-cards">
+
+                <div class="dashboard-card">
+                    <span>📢</span>
+                    <h3>New Complaint</h3>
+                    <p>Report a problem on campus.</p>
+                    <button type="button" id="show-complaint">
+                        Submit Complaint
+                    </button>
+                </div>
+
+                <div class="dashboard-card">
+                    <span>📋</span>
+                    <h3>My Complaints</h3>
+                    <p>View your submitted complaints.</p>
+                    <button type="button" id="show-history">
+                        View History
+                    </button>
+                </div>
+
+                <div class="dashboard-card">
+                    <span>⭐</span>
+                    <h3>Feedback</h3>
+                    <p>Share your experience with us.</p>
+                    <button type="button" id="show-feedback">
+                        Give Feedback
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- NEW COMPLAINT FORM -->
+            <div class="dashboard-panel hidden" id="complaint-panel">
+
+                <h2>Submit a New Complaint</h2>
+
+                <p>
+                    Tell us about the problem you are facing on campus.
+                </p>
+
+                <form id="complaint-form">
+
+                    <label for="complaint-course">Course</label>
+
+                    <input
+                        type="text"
+                        id="complaint-course"
+                        name="course"
+                        placeholder="Your course"
+                        required
+                    >
+
+                    <label for="complaint-semester">Semester</label>
+
+                    <input
+                        type="text"
+                        id="complaint-semester"
+                        name="semester"
+                        placeholder="Your semester"
+                        required
+                    >
+
+                    <label for="complaint-location">
+                        Location / Block Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="complaint-location"
+                        name="location"
+                        placeholder="Enter campus location or block"
+                        required
+                    >
+
+                    <label for="problem-category">
+                        Problem Category
+                    </label>
+
+                    <select id="problem-category"
+                            name="category" required>
+
+                        <option value="">Select Problem Category</option>
+                        <option>Water</option>
+                        <option>Cleanliness</option>
+                        <option>Electricity</option>
+                        <option>Roads</option>
+                        <option>Wi-Fi</option>
+                        <option>Security</option>
+                        <option>Buildings</option>
+                        <option>Hostel</option>
+                        <option>Classrooms</option>
+                        <option>Washrooms</option>
+                        <option>Furniture</option>
+                        <option>Lab</option>
+                        <option>Parking</option>
+                        <option>Other</option>
+
+                    </select>
+
+                    <label for="problem-description">
+                        Describe Your Problem
+                    </label>
+
+                    <textarea
+                        id="problem-description"
+                        name="description"
+                        rows="5"
+                        placeholder="Explain the problem clearly..."
+                        required
+                    ></textarea>
+
+                    <label for="complaint-media">
+                        Upload Photo / Video (Optional)
+                    </label>
+
+                    <input
+                        type="file"
+                        id="complaint-media"
+                        name="media"
+                        accept="image/*,video/*"
+                    >
+
+                    <button type="submit" class="primary-btn">
+                        Submit Complaint
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- COMPLAINT HISTORY -->
+            <div class="dashboard-panel hidden" id="history-panel">
+
+                <h2>My Complaint History</h2>
+
+                <p>
+                    Your submitted complaints and their latest status
+                    will appear here.
+                </p>
+
+                <div id="complaint-history">
+                    <p>No complaint records are available yet.</p>
+                </div>
+
+            </div>
+
+            <!-- FEEDBACK FORM -->
+            <div class="dashboard-panel hidden" id="feedback-panel">
+
+                <h2>Share Your Feedback</h2>
+
+                <form id="feedback-form">
+
+                    <label for="feedback-complaint-id">
+                        Complaint ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="feedback-complaint-id"
+                        name="complaintId"
+                        placeholder="Enter your Complaint ID"
+                        required
+                    >
+
+                    <label for="feedback-rating">
+                        Your Rating
+                    </label>
+
+                    <select id="feedback-rating"
+                            name="rating" required>
+                        <option value="">Select Rating</option>
+                        <option value="5">5 - Excellent</option>
+                        <option value="4">4 - Very Good</option>
+                        <option value="3">3 - Good</option>
+                        <option value="2">2 - Needs Improvement</option>
+                        <option value="1">1 - Poor</option>
+                    </select>
+
+                    <label for="feedback-message">
+                        Your Feedback
+                    </label>
+
+                    <textarea
+                        id="feedback-message"
+                        name="feedback"
+                        rows="4"
+                        placeholder="Share your experience..."
+                        required
+                    ></textarea>
+
+                    <button type="submit" class="primary-btn">
+                        Submit Feedback
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>
+            © <span id="current-year"></span>
+            LTSU Campus Support
+        </p>
+
+        <p>
+            A Better Campus Begins With a Voice That Is Heard.
+        </p>
+    </footer>
+
+</body>
+</html>
