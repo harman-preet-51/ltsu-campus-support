@@ -1,0 +1,505 @@
+/* =========================================
+   LTSU CAMPUS SUPPORT - STUDENT PORTAL CSS
+   Theme: Navy Blue + Emerald Green
+========================================= */
+
+/* ---------- BASIC RESET ---------- */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --navy: #07152e;
+    --navy-light: #102746;
+    --green: #10b981;
+    --green-dark: #059669;
+    --white: #ffffff;
+    --text: #eaf2ff;
+    --muted: #a8b8cc;
+    --border: rgba(255, 255, 255, 0.13);
+    --glass: rgba(255, 255, 255, 0.07);
+    --danger: #fb7185;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 15% 10%, rgba(16, 185, 129, 0.16), transparent 35%),
+        radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.18), transparent 35%),
+        linear-gradient(135deg, #061329, #102746 55%, #07152e);
+    line-height: 1.6;
+}
+
+/* ---------- HEADER ---------- */
+
+.student-header {
+    width: 100%;
+    padding: 18px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(5, 17, 37, 0.78);
+    backdrop-filter: blur(15px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.brand {
+    color: var(--white);
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.brand::first-letter {
+    color: var(--green);
+}
+
+.home-link {
+    color: var(--green);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 9px 17px;
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    border-radius: 10px;
+    transition: 0.3s ease;
+}
+
+.home-link:hover {
+    color: var(--white);
+    background: var(--green-dark);
+}
+
+/* ---------- MAIN CONTENT ---------- */
+
+main {
+    width: 100%;
+    max-width: 1150px;
+    margin: auto;
+    padding: 35px 22px 60px;
+}
+
+/* ---------- WELCOME SECTION ---------- */
+
+.welcome-section {
+    text-align: center;
+    padding: 35px 15px 40px;
+}
+
+.welcome-tag {
+    display: inline-block;
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 30px;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+}
+
+.welcome-section h1 {
+    font-size: clamp(30px, 5vw, 48px);
+    line-height: 1.2;
+    color: var(--white);
+    margin-bottom: 14px;
+}
+
+.welcome-section p {
+    color: var(--muted);
+    max-width: 650px;
+    margin: auto;
+    font-size: 16px;
+}
+
+/* ---------- AUTHENTICATION SECTION ---------- */
+
+.auth-section {
+    max-width: 620px;
+    margin: 0 auto 35px;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 13px 10px;
+    border: none;
+    border-radius: 10px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.auth-tab:hover {
+    color: var(--white);
+}
+
+.auth-tab.active {
+    color: #06251d;
+    background: linear-gradient(135deg, #34d399, #10b981);
+    box-shadow: 0 5px 18px rgba(16, 185, 129, 0.2);
+}
+
+/* ---------- GLASS CARDS ---------- */
+
+.auth-card,
+.dashboard-panel {
+    padding: 30px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
+}
+
+.auth-card h2,
+.dashboard-panel h2 {
+    color: var(--white);
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.auth-card > p,
+.dashboard-panel > p {
+    color: var(--muted);
+    margin-bottom: 23px;
+}
+
+/* ---------- FORMS ---------- */
+
+form {
+    width: 100%;
+}
+
+form label {
+    display: block;
+    color: #dce8f7;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 17px 0 7px;
+}
+
+form input,
+form select,
+form textarea {
+    width: 100%;
+    padding: 13px 14px;
+    color: var(--white);
+    background: rgba(3, 14, 32, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.17);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    font-size: 15px;
+    transition: 0.25s ease;
+}
+
+form input::placeholder,
+form textarea::placeholder {
+    color: #8294ab;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.13);
+}
+
+form select {
+    cursor: pointer;
+}
+
+form select option {
+    color: var(--white);
+    background: var(--navy);
+}
+
+form textarea {
+    min-height: 125px;
+    resize: vertical;
+}
+
+form input[type="file"] {
+    padding: 11px;
+    cursor: pointer;
+}
+
+form input[type="file"]::file-selector-button {
+    color: #05251d;
+    background: #34d399;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 12px;
+    margin-right: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ---------- PRIMARY BUTTON ---------- */
+
+.primary-btn {
+    width: 100%;
+    margin-top: 23px;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 11px;
+    color: #05251d;
+    background: linear-gradient(135deg, #34d399, #10b981);
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 9px 22px rgba(16, 185, 129, 0.25);
+}
+
+.primary-btn:active {
+    transform: scale(0.98);
+}
+
+.switch-text {
+    color: var(--muted);
+    text-align: center;
+    margin-top: 18px;
+    font-size: 14px;
+}
+
+.switch-text a {
+    color: #6ee7b7;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.switch-text a:hover {
+    text-decoration: underline;
+}
+
+.form-message {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 9px;
+    color: #a7f3d0;
+    background: rgba(16, 185, 129, 0.1);
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ---------- STUDENT DASHBOARD ---------- */
+
+.dashboard {
+    width: 100%;
+    margin-top: 25px;
+}
+
+.dashboard-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.dashboard-heading h2 {
+    color: var(--white);
+    font-size: 27px;
+}
+
+.dashboard-heading p {
+    color: var(--muted);
+}
+
+.logout-btn {
+    padding: 10px 18px;
+    color: #fecdd3;
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(251, 113, 133, 0.4);
+    border-radius: 9px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(244, 63, 94, 0.25);
+}
+
+/* ---------- DASHBOARD CARDS ---------- */
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.dashboard-card {
+    min-height: 145px;
+    padding: 23px 18px;
+    text-align: center;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--green);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.dashboard-card h3 {
+    color: var(--white);
+    font-size: 18px;
+    margin-bottom: 7px;
+}
+
+.dashboard-card p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* ---------- DASHBOARD PANELS ---------- */
+
+.dashboard-panel {
+    margin-bottom: 25px;
+    scroll-margin-top: 100px;
+}
+
+.dashboard-panel h2 {
+    margin-bottom: 20px;
+}
+
+#complaint-history {
+    display: grid;
+    gap: 14px;
+}
+
+#complaint-history > * {
+    padding: 17px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+}
+
+/* ---------- FEEDBACK RATING ---------- */
+
+#feedback-rating {
+    cursor: pointer;
+}
+
+/* ---------- HIDDEN ELEMENTS ---------- */
+
+.hidden {
+    display: none !important;
+}
+
+/* ---------- FOOTER ---------- */
+
+footer {
+    padding: 22px 15px;
+    text-align: center;
+    color: var(--muted);
+    background: rgba(3, 12, 27, 0.65);
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+}
+
+/* ---------- RESPONSIVE DESIGN ---------- */
+
+@media (max-width: 768px) {
+    .student-header {
+        padding: 15px 5%;
+    }
+
+    .brand {
+        font-size: 18px;
+    }
+
+    main {
+        padding: 25px 16px 45px;
+    }
+
+    .welcome-section {
+        padding: 25px 8px 30px;
+    }
+
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-card {
+        min-height: auto;
+    }
+
+    .auth-card,
+    .dashboard-panel {
+        padding: 23px 18px;
+    }
+
+    .dashboard-heading {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 420px) {
+    .student-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .home-link {
+        font-size: 13px;
+    }
+
+    .auth-tabs {
+        gap: 5px;
+    }
+
+    .auth-tab {
+        font-size: 13px;
+        padding: 11px 5px;
+    }
+
+    .auth-card h2,
+    .dashboard-panel h2 {
+        font-size: 21px;
+    }
+
+    form input,
+    form select,
+    form textarea {
+        font-size: 14px;
+    }
+}
