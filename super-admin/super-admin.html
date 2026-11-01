@@ -4,287 +4,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin Portal | LTSU Campus Support</title>
+    <title>LTSU Campus Support | Super Admin</title>
     <link rel="stylesheet" href="super-admin.css">
 </head>
 
 <body>
 
-    <!-- Login Page -->
-    <div class="login-page" id="login-page">
-        <div class="login-box">
+<!-- LOGIN PAGE -->
+<div class="login-page" id="login-page">
+    <div class="login-box">
+        <h1>Super Admin</h1>
+        <p>LTSU Campus Support Portal</p>
 
-            <h1>LTSU Campus Support</h1>
-            <h2>Super Admin Portal</h2>
+        <form id="login-form">
+            <input type="text" id="admin-id"
+                   placeholder="Super Admin ID" required>
 
-            <p>Welcome to the Super Admin Control Center</p>
+            <input type="password" id="admin-pin"
+                   placeholder="Admin PIN" required>
 
-            <form id="login-form">
+            <button type="submit">Login to Dashboard</button>
+        </form>
 
-                <label>Super Admin ID</label>
-                <input type="text" id="admin-id" placeholder="Enter your Admin ID" required>
-
-                <label>Security PIN</label>
-                <input type="password" id="admin-pin" placeholder="Enter your Security PIN" required>
-
-                <button type="submit">Login to Dashboard</button>
-
-            </form>
-
-            <p class="login-note">
-                Authorized Super Admin Access Only
-            </p>
-
-        </div>
+        <small class="login-note">
+            Authorized Super Admin Access
+        </small>
     </div>
+</div>
 
+<!-- MAIN DASHBOARD -->
+<div class="dashboard hidden" id="dashboard">
 
-    <!-- Main Dashboard -->
-    <div class="dashboard hidden" id="dashboard">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-
-            <h2>LTSU Support</h2>
-            <p>Super Admin Panel</p>
-
-            <nav>
-                <button class="nav-btn active" data-page="overview">Dashboard</button>
-                <button class="nav-btn" data-page="complaints">Complaints</button>
-                <button class="nav-btn" data-page="students">Students</button>
-                <button class="nav-btn" data-page="admins">Admin Management</button>
-                <button class="nav-btn" data-page="activity">Activity Log</button>
-                <button class="nav-btn" data-page="settings">Settings</button>
-            </nav>
-
-            <button id="logout-btn" class="logout-btn">Logout</button>
-
-        </aside>
-
-
-        <!-- Main Content -->
-        <main class="main-content">
-
-            <header class="topbar">
-                <div>
-                    <h1 id="page-title">Super Admin Dashboard</h1>
-                    <p>Manage and monitor LTSU Campus Support</p>
-                </div>
-
-                <span class="admin-label">SUPER ADMIN</span>
-            </header>
-
-
-            <!-- Dashboard Overview -->
-            <section class="page-section active" id="overview">
-
-                <div class="welcome-banner">
-                    <h2>Welcome to the Control Center!</h2>
-                    <p>
-                        Manage campus complaints, student records,
-                        admin accounts and platform activities.
-                    </p>
-                </div>
-
-                <div class="stats-container">
-
-                    <div class="stat-card">
-                        <p>Total Complaints</p>
-                        <h2 id="total-count">0</h2>
-                    </div>
-
-                    <div class="stat-card">
-                        <p>Pending Complaints</p>
-                        <h2 id="pending-count">0</h2>
-                    </div>
-
-                    <div class="stat-card">
-                        <p>Registered Students</p>
-                        <h2 id="student-count">0</h2>
-                    </div>
-
-                    <div class="stat-card">
-                        <p>Admin Accounts</p>
-                        <h2 id="admin-count">0</h2>
-                    </div>
-
-                </div>
-
-                <div class="content-box">
-                    <h3>Recent Complaints</h3>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Complaint ID</th>
-                                    <th>Category</th>
-                                    <th>Location</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="recent-complaints">
-                                <tr>
-                                    <td colspan="4">No complaint records available yet.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </section>
-
-
-            <!-- Complaints Section -->
-            <section class="page-section" id="complaints">
-
-                <h2>Complaint Management</h2>
-
-                <div class="content-box">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Complaint ID</th>
-                                    <th>Category</th>
-                                    <th>Location</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="complaint-list">
-                                <tr>
-                                    <td colspan="5">No complaint records available yet.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </section>
-
-
-            <!-- Students Section -->
-            <section class="page-section" id="students">
-
-                <h2>Student Management</h2>
-
-                <div class="content-box">
-                    <h3>Registered Students</h3>
-                    <p id="student-message">
-                        Student records will appear here after database integration.
-                    </p>
-                </div>
-
-            </section>
-
-
-            <!-- Admin Management -->
-            <section class="page-section" id="admins">
-
-                <h2>Admin Management</h2>
-
-                <div class="content-box">
-                    <h3>Administration Accounts</h3>
-                    <p>
-                        Manage university administration accounts,
-                        access permissions and account requests.
-                    </p>
-                </div>
-
-                <div class="content-box">
-                    <h3>Access Control</h3>
-                    <p>
-                        Super Admin will be able to manage administrative
-                        access after backend integration.
-                    </p>
-                </div>
-
-            </section>
-
-
-            <!-- Activity Log -->
-            <section class="page-section" id="activity">
-
-                <h2>Activity Log</h2>
-
-                <div class="content-box">
-                    <h3>Recent Platform Activities</h3>
-
-                    <p>
-                        Platform activity records will appear here
-                        after database integration.
-                    </p>
-                </div>
-
-            </section>
-
-
-            <!-- Settings -->
-            <section class="page-section" id="settings">
-
-                <h2>Platform Settings</h2>
-
-                <div class="content-box">
-                    <h3>Platform Information</h3>
-
-                    <p><strong>Project:</strong> LTSU Campus Support</p>
-
-                    <p>
-                        <strong>University:</strong>
-                        Lamrin Tech Skills University Punjab
-                    </p>
-
-                    <p><strong>Portal:</strong> Super Admin Control Center</p>
-
-                </div>
-
-            </section>
-
-        </main>
-
-    </div>
-
-
-    <!-- AI Assistant -->
-    <button id="ai-button" class="hidden">
-        ✦ AI Assistant
-    </button>
-
-    <div class="ai-chat-window" id="ai-window">
-
-        <div class="ai-header">
-            <h3>LTSU AI Assistant</h3>
-            <button id="ai-close">×</button>
+        <div class="brand">
+            LTSU<br>
+            <small>SUPER ADMIN</small>
         </div>
 
-        <div class="ai-messages" id="ai-messages">
+        <button class="nav-btn active" data-page="overview">
+            🏠 Overview
+        </button>
 
-            <div class="bot-message">
-                Hello, Super Admin! Welcome to LTSU Campus Support.
-                How can I help you today?
+        <button class="nav-btn" data-page="complaints">
+            📋 Complaints
+        </button>
+
+        <button class="nav-btn" data-page="students">
+            🎓 Students
+        </button>
+
+        <button class="nav-btn" data-page="admins">
+            👨‍💼 Admins
+        </button>
+
+        <button class="nav-btn" data-page="activity">
+            📊 Activity
+        </button>
+
+        <button class="nav-btn" data-page="settings">
+            ⚙️ Settings
+        </button>
+
+        <button class="logout-btn" id="logout-btn">
+            Logout
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <h2 id="page-title">Overview</h2>
+            <span class="admin-label">👑 Super Admin</span>
+        </header>
+
+        <!-- OVERVIEW -->
+        <section class="page-section active" id="overview">
+
+            <div class="welcome-banner">
+                <h2>Welcome, Super Admin!</h2>
+                <p>
+                    Manage campus complaints, students,
+                    administrators and portal activities.
+                </p>
             </div>
 
-        </div>
+            <div class="stats-container">
 
-        <div class="ai-input-area">
+                <div class="stat-card">
+                    <h3>Total Complaints</h3>
+                    <p id="total-count">0</p>
+                </div>
 
-            <input
-                type="text"
-                id="ai-input"
-                placeholder="Type your message..."
-            >
+                <div class="stat-card">
+                    <h3>Pending Complaints</h3>
+                    <p id="pending-count">0</p>
+                </div>
 
-            <button id="ai-send">Send</button>
+                <div class="stat-card">
+                    <h3>Total Students</h3>
+                    <p id="student-count">0</p>
+                </div>
 
-        </div>
+                <div class="stat-card">
+                    <h3>Total Admins</h3>
+                    <p id="admin-count">0</p>
+                </div>
 
+            </div>
+
+            <div class="content-box">
+                <h3>Recent Complaints</h3>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Problem</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="recent-complaints">
+                            <tr>
+                                <td colspan="3">
+                                    No complaints available yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- COMPLAINTS -->
+        <section class="page-section" id="complaints">
+
+            <div class="content-box">
+                <h3>All Campus Complaints</h3>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Student</th>
+                                <th>Problem</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="complaint-list">
+                            <tr>
+                                <td colspan="5">
+                                    No complaints available yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- STUDENTS -->
+        <section class="page-section" id="students">
+
+            <div class="content-box">
+                <h3>Student Management</h3>
+                <p>Student records will appear here after database integration.</p>
+            </div>
+
+        </section>
+
+        <!-- ADMINS -->
+        <section class="page-section" id="admins">
+
+            <div class="content-box">
+                <h3>Admin Management</h3>
+                <p>Administrator records will appear here after database integration.</p>
+            </div>
+
+        </section>
+
+        <!-- ACTIVITY -->
+        <section class="page-section" id="activity">
+
+            <div class="content-box">
+                <h3>Portal Activity</h3>
+                <p>Portal activity records will appear here after database integration.</p>
+            </div>
+
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="page-section" id="settings">
+
+            <div class="content-box">
+                <h3>Super Admin Settings</h3>
+                <p>Portal settings and management options will appear here.</p>
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<!-- FLOATING AI ASSISTANT BUTTON -->
+<button type="button" id="ai-button" title="Open AI Assistant">
+    🤖
+</button>
+
+<!-- AI CHAT WINDOW -->
+<div class="ai-chat-window hidden" id="ai-window">
+
+    <div class="ai-header">
+        <strong>🤖 LTSU AI Assistant</strong>
+        <button type="button" id="ai-close">×</button>
     </div>
 
+    <div class="ai-messages" id="ai-messages">
+        <div class="bot-message">
+            Hello! Welcome to the LTSU Super Admin Portal.
+            I can guide you with complaints, students,
+            administrators and dashboard navigation.
+            How can I help you?
+        </div>
+    </div>
 
-    <script src="super-admin.js"></script>
+    <div class="ai-input-area">
+        <input type="text" id="ai-input"
+               placeholder="Ask your question...">
+
+        <button type="button" id="ai-send">
+            Send
+        </button>
+    </div>
+
+</div>
+
+<!-- JAVASCRIPT FILE -->
+<script src="super-admin.js"></script>
 
 </body>
 </html>
