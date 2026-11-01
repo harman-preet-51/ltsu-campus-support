@@ -1,0 +1,293 @@
+/* =========================================
+   LTSU CAMPUS SUPPORT - HOMEPAGE DESIGN
+   Theme: Deep Navy + Emerald Glassmorphism
+   ========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #ffffff;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(5, 15, 30, 0.94),
+            rgba(5, 35, 43, 0.82)
+        ),
+        url("https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=2000&q=85")
+        center / cover fixed no-repeat;
+    background-color: #071827;
+    overflow-x: hidden;
+}
+
+/* NAVIGATION BAR */
+
+.navbar {
+    width: 100%;
+    min-height: 76px;
+    padding: 15px 7%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    background: rgba(4, 18, 32, 0.72);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.brand {
+    color: #ffffff;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.brand span {
+    color: #34e6a0;
+}
+
+/* HERO SECTION */
+
+.hero {
+    min-height: 420px;
+    padding: 90px 20px 65px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.hero h1 {
+    max-width: 900px;
+    font-size: clamp(34px, 5vw, 62px);
+    line-height: 1.15;
+    font-weight: 800;
+    margin-bottom: 22px;
+    text-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+}
+
+.hero h1 span {
+    color: #34e6a0;
+}
+
+.hero p {
+    max-width: 720px;
+    font-size: 17px;
+    line-height: 1.8;
+    color: #d8e9e9;
+}
+
+/* QUOTE / HIGHLIGHT */
+
+.hero .quote {
+    margin-top: 25px;
+    color: #7fffc5;
+    font-size: 19px;
+    font-weight: 600;
+    font-style: italic;
+}
+
+/* PORTAL SECTION */
+
+.portal-section {
+    width: 100%;
+    padding: 35px 7% 85px;
+    text-align: center;
+}
+
+.portal-section h2 {
+    font-size: clamp(26px, 4vw, 38px);
+    margin-bottom: 12px;
+    font-weight: 800;
+}
+
+.portal-section > p {
+    color: #c8dddd;
+    font-size: 16px;
+    margin-bottom: 38px;
+    line-height: 1.7;
+}
+
+/* PORTAL CARDS GRID */
+
+.portal-grid {
+    max-width: 1150px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 25px;
+}
+
+/* INDIVIDUAL PORTAL CARD */
+
+.portal-card {
+    position: relative;
+    padding: 35px 24px;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    border-radius: 22px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.22);
+    transition: transform 0.3s ease, background 0.3s ease,
+                border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.portal-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #34e6a0;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+}
+
+.portal-card h3 {
+    font-size: 23px;
+    margin: 14px 0 12px;
+    font-weight: 750;
+}
+
+.portal-card p {
+    color: #d3e5e5;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* CARD ICON */
+
+.portal-card .icon {
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    font-size: 32px;
+    background: rgba(52, 230, 160, 0.15);
+    border: 1px solid rgba(52, 230, 160, 0.35);
+}
+
+/* PORTAL BUTTON */
+
+.portal-card .portal-btn {
+    display: inline-block;
+    margin-top: 22px;
+    padding: 11px 25px;
+    color: #05251c;
+    background: #34e6a0;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 750;
+    transition: background 0.3s ease;
+}
+
+.portal-card:hover .portal-btn {
+    background: #ffffff;
+}
+
+/* FOOTER */
+
+footer {
+    padding: 25px 15px;
+    text-align: center;
+    color: #b8cccc;
+    background: rgba(3, 13, 25, 0.82);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+footer span {
+    color: #34e6a0;
+    font-weight: 700;
+}
+
+/* TABLET RESPONSIVE DESIGN */
+
+@media (max-width: 900px) {
+    .portal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero {
+        min-height: 360px;
+        padding-top: 70px;
+    }
+}
+
+/* MOBILE RESPONSIVE DESIGN */
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 15px 5%;
+    }
+
+    .brand {
+        font-size: 17px;
+    }
+
+    .hero {
+        min-height: 340px;
+        padding: 65px 20px 45px;
+    }
+
+    .hero p {
+        font-size: 15px;
+    }
+
+    .hero .quote {
+        font-size: 16px;
+    }
+
+    .portal-section {
+        padding: 30px 6% 60px;
+    }
+
+    .portal-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .portal-card {
+        min-height: 235px;
+        padding: 28px 20px;
+    }
+
+    body {
+        background-attachment: scroll;
+    }
+}
+
+/* ACCESSIBILITY */
+
+a:focus-visible {
+    outline: 3px solid #7fffc5;
+    outline-offset: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
