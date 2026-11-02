@@ -9,6 +9,12 @@
     <title>Student Portal | LTSU Campus Support</title>
 
     <link rel="stylesheet" href="student.css">
+
+    <!-- Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Project JavaScript files -->
+    <script src="supabase-config.js" defer></script>
     <script src="student.js" defer></script>
 </head>
 
@@ -242,18 +248,23 @@
         <section class="dashboard hidden" id="student-dashboard">
 
             <div class="dashboard-heading">
+
                 <div>
                     <span class="welcome-tag">STUDENT DASHBOARD</span>
+
                     <h2 id="dashboard-student-name">
                         Welcome, Student
                     </h2>
+
                     <p>Your campus support centre.</p>
                 </div>
 
-                <button type="button" id="logout-btn"
+                <button type="button"
+                        id="logout-btn"
                         class="logout-btn">
                     Logout
                 </button>
+
             </div>
 
             <div class="dashboard-cards">
@@ -262,6 +273,7 @@
                     <span>📢</span>
                     <h3>New Complaint</h3>
                     <p>Report a problem on campus.</p>
+
                     <button type="button" id="show-complaint">
                         Submit Complaint
                     </button>
@@ -271,6 +283,7 @@
                     <span>📋</span>
                     <h3>My Complaints</h3>
                     <p>View your submitted complaints.</p>
+
                     <button type="button" id="show-history">
                         View History
                     </button>
@@ -280,6 +293,7 @@
                     <span>⭐</span>
                     <h3>Feedback</h3>
                     <p>Share your experience with us.</p>
+
                     <button type="button" id="show-feedback">
                         Give Feedback
                     </button>
@@ -384,6 +398,9 @@
 
                 </form>
 
+                <p class="form-message" id="complaint-message"
+                   role="status" aria-live="polite"></p>
+
             </div>
 
             <!-- COMPLAINT HISTORY -->
@@ -427,12 +444,14 @@
 
                     <select id="feedback-rating"
                             name="rating" required>
+
                         <option value="">Select Rating</option>
                         <option value="5">5 - Excellent</option>
                         <option value="4">4 - Very Good</option>
                         <option value="3">3 - Good</option>
                         <option value="2">2 - Needs Improvement</option>
                         <option value="1">1 - Poor</option>
+
                     </select>
 
                     <label for="feedback-message">
@@ -453,6 +472,9 @@
 
                 </form>
 
+                <p class="form-message" id="feedback-message-status"
+                   role="status" aria-live="polite"></p>
+
             </div>
 
         </section>
@@ -461,6 +483,7 @@
 
     <!-- FOOTER -->
     <footer>
+
         <p>
             © <span id="current-year"></span>
             LTSU Campus Support
@@ -469,6 +492,7 @@
         <p>
             A Better Campus Begins With a Voice That Is Heard.
         </p>
+
     </footer>
 
 </body>
