@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showMessage(message, success = false) {
         if (!loginMessage) return;
-
         loginMessage.textContent = message;
         loginMessage.style.display = "block";
         loginMessage.style.color = success ? "#168c79" : "#d94b64";
@@ -22,21 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showDashboard() {
-        if (loginPage) loginPage.classList.add("hidden");
-        if (dashboard) dashboard.classList.remove("hidden");
+        loginPage?.classList.add("hidden");
+        dashboard?.classList.remove("hidden");
     }
 
     function showLogin() {
-        if (dashboard) dashboard.classList.add("hidden");
-        if (loginPage) loginPage.classList.remove("hidden");
+        dashboard?.classList.add("hidden");
+        loginPage?.classList.remove("hidden");
     }
 
     if (!supabaseClient) {
-        showMessage("Supabase connection nahi mili. Please page configuration check karein.");
+        showMessage("Supabase connection nahi mili. Configuration check karein.");
         return;
     }
 
-    // Check whether the logged-in user is the active Super Admin.
     async function verifySuperAdmin(user) {
         const { data: profile, error } = await supabaseClient
             .from("profiles")
@@ -47,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (error || !profile) {
             await supabaseClient.auth.signOut();
             showLogin();
-            showMessage("Profile verify nahi ho paayi. Please administrator se contact karein.");
+            showMessage("Profile verify nahi ho paayi.");
             return false;
         }
 
@@ -61,14 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
         showDashboard();
 
         const adminLabel = document.querySelector(".admin-label");
-        if (adminLabel) {
-            adminLabel.textContent = profile.full_name || "Super Admin";
-        }
+        if (adminLabel) adminLabel.textContent = profile.full_name || "Super Admin";
 
         return true;
     }
 
-    // Login
     if (loginForm) {
         loginForm.addEventListener("submit", async (event) => {
             event.preventDefault();
@@ -77,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const password = passwordInput.value;
 
             if (!email || !password) {
-                showMessage("Please email aur password dono enter karein.");
+                showMessage("Email aur password enter karein.");
                 return;
             }
 
@@ -87,15 +82,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 submitButton.textContent = "Please wait...";
             }
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
 
-            if (error) {
-                showMessage("Login failed: " + error.message);
-            } else {
-                await verifySuperAdmin(data.user);
+                if (error) {
+                    showMessage("Login failed: " + error.message);
+                } else {
+                    await verifySuperAdmin(data.user);
+                }
+            } catch (error) {
+                showMessage("Something went wrong. Please try again.");
             }
 
             if (submitButton) {
@@ -105,13 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Forgot password
     if (forgotPasswordBtn) {
         forgotPasswordBtn.addEventListener("click", async () => {
             const email = emailInput.value.trim();
 
             if (!email) {
-                showMessage("Pehle email address enter karein, phir Forgot Password click karein.");
+                showMessage("Pehle email address enter karein.");
                 emailInput.focus();
                 return;
             }
@@ -129,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (error) {
                 showMessage("Reset email nahi bheji ja saki: " + error.message);
             } else {
-                showMessage("Password reset link aapke email par bhej diya gaya hai. Inbox check karein.", true);
+                showMessage("Password reset link email par bhej diya gaya hai.", true);
             }
 
             forgotPasswordBtn.disabled = false;
@@ -137,27 +135,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Sidebar navigation
     document.querySelectorAll(".nav-btn").forEach((button) => {
         button.addEventListener("click", () => {
             const pageName = button.dataset.page;
 
-            document.querySelectorAll(".nav-btn").forEach((item) => {
-                item.classList.remove("active");
-            });
-
-            document.querySelectorAll(".page-section").forEach((section) => {
-                section.classList.remove("active");
-            });
+            document.querySelectorAll(".nav-btn").forEach(item => item.classList.remove("active"));
+            document.querySelectorAll(".page-section").forEach(section => section.classList.remove("active"));
 
             button.classList.add("active");
-
-            const selectedPage = document.getElementById(pageName);
-            if (selectedPage) selectedPage.classList.add("active");
+            document.getElementById(pageName)?.classList.add("active");
         });
     });
 
-    // Logout
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
             await supabaseClient.auth.signOut();
@@ -165,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // AI Assistant window
     const aiButton = document.getElementById("ai-button");
     const aiWindow = document.getElementById("ai-window");
     const aiClose = document.getElementById("ai-close");
@@ -173,17 +161,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const aiInput = document.getElementById("ai-input");
     const aiMessages = document.getElementById("ai-messages");
 
-    if (aiButton && aiWindow) {
-        aiButton.addEventListener("click", () => {
-            aiWindow.classList.toggle("hidden");
-        });
-    }
-
-    if (aiClose && aiWindow) {
-        aiClose.addEventListener("click", () => {
-            aiWindow.classList.add("hidden");
-        });
-    }
+    aiButton?.addEventListener("click", () => aiWindow?.classList.toggle("hidden"));
+    aiClose?.addEventListener("click", () => aiWindow?.classList.add("hidden"));
 
     function sendAIMessage() {
         if (!aiInput || !aiMessages) return;
@@ -204,15 +183,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const lowerQuestion = question.toLowerCase();
 
         if (lowerQuestion.includes("complaint")) {
-            reply.textContent = "Complaints section mein submitted complaints ko review aur manage karein.";
+            reply.textContent = "Complaints section mein submitted complaints review karein.";
         } else if (lowerQuestion.includes("student")) {
-            reply.textContent = "Students section mein student records aur account status dekhein.";
+            reply.textContent = "Students section mein student records dekhein.";
         } else if (lowerQuestion.includes("admin")) {
-            reply.textContent = "Admins section mein admin access requests review karein. Approval sirf authorized Super Admin ko deni chahiye.";
-        } else if (lowerQuestion.includes("help")) {
-            reply.textContent = "Main dashboard navigation aur portal ke basic sections ke baare mein help kar sakta hoon.";
+            reply.textContent = "Admins section mein admin access requests review karein.";
         } else {
-            reply.textContent = "Main LTSUCare Super Admin Assistant hoon. Complaints, students ya admin management ke baare mein pooch sakte hain.";
+            reply.textContent = "Main LTSUCare Super Admin Assistant hoon. Complaints, students aur admin management ke baare mein pooch sakte hain.";
         }
 
         aiMessages.appendChild(reply);
@@ -220,21 +197,16 @@ document.addEventListener("DOMContentLoaded", () => {
         aiMessages.scrollTop = aiMessages.scrollHeight;
     }
 
-    if (aiSend) {
-        aiSend.addEventListener("click", sendAIMessage);
-    }
+    aiSend?.addEventListener("click", sendAIMessage);
 
-    if (aiInput) {
-        aiInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") sendAIMessage();
-        });
-    }
+    aiInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") sendAIMessage();
+    });
 
-    // Keep the login page hidden only after checking the existing session.
     async function checkExistingSession() {
-        const { data } = await supabaseClient.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
 
-        if (data.session) {
+        if (!error && data.session) {
             await verifySuperAdmin(data.session.user);
         } else {
             showLogin();
