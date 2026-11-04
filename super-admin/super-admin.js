@@ -1,130 +1,245 @@
-// SUPER ADMIN LOGIN
-const loginForm = document.getElementById("login-form");
-const loginPage = document.getElementById("login-page");
-const dashboard = document.getElementById("dashboard");
 
-if (loginForm) {
-    loginForm.addEventListener("submit", function (event) {
-        event.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
+    const supabaseClient = window.supabaseClient;
 
-        const adminId = document.getElementById("admin-id").value.trim();
-        const adminPin = document.getElementById("admin-pin").value.trim();
+    const loginPage = document.getElementById("login-page");
+    const dashboard = document.getElementById("dashboard");
+    const loginForm = document.getElementById("login-form");
+    const emailInput = document.getElementById("admin-id");
+    const passwordInput = document.getElementById("admin-pin");
+    const loginMessage = document.getElementById("login-message");
+    const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+    const logoutBtn = document.getElementById("logout-btn");
 
-        if (adminId !== "" && adminPin !== "") {
-            loginPage.classList.add("hidden");
-            dashboard.classList.remove("hidden");
-        } else {
-            alert("Please enter Admin ID and PIN.");
-        }
-    });
-}
+    function showMessage(message, success = false) {
+        if (!loginMessage) return;
 
-// SIDEBAR NAVIGATION
-const navButtons = document.querySelectorAll(".nav-btn");
-const sections = document.querySelectorAll(".page-section");
-const pageTitle = document.getElementById("page-title");
+        loginMessage.textContent = message;
+        loginMessage.style.display = "block";
+        loginMessage.style.color = success ? "#168c79" : "#d94b64";
+        loginMessage.style.marginTop = "12px";
+        loginMessage.style.fontSize = "13px";
+    }
 
-navButtons.forEach(function (button) {
-    button.addEventListener("click", function () {
-        const page = button.dataset.page;
+    function showDashboard() {
+        if (loginPage) loginPage.classList.add("hidden");
+        if (dashboard) dashboard.classList.remove("hidden");
+    }
 
-        navButtons.forEach(function (item) {
-            item.classList.remove("active");
-        });
+    function showLogin() {
+        if (dashboard) dashboard.classList.add("hidden");
+        if (loginPage) loginPage.classList.remove("hidden");
+    }
 
-        button.classList.add("active");
-
-        sections.forEach(function (section) {
-            section.classList.remove("active");
-        });
-
-        const selectedSection = document.getElementById(page);
-
-        if (selectedSection) {
-            selectedSection.classList.add("active");
-        }
-
-        if (pageTitle) {
-            pageTitle.textContent = button.textContent.trim();
-        }
-    });
-});
-
-// LOGOUT
-const logoutButton = document.getElementById("logout-btn");
-
-if (logoutButton) {
-    logoutButton.addEventListener("click", function () {
-        dashboard.classList.add("hidden");
-        loginPage.classList.remove("hidden");
-        document.getElementById("admin-pin").value = "";
-    });
-}
-
-// AI ASSISTANT
-const aiButton = document.getElementById("ai-button");
-const aiWindow = document.getElementById("ai-window");
-const aiClose = document.getElementById("ai-close");
-const aiSend = document.getElementById("ai-send");
-const aiInput = document.getElementById("ai-input");
-const aiMessages = document.getElementById("ai-messages");
-
-if (aiButton && aiWindow) {
-    aiButton.addEventListener("click", function () {
-        aiWindow.classList.toggle("hidden");
-    });
-}
-
-if (aiClose && aiWindow) {
-    aiClose.addEventListener("click", function () {
-        aiWindow.classList.add("hidden");
-    });
-}
-
-function sendAIMessage() {
-    const message = aiInput.value.trim();
-
-    if (message === "") {
+    if (!supabaseClient) {
+        showMessage("Supabase connection nahi mili. Please page configuration check karein.");
         return;
     }
 
-    const userMessage = document.createElement("p");
-    userMessage.className = "bot-message";
-    userMessage.style.background = "#dff5ed";
-    userMessage.textContent = "You: " + message;
+    // Check whether the logged-in user is the active Super Admin.
+    async function verifySuperAdmin(user) {
+        const { data: profile, error } = await supabaseClient
+            .from("profiles")
+            .select("id, full_name, email, role, is_active")
+            .eq("id", user.id)
+            .maybeSingle();
 
-    aiMessages.appendChild(userMessage);
+        if (error || !profile) {
+            await supabaseClient.auth.signOut();
+            showLogin();
+            showMessage("Profile verify nahi ho paayi. Please administrator se contact karein.");
+            return false;
+        }
 
-    const reply = document.createElement("p");
-    reply.className = "bot-message";
+        if (profile.role !== "super_admin" || profile.is_active !== true) {
+            await supabaseClient.auth.signOut();
+            showLogin();
+            showMessage("Access denied. Sirf active Super Admin login kar sakta hai.");
+            return false;
+        }
 
-    const lowerMessage = message.toLowerCase();
+        showDashboard();
 
-    if (lowerMessage.includes("complaint")) {
-        reply.textContent = "I can help you review and manage campus complaints.";
-    } else if (lowerMessage.includes("student")) {
-        reply.textContent = "You can manage student information from the Students section.";
-    } else if (lowerMessage.includes("admin")) {
-        reply.textContent = "You can manage administrator information from the Admins section.";
-    } else if (lowerMessage.includes("help")) {
-        reply.textContent = "Please tell me what you need help with in the Super Admin Portal.";
-    } else {
-        reply.textContent = "I am the Super Admin demo assistant. Please ask about complaints, students, or admins.";
+        const adminLabel = document.querySelector(".admin-label");
+        if (adminLabel) {
+            adminLabel.textContent = profile.full_name || "Super Admin";
+        }
+
+        return true;
     }
 
-    aiMessages.appendChild(reply);
-    aiInput.value = "";
-    aiMessages.scrollTop = aiMessages.scrollHeight;
-}
+    // Login
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
 
-if (aiSend) {
-    aiSend.addEventListener("click", sendAIMessage);
-}
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
 
-if (aiInput) {
-    aiInput.addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-            sendAIMessage();
-        }
+            if (!email || !password) {
+                showMessage("Please email aur password dono enter karein.");
+                return;
+            }
+
+            const submitButton = loginForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "Please wait...";
+            }
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) {
+                showMessage("Login failed: " + error.message);
+            } else {
+                await verifySuperAdmin(data.user);
+            }
+
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = "Login";
+            }
+        });
+    }
+
+    // Forgot password
+    if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener("click", async () => {
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                showMessage("Pehle email address enter karein, phir Forgot Password click karein.");
+                emailInput.focus();
+                return;
+            }
+
+            forgotPasswordBtn.disabled = true;
+            forgotPasswordBtn.textContent = "Sending...";
+
+            const redirectTo =
+                "https://harman-preet-51.github.io/ltsu-campus-support/super-admin/reset-password.html";
+
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo
+            });
+
+            if (error) {
+                showMessage("Reset email nahi bheji ja saki: " + error.message);
+            } else {
+                showMessage("Password reset link aapke email par bhej diya gaya hai. Inbox check karein.", true);
+            }
+
+            forgotPasswordBtn.disabled = false;
+            forgotPasswordBtn.textContent = "Forgot Password?";
+        });
+    }
+
+    // Sidebar navigation
+    document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+            const pageName = button.dataset.page;
+
+            document.querySelectorAll(".nav-btn").forEach((item) => {
+                item.classList.remove("active");
+            });
+
+            document.querySelectorAll(".page-section").forEach((section) => {
+                section.classList.remove("active");
+            });
+
+            button.classList.add("active");
+
+            const selectedPage = document.getElementById(pageName);
+            if (selectedPage) selectedPage.classList.add("active");
+        });
     });
-}
+
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            await supabaseClient.auth.signOut();
+            showLogin();
+        });
+    }
+
+    // AI Assistant window
+    const aiButton = document.getElementById("ai-button");
+    const aiWindow = document.getElementById("ai-window");
+    const aiClose = document.getElementById("ai-close");
+    const aiSend = document.getElementById("ai-send");
+    const aiInput = document.getElementById("ai-input");
+    const aiMessages = document.getElementById("ai-messages");
+
+    if (aiButton && aiWindow) {
+        aiButton.addEventListener("click", () => {
+            aiWindow.classList.toggle("hidden");
+        });
+    }
+
+    if (aiClose && aiWindow) {
+        aiClose.addEventListener("click", () => {
+            aiWindow.classList.add("hidden");
+        });
+    }
+
+    function sendAIMessage() {
+        if (!aiInput || !aiMessages) return;
+
+        const question = aiInput.value.trim();
+        if (!question) return;
+
+        const userMessage = document.createElement("div");
+        userMessage.className = "bot-message";
+        userMessage.style.marginLeft = "auto";
+        userMessage.style.background = "#dff4ed";
+        userMessage.textContent = question;
+        aiMessages.appendChild(userMessage);
+
+        const reply = document.createElement("div");
+        reply.className = "bot-message";
+
+        const lowerQuestion = question.toLowerCase();
+
+        if (lowerQuestion.includes("complaint")) {
+            reply.textContent = "Complaints section mein submitted complaints ko review aur manage karein.";
+        } else if (lowerQuestion.includes("student")) {
+            reply.textContent = "Students section mein student records aur account status dekhein.";
+        } else if (lowerQuestion.includes("admin")) {
+            reply.textContent = "Admins section mein admin access requests review karein. Approval sirf authorized Super Admin ko deni chahiye.";
+        } else if (lowerQuestion.includes("help")) {
+            reply.textContent = "Main dashboard navigation aur portal ke basic sections ke baare mein help kar sakta hoon.";
+        } else {
+            reply.textContent = "Main LTSUCare Super Admin Assistant hoon. Complaints, students ya admin management ke baare mein pooch sakte hain.";
+        }
+
+        aiMessages.appendChild(reply);
+        aiInput.value = "";
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+    }
+
+    if (aiSend) {
+        aiSend.addEventListener("click", sendAIMessage);
+    }
+
+    if (aiInput) {
+        aiInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") sendAIMessage();
+        });
+    }
+
+    // Keep the login page hidden only after checking the existing session.
+    async function checkExistingSession() {
+        const { data } = await supabaseClient.auth.getSession();
+
+        if (data.session) {
+            await verifySuperAdmin(data.session.user);
+        } else {
+            showLogin();
+        }
+    }
+
+    checkExistingSession();
+});
