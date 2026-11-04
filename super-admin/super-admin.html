@@ -4,279 +4,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTSU Campus Support | Super Admin</title>
+
+    <title>Super Admin Portal | LTSUCare</title>
 
     <link rel="stylesheet" href="super-admin.css">
-
-    <!-- Supabase Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../student/supabase-config.js"></script>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
-<div class="login-page" id="login-page">
-    <div class="login-box">
-        <h1>Super Admin</h1>
-        <p>LTSU Campus Support Portal</p>
+    <!-- ================= LOGIN PAGE ================= -->
 
-        <form id="login-form">
-            <input
-                type="email"
-                id="admin-id"
-                placeholder="Super Admin Email"
-                autocomplete="username"
-                required
-            >
+    <section id="login-page" class="login-page">
 
-            <input
-                type="password"
-                id="admin-pin"
-                placeholder="Password"
-                autocomplete="current-password"
-                required
-            >
+        <div class="login-box">
 
-            <button type="submit" id="login-button">
-                Login to Dashboard
+            <h1>LTSUCare</h1>
+
+            <p>Super Admin Login Portal</p>
+
+            <form id="login-form">
+
+                <input
+                    type="email"
+                    id="admin-id"
+                    placeholder="Enter Super Admin Email"
+                    autocomplete="username"
+                    required
+                >
+
+                <input
+                    type="password"
+                    id="admin-pin"
+                    placeholder="Enter Password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit" id="login-button">
+                    Login
+                </button>
+
+            </form>
+
+            <button type="button" id="forgot-password-btn">
+                Forgot Password?
             </button>
-        </form>
 
-        <button type="button" id="forgot-password-btn">
-            Forgot Password?
-        </button>
+            <div id="login-message" role="status"></div>
 
-        <p id="login-message" role="status" aria-live="polite"></p>
+            <span class="login-note">
+                Authorized Super Admin Access Only
+            </span>
 
-        <small class="login-note">
-            Authorized Super Admin Access
-        </small>
-    </div>
-</div>
-
-<!-- MAIN DASHBOARD -->
-<div class="dashboard hidden" id="dashboard">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-        <div class="brand">
-            LTSU<br>
-            <small>SUPER ADMIN</small>
         </div>
 
-        <button class="nav-btn active" data-page="overview">
-            🏠 Overview
-        </button>
+    </section>
 
-        <button class="nav-btn" data-page="complaints">
-            📋 Complaints
-        </button>
 
-        <button class="nav-btn" data-page="students">
-            🎓 Students
-        </button>
+    <!-- ================= SUPER ADMIN DASHBOARD ================= -->
 
-        <button class="nav-btn" data-page="admins">
-            👨‍💼 Admins
-        </button>
+    <section id="dashboard" class="dashboard hidden">
 
-        <button class="nav-btn" data-page="activity">
-            📊 Activity
-        </button>
+        <!-- SIDEBAR -->
 
-        <button class="nav-btn" data-page="settings">
-            ⚙️ Settings
-        </button>
+        <aside class="sidebar">
 
-        <button class="logout-btn" id="logout-btn">
-            Logout
-        </button>
-
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-
-        <header class="topbar">
-            <h2 id="page-title">Overview</h2>
-            <span class="admin-label">👑 Super Admin</span>
-        </header>
-
-        <!-- OVERVIEW -->
-        <section class="page-section active" id="overview">
-
-            <div class="welcome-banner">
-                <h2>Welcome, Super Admin!</h2>
-                <p>
-                    Manage campus complaints, students,
-                    administrators and portal activities.
-                </p>
+            <div class="brand">
+                LTSUCare
             </div>
 
-            <div class="stats-container">
+            <button class="nav-btn active" data-page="overview">
+                Overview
+            </button>
 
-                <div class="stat-card">
-                    <h3>Total Complaints</h3>
-                    <p id="total-count">0</p>
+            <button class="nav-btn" data-page="complaints">
+                Complaints
+            </button>
+
+            <button class="nav-btn" data-page="students">
+                Students
+            </button>
+
+            <button class="nav-btn" data-page="admins">
+                Admin Management
+            </button>
+
+            <button class="nav-btn" data-page="activity">
+                Activity Logs
+            </button>
+
+            <button class="nav-btn" data-page="settings">
+                Settings
+            </button>
+
+            <button id="logout-btn" class="logout-btn">
+                Logout
+            </button>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+
+        <main class="main-content">
+
+            <header class="topbar">
+
+                <h2>Super Admin Dashboard</h2>
+
+                <span class="admin-label">
+                    Super Admin
+                </span>
+
+            </header>
+
+
+            <!-- OVERVIEW PAGE -->
+
+            <section id="overview" class="page-section active">
+
+                <div class="welcome-banner">
+
+                    <h2>Welcome to LTSUCare</h2>
+
+                    <p>
+                        Manage campus complaints, students and administrators
+                        from one place.
+                    </p>
+
                 </div>
 
-                <div class="stat-card">
-                    <h3>Pending Complaints</h3>
-                    <p id="pending-count">0</p>
+
+                <div class="stats-container">
+
+                    <div class="stat-card">
+                        <h3>Total Complaints</h3>
+                        <p id="total-count">0</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>Pending Complaints</h3>
+                        <p id="pending-count">0</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>Total Students</h3>
+                        <p id="student-count">0</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>Total Admins</h3>
+                        <p id="admin-count">0</p>
+                    </div>
+
                 </div>
 
-                <div class="stat-card">
-                    <h3>Total Students</h3>
-                    <p id="student-count">0</p>
+
+                <div class="content-box">
+
+                    <h3>Recent Complaints</h3>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Complaint ID</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="recent-complaints">
+
+                                <tr>
+                                    <td colspan="4">
+                                        No complaints available yet.
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
                 </div>
 
-                <div class="stat-card">
-                    <h3>Total Admins</h3>
-                    <p id="admin-count">0</p>
+            </section>
+
+
+            <!-- COMPLAINTS PAGE -->
+
+            <section id="complaints" class="page-section">
+
+                <div class="content-box">
+
+                    <h3>Complaint Management</h3>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Complaint ID</th>
+                                    <th>Category</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="complaint-list">
+
+                                <tr>
+                                    <td colspan="5">
+                                        Complaints will appear here after database integration.
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
                 </div>
 
-            </div>
+            </section>
 
-            <div class="content-box">
-                <h3>Recent Complaints</h3>
 
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Complaint ID</th>
-                                <th>Problem</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
+            <!-- STUDENTS PAGE -->
 
-                        <tbody id="recent-complaints">
-                            <tr>
-                                <td colspan="3">
-                                    No complaints available yet.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <section id="students" class="page-section">
+
+                <div class="content-box">
+
+                    <h3>Student Management</h3>
+
+                    <p>
+                        Student records will appear here after database integration.
+                    </p>
+
                 </div>
-            </div>
 
-        </section>
+            </section>
 
-        <!-- COMPLAINTS -->
-        <section class="page-section" id="complaints">
 
-            <div class="content-box">
-                <h3>All Campus Complaints</h3>
+            <!-- ADMINS PAGE -->
 
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Complaint ID</th>
-                                <th>Student</th>
-                                <th>Problem</th>
-                                <th>Location</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
+            <section id="admins" class="page-section">
 
-                        <tbody id="complaint-list">
-                            <tr>
-                                <td colspan="5">
-                                    No complaints available yet.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="content-box">
+
+                    <h3>Admin Management</h3>
+
+                    <p>
+                        Administrator records and access requests will appear here
+                        after database integration.
+                    </p>
+
                 </div>
-            </div>
 
-        </section>
+            </section>
 
-        <!-- STUDENTS -->
-        <section class="page-section" id="students">
 
-            <div class="content-box">
-                <h3>Student Management</h3>
-                <p>Student records will appear here after database integration.</p>
-            </div>
+            <!-- ACTIVITY LOGS PAGE -->
 
-        </section>
+            <section id="activity" class="page-section">
 
-        <!-- ADMINS -->
-        <section class="page-section" id="admins">
+                <div class="content-box">
 
-            <div class="content-box">
-                <h3>Admin Management</h3>
-                <p>Administrator records will appear here after database integration.</p>
-            </div>
+                    <h3>Activity Logs</h3>
 
-        </section>
+                    <p>
+                        System activity records will appear here after database integration.
+                    </p>
 
-        <!-- ACTIVITY -->
-        <section class="page-section" id="activity">
+                </div>
 
-            <div class="content-box">
-                <h3>Portal Activity</h3>
-                <p>Portal activity records will appear here after database integration.</p>
-            </div>
+            </section>
 
-        </section>
 
-        <!-- SETTINGS -->
-        <section class="page-section" id="settings">
+            <!-- SETTINGS PAGE -->
 
-            <div class="content-box">
-                <h3>Super Admin Settings</h3>
-                <p>Portal settings and management options will appear here.</p>
-            </div>
+            <section id="settings" class="page-section">
 
-        </section>
+                <div class="content-box">
 
-    </main>
-</div>
+                    <h3>Super Admin Settings</h3>
 
-<!-- FLOATING AI ASSISTANT BUTTON -->
-<button type="button" id="ai-button" title="Open AI Assistant">
-    🤖
-</button>
+                    <p>
+                        Account and portal settings will be available here.
+                    </p>
 
-<!-- AI CHAT WINDOW -->
-<div class="ai-chat-window hidden" id="ai-window">
+                </div>
 
-    <div class="ai-header">
-        <strong>🤖 LTSU AI Assistant</strong>
-        <button type="button" id="ai-close">×</button>
-    </div>
+            </section>
 
-    <div class="ai-messages" id="ai-messages">
-        <div class="bot-message">
-            Hello! Welcome to the LTSU Super Admin Portal.
-            I can guide you with complaints, students,
-            administrators and dashboard navigation.
-            How can I help you?
+        </main>
+
+    </section>
+
+
+    <!-- ================= AI ASSISTANT ================= -->
+
+    <button id="ai-button" type="button">
+        AI
+    </button>
+
+    <div id="ai-window" class="ai-chat-window hidden">
+
+        <div class="ai-header">
+
+            <strong>LTSUCare Assistant</strong>
+
+            <button id="ai-close" type="button">
+                &times;
+            </button>
+
         </div>
+
+        <div id="ai-messages" class="ai-messages">
+
+            <div class="bot-message">
+                Hello! I am your LTSUCare Super Admin Assistant.
+                How can I help you?
+            </div>
+
+        </div>
+
+        <div class="ai-input-area">
+
+            <input
+                type="text"
+                id="ai-input"
+                placeholder="Ask something..."
+            >
+
+            <button id="ai-send" type="button">
+                Send
+            </button>
+
+        </div>
+
     </div>
 
-    <div class="ai-input-area">
-        <input
-            type="text"
-            id="ai-input"
-            placeholder="Ask your question..."
-        >
 
-        <button type="button" id="ai-send">
-            Send
-        </button>
-    </div>
+    <!-- ================= JAVASCRIPT FILES ================= -->
 
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- SUPER ADMIN JAVASCRIPT -->
-<script src="super-admin.js"></script>
+    <script src="../student/supabase-config.js"></script>
+
+    <script src="super-admin.js"></script>
 
 </body>
 </html>
