@@ -5,7 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTSU Campus Support | Super Admin</title>
+
     <link rel="stylesheet" href="super-admin.css">
+
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../student/supabase-config.js"></script>
 </head>
 
 <body>
@@ -17,14 +22,32 @@
         <p>LTSU Campus Support Portal</p>
 
         <form id="login-form">
-            <input type="text" id="admin-id"
-                   placeholder="Super Admin ID" required>
+            <input
+                type="email"
+                id="admin-id"
+                placeholder="Super Admin Email"
+                autocomplete="username"
+                required
+            >
 
-            <input type="password" id="admin-pin"
-                   placeholder="Admin PIN" required>
+            <input
+                type="password"
+                id="admin-pin"
+                placeholder="Password"
+                autocomplete="current-password"
+                required
+            >
 
-            <button type="submit">Login to Dashboard</button>
+            <button type="submit" id="login-button">
+                Login to Dashboard
+            </button>
         </form>
+
+        <button type="button" id="forgot-password-btn">
+            Forgot Password?
+        </button>
+
+        <p id="login-message" role="status" aria-live="polite"></p>
 
         <small class="login-note">
             Authorized Super Admin Access
@@ -239,8 +262,11 @@
     </div>
 
     <div class="ai-input-area">
-        <input type="text" id="ai-input"
-               placeholder="Ask your question...">
+        <input
+            type="text"
+            id="ai-input"
+            placeholder="Ask your question..."
+        >
 
         <button type="button" id="ai-send">
             Send
@@ -249,7 +275,7 @@
 
 </div>
 
-<!-- JAVASCRIPT FILE -->
+<!-- SUPER ADMIN JAVASCRIPT -->
 <script src="super-admin.js"></script>
 
 </body>
