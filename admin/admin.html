@@ -39,33 +39,35 @@
             </p>
         </section>
 
+
         <!-- AUTHENTICATION SECTION -->
         <section id="admin-auth-section" class="auth-section">
 
             <div class="auth-tabs">
 
-                <button
-                    type="button"
-                    id="admin-login-tab"
-                    class="auth-tab active">
+                <button type="button"
+                        id="admin-login-tab"
+                        class="auth-tab active">
                     Admin Login
                 </button>
 
-                <button
-                    type="button"
-                    id="admin-register-tab"
-                    class="auth-tab">
+                <button type="button"
+                        id="admin-register-tab"
+                        class="auth-tab">
                     Request Admin Access
                 </button>
 
             </div>
+
 
             <!-- ADMIN LOGIN -->
             <div id="admin-login-panel" class="auth-card">
 
                 <h2>Welcome Back, Admin</h2>
 
-                <p>Login to access your administration dashboard.</p>
+                <p>
+                    Login to access your administration dashboard.
+                </p>
 
                 <form id="admin-login-form">
 
@@ -102,7 +104,8 @@
                 </form>
 
                 <p class="switch-text">
-                    Don't have an admin account?
+                    Don't have Admin Access?
+
                     <a href="#" id="open-admin-register">
                         Request Access
                     </a>
@@ -110,20 +113,19 @@
 
             </div>
 
-            <!-- ADMIN REGISTRATION REQUEST -->
+
+            <!-- ADMIN ACCESS REQUEST -->
             <div id="admin-register-panel" class="auth-card hidden">
 
                 <h2>Request Admin Access</h2>
 
                 <p>
-                    Create your account and submit your details for
-                    Super Admin approval. Admin access will remain
-                    unavailable until your request is approved.
+                    Submit your details for Super Admin approval.
+                    Your account will remain pending until approved.
                 </p>
 
                 <form id="admin-register-form">
 
-                    <!-- FULL NAME -->
                     <label for="admin-name">
                         Full Name
                     </label>
@@ -137,7 +139,7 @@
                         required
                     >
 
-                    <!-- EMAIL -->
+
                     <label for="admin-email">
                         Official Email Address
                     </label>
@@ -151,7 +153,7 @@
                         required
                     >
 
-                    <!-- MOBILE -->
+
                     <label for="admin-mobile">
                         Mobile Number
                     </label>
@@ -165,7 +167,7 @@
                         required
                     >
 
-                    <!-- DEPARTMENT -->
+
                     <label for="admin-department">
                         Department
                     </label>
@@ -187,7 +189,7 @@
                         <option value="Other">Other</option>
                     </select>
 
-                    <!-- REASON -->
+
                     <label for="admin-reason">
                         Reason for Request
                     </label>
@@ -199,6 +201,7 @@
                         required
                     ></textarea>
 
+
                     <!-- CREATE PASSWORD -->
                     <label for="admin-create-password">
                         Create Password
@@ -208,11 +211,12 @@
                         type="password"
                         id="admin-create-password"
                         name="adminPassword"
-                        placeholder="Create your password"
-                        autocomplete="new-password"
+                        placeholder="Create your password (minimum 8 characters)"
                         minlength="8"
+                        autocomplete="new-password"
                         required
                     >
+
 
                     <!-- CONFIRM PASSWORD -->
                     <label for="admin-confirm-password">
@@ -223,11 +227,43 @@
                         type="password"
                         id="admin-confirm-password"
                         name="confirmPassword"
-                        placeholder="Re-enter your password"
-                        autocomplete="new-password"
+                        placeholder="Enter your password again"
                         minlength="8"
+                        autocomplete="new-password"
                         required
                     >
+
+
+                    <!-- PASSWORD WARNING -->
+                    <div class="password-warning">
+                        <strong>Important Password Notice</strong>
+
+                        <p>
+                            Create a password that you can remember.
+                            Your password is private and will not be
+                            visible to the Super Admin.
+                        </p>
+
+                        <p>
+                            Do not share your password with anyone.
+                            If you forget it, you may need to use the
+                            password recovery facility.
+                        </p>
+                    </div>
+
+
+                    <!-- APPROVAL NOTICE -->
+                    <div class="password-warning">
+                        <strong>Admin Approval Required</strong>
+
+                        <p>
+                            Submitting this form does not give you
+                            immediate Admin Dashboard access.
+                            Your request will first be reviewed by
+                            the Super Admin.
+                        </p>
+                    </div>
+
 
                     <button type="submit" class="primary-btn">
                         Submit Access Request
@@ -235,8 +271,10 @@
 
                 </form>
 
+
                 <p class="switch-text">
-                    Already have an admin account?
+                    Already have an account?
+
                     <a href="#" id="open-admin-login">
                         Login Here
                     </a>
@@ -246,6 +284,7 @@
 
         </section>
 
+
         <!-- ADMIN DASHBOARD -->
         <section id="admin-dashboard" class="dashboard hidden">
 
@@ -253,17 +292,22 @@
 
                 <div>
                     <h2>Admin Dashboard</h2>
-                    <p>Welcome to your complaint management workspace.</p>
+
+                    <p>
+                        Welcome to your complaint management workspace.
+                    </p>
                 </div>
 
                 <button
                     type="button"
                     id="admin-logout"
-                    class="logout-btn">
+                    class="logout-btn"
+                >
                     Logout
                 </button>
 
             </div>
+
 
             <!-- DASHBOARD STATISTICS -->
             <div class="dashboard-stats">
@@ -294,48 +338,56 @@
 
             </div>
 
+
             <!-- DASHBOARD NAVIGATION -->
             <div class="dashboard-navigation">
 
                 <button
                     type="button"
                     class="nav-btn active"
-                    data-section="complaints-section">
+                    data-section="complaints-section"
+                >
                     Complaint Management
                 </button>
 
                 <button
                     type="button"
                     class="nav-btn"
-                    data-section="email-section">
+                    data-section="email-section"
+                >
                     Email Centre
                 </button>
 
                 <button
                     type="button"
                     class="nav-btn"
-                    data-section="admin-profile-section">
+                    data-section="admin-profile-section"
+                >
                     My Profile
                 </button>
 
             </div>
 
+
             <!-- COMPLAINT MANAGEMENT -->
             <section
                 id="complaints-section"
-                class="dashboard-panel">
+                class="dashboard-panel"
+            >
 
                 <div class="panel-heading">
 
                     <div>
                         <h2>Complaint Management</h2>
+
                         <p>
-                            Review and manage complaints assigned to
-                            your department.
+                            Review and manage complaints assigned
+                            to your department.
                         </p>
                     </div>
 
                 </div>
+
 
                 <!-- SEARCH AND FILTER -->
                 <div class="filter-area">
@@ -347,14 +399,18 @@
                     >
 
                     <select id="complaint-status-filter">
+
                         <option value="all">All Statuses</option>
                         <option value="Submitted">Submitted</option>
                         <option value="Under Review">Under Review</option>
                         <option value="Work in Progress">Work in Progress</option>
                         <option value="Solved">Solved</option>
+
                     </select>
 
+
                     <select id="complaint-category-filter">
+
                         <option value="all">All Categories</option>
                         <option value="Water">Water</option>
                         <option value="Cleanliness">Cleanliness</option>
@@ -370,9 +426,11 @@
                         <option value="Lab">Lab</option>
                         <option value="Parking">Parking</option>
                         <option value="Other">Other</option>
+
                     </select>
 
                 </div>
+
 
                 <!-- COMPLAINT TABLE -->
                 <div class="table-container">
@@ -391,28 +449,33 @@
                         </thead>
 
                         <tbody id="complaints-table-body">
+
                             <tr>
                                 <td colspan="6">
                                     Complaint records will appear here
                                     after database connection.
                                 </td>
                             </tr>
+
                         </tbody>
 
                     </table>
 
                 </div>
 
+
                 <!-- COMPLAINT DETAILS -->
                 <div
                     id="complaint-details"
-                    class="details-card hidden">
+                    class="details-card hidden"
+                >
 
                     <h3>Complaint Details</h3>
 
                     <div id="complaint-detail-content">
                         Select a complaint to view its details.
                     </div>
+
 
                     <form id="complaint-update-form">
 
@@ -421,11 +484,14 @@
                         </label>
 
                         <select id="update-status" required>
+
                             <option value="">Select New Status</option>
                             <option value="Under Review">Under Review</option>
                             <option value="Work in Progress">Work in Progress</option>
                             <option value="Solved">Solved</option>
+
                         </select>
+
 
                         <label for="resolution-details">
                             Resolution Details / Remarks
@@ -437,6 +503,7 @@
                             required
                         ></textarea>
 
+
                         <button type="submit" class="primary-btn">
                             Save Status Update
                         </button>
@@ -447,17 +514,20 @@
 
             </section>
 
+
             <!-- EMAIL CENTRE -->
             <section
                 id="email-section"
-                class="dashboard-panel hidden">
+                class="dashboard-panel hidden"
+            >
 
                 <h2>Email Centre</h2>
 
                 <p>
-                    Send complaint updates to students after reviewing
-                    the message.
+                    Send complaint updates to students after
+                    reviewing the message.
                 </p>
+
 
                 <form id="admin-email-form">
 
@@ -472,6 +542,7 @@
                         required
                     >
 
+
                     <label for="email-subject">
                         Email Subject
                     </label>
@@ -483,6 +554,7 @@
                         required
                     >
 
+
                     <label for="email-message">
                         Message
                     </label>
@@ -493,15 +565,18 @@
                         required
                     ></textarea>
 
+
                     <button type="submit" class="primary-btn">
                         Preview Email
                     </button>
 
                 </form>
 
+
                 <div
                     id="email-preview"
-                    class="details-card hidden">
+                    class="details-card hidden"
+                >
 
                     <h3>Email Preview</h3>
 
@@ -515,7 +590,8 @@
                     <button
                         type="button"
                         id="confirm-email-send"
-                        class="primary-btn">
+                        class="primary-btn"
+                    >
                         Confirm and Send
                     </button>
 
@@ -523,10 +599,12 @@
 
             </section>
 
+
             <!-- ADMIN PROFILE -->
             <section
                 id="admin-profile-section"
-                class="dashboard-panel hidden">
+                class="dashboard-panel hidden"
+            >
 
                 <h2>My Admin Profile</h2>
 
@@ -565,6 +643,7 @@
 
     </main>
 
+
     <!-- FOOTER -->
     <footer>
 
@@ -574,10 +653,19 @@
             All Rights Reserved.
         </p>
 
-        <p>Building a Better Campus Together.</p>
+        <p>
+            Building a Better Campus Together.
+        </p>
 
     </footer>
 
+
+    <!-- SUPABASE CONNECTION -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="../student/supabase-config.js"></script>
+
+    <!-- ADMIN JAVASCRIPT -->
     <script src="admin.js"></script>
 
 </body>
