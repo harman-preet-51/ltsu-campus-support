@@ -1,655 +1,447 @@
+document.addEventListener("DOMContentLoaded", async () => {
+  const db = window.supabaseClient;
+  const $ = id => document.getElementById(id);
 
-document.addEventListener("DOMContentLoaded", () => {
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhM-icfed2rd2xA_aFwIFTpXGQourymAtY4xPnVV5eWFpk6yc5mDYv6_Dg3pXtLG_XTw/exec";
 
-    // =====================================
-    // SUPABASE
-    // =====================================
+  let currentUser = null;
+  let currentProfile = null;
+  let adminRequests = [];
+  let complaints = [];
 
-    const db = window.supabaseClient;
+  if (!db) {
+    alert("Supabase connection missing. Check supabase-config.js");
+    return;
+  }
 
-    const $ = (id) => document.getElementById(id);
+  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#039;"
+  })[char]);
 
-    const loginPage = $("login-page");
-    const dashboard = $("dashboard");
-    const loginForm = $("login-form");
-    const loginMessage = $("login-message");
+  // SUPER ADMIN LOGIN VERIFICATION
+  async function verifySuperAdmin(user) {
+    const { data, error } = await db
+      .from("profiles")
+      .select("id,full_name,email,role,is_active")
+      .eq("id", user.id)
+      .single();
 
-    let currentUser = null;
-
-    function message(text, success = false) {
-        if (!loginMessage) return;
-        loginMessage.textContent = text;
-        loginMessage.style.color = success ? "green" : "crimson";
+    if (error || !data || data.role !== "super_admin" || data.is_active !== true) {
+      await db.auth.signOut();
+      alert("Super Admin access denied.");
+      return false;
     }
 
-    function showLogin() {
-        dashboard?.classList.add("hidden");
-        loginPage?.classList.remove("hidden");
+    currentUser = user;
+    currentProfile = data;
+
+    $("login-page")?.classList.add("hidden");
+    $("dashboard")?.classList.remove("hidden");
+
+    document.querySelectorAll(".admin-label").forEach(el => {
+      el.textContent = data.full_name || data.email;
+    });
+
+    await loadAdminRequests();
+    await loadAdminCount();
+    await loadComplaints();
+
+    return true;
+  }
+
+  // LOGIN
+  $("login-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const email = $("admin-id")?.value.trim();
+    const password = $("admin-pin")?.value;
+
+    if (!email || !password) {
+      alert("Email aur password bharo.");
+      return;
     }
 
-    function showDashboard() {
-        loginPage?.classList.add("hidden");
-        dashboard?.classList.remove("hidden");
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
     }
 
-    if (!db) {
-        showLogin();
-        message("Supabase connection nahi mili. Configuration check karein.");
+    await verifySuperAdmin(data.user);
+  });
+
+  // LOAD ADMIN REQUESTS
+  async function loadAdminRequests() {
+    const container = $("admins");
+    if (!container) return;
+
+    const { data, error } = await db
+      .from("admin_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      container.innerHTML = "<p>Admin requests load nahi hui: " +
+        escapeHTML(error.message) + "</p>";
+      return;
+    }
+
+    adminRequests = data || [];
+    renderAdminRequests();
+  }
+
+  function renderAdminRequests() {
+    const container = $("admins");
+    if (!container) return;
+
+    if (!adminRequests.length) {
+      container.innerHTML = "<h2>Admin Management</h2><p>Abhi koi admin request nahi hai.</p>";
+      return;
+    }
+
+    container.innerHTML = `
+      <h2>Admin Management</h2>
+      ${adminRequests.map(request => `
+        <div style="border:1px solid #ddd;padding:15px;margin:12px 0;border-radius:8px">
+          <h3>${escapeHTML(request.full_name)}</h3>
+          <p><b>Email:</b> ${escapeHTML(request.email)}</p>
+          <p><b>Contact:</b> ${escapeHTML(request.contact_number)}</p>
+          <p><b>Department:</b> ${escapeHTML(request.department)}</p>
+          <p><b>Reason:</b> ${escapeHTML(request.reason)}</p>
+          <p><b>Status:</b> ${escapeHTML(request.status)}</p>
+          ${request.status === "pending" ? `
+            <button type="button" data-approve="${escapeHTML(request.id)}">Approve</button>
+            <button type="button" data-reject="${escapeHTML(request.id)}">Reject</button>
+          ` : ""}
+        </div>
+      `).join("")}
+    `;
+  }
+
+  // APPROVE / REJECT REQUESTS
+  $("admins")?.addEventListener("click", async event => {
+    const approveButton = event.target.closest("[data-approve]");
+    const rejectButton = event.target.closest("[data-reject]");
+
+    if (approveButton) {
+      const request = adminRequests.find(r => r.id === approveButton.dataset.approve);
+      if (!request) return;
+
+      if (!confirm("Is Admin request ko approve karna hai?")) return;
+
+      const { error: profileError } = await db
+        .from("profiles")
+        .update({
+          role: "admin",
+          is_active: true
+        })
+        .eq("id", request.user_id);
+
+      if (profileError) {
+        alert("Profile approval error: " + profileError.message);
         return;
+      }
+
+      const { error: requestError } = await db
+        .from("admin_requests")
+        .update({
+          status: "approved",
+          reviewed_by: currentUser.id,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq("id", request.id);
+
+      if (requestError) {
+        alert("Request status update error: " + requestError.message);
+        return;
+      }
+
+      alert("Admin request approved.");
+      await loadAdminRequests();
+      await loadAdminCount();
     }
 
+    if (rejectButton) {
+      const request = adminRequests.find(r => r.id === rejectButton.dataset.reject);
+      if (!request) return;
 
-    // =====================================
-    // VERIFY SUPER ADMIN
-    // =====================================
+      if (!confirm("Is Admin request ko reject karna hai?")) return;
 
-    async function verifySuperAdmin(user) {
+      const { error } = await db
+        .from("admin_requests")
+        .update({
+          status: "rejected",
+          reviewed_by: currentUser.id,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq("id", request.id);
 
-        const { data: profile, error } = await db
-            .from("profiles")
-            .select("id, full_name, role, is_active")
-            .eq("id", user.id)
-            .maybeSingle();
+      if (error) {
+        alert("Reject error: " + error.message);
+        return;
+      }
 
-        if (error || !profile) {
-            await db.auth.signOut();
-            showLogin();
-            message("Profile error: " + (error?.message || "Profile not found"));
-            return false;
-        }
+      alert("Request rejected.");
+      await loadAdminRequests();
+    }
+  });
 
-        if (profile.role !== "super_admin" || profile.is_active !== true) {
-            await db.auth.signOut();
-            showLogin();
-            message("Access denied. Active Super Admin account required.");
-            return false;
-        }
+  // ACTIVE ADMIN COUNT
+  async function loadAdminCount() {
+    const { count, error } = await db
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "admin")
+      .eq("is_active", true);
 
-        currentUser = user;
-        showDashboard();
+    if (!error) {
+      const target = $("admin-count");
+      if (target) target.textContent = count ?? 0;
+    }
+  }
 
-        const label = document.querySelector(".admin-label");
-        if (label) {
-            label.textContent = profile.full_name || "Super Admin";
-        }
+  // LOAD COMPLAINTS FOR EMAIL CENTRE
+  async function loadComplaints() {
+    const { data, error } = await db
+      .from("complaints")
+      .select("id,complaint_id,user_id,category,title,location,description,status,notes,created_at")
+      .order("created_at", { ascending: false });
 
-        await loadAdminRequests();
-        await loadAdminCount();
-
-        return true;
+    if (error) {
+      console.error("Complaints load error:", error.message);
+      complaints = [];
+    } else {
+      complaints = data || [];
     }
 
+    renderEmailCentre();
+  }
 
-    // =====================================
-    // LOGIN
-    // =====================================
+  // CREATE EMAIL CENTRE
+  function createEmailCentre() {
+    let section = $("super-admin-email-section");
 
-    loginForm?.addEventListener("submit", async (event) => {
+    if (!section) {
+      section = document.createElement("section");
+      section.id = "super-admin-email-section";
+      section.className = "page-section hidden";
+      section.innerHTML = `
+        <h2>Student Complaint Email Centre</h2>
+        <p>Select complaints. Each student will receive an individual email.</p>
 
-        event.preventDefault();
+        <label for="sa-mail-status">Filter by status</label>
+        <select id="sa-mail-status">
+          <option value="">All statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
 
-        const email = $("admin-id").value.trim();
-        const password = $("admin-pin").value;
+        <p id="sa-mail-complaints"></p>
 
-        const button = loginForm.querySelector('button[type="submit"]');
+        <label for="sa-mail-subject">Email subject</label>
+        <input id="sa-mail-subject"
+          value="Update on your LTSUCare complaint">
 
-        if (button) {
-            button.disabled = true;
-            button.textContent = "Please wait...";
-        }
+        <label for="sa-mail-remarks">Remarks for selected students</label>
+        <textarea id="sa-mail-remarks" rows="4"
+          placeholder="Write resolution details or update"></textarea>
 
-        try {
+        <button type="button" id="sa-mail-send">
+          Send Email to Selected Students
+        </button>
 
-            const { data, error } = await db.auth.signInWithPassword({
-                email,
-                password
-            });
+        <p id="sa-mail-result"></p>
+      `;
 
-            if (error) {
-                message("Login failed: " + error.message);
-                return;
-            }
+      $("dashboard")?.appendChild(section);
+    }
 
-            await verifySuperAdmin(data.user);
+    // Add navigation button if not already present
+    if (!document.querySelector('[data-page="super-admin-email-section"]')) {
+      const nav = document.querySelector(".dashboard-navigation") ||
+                  document.querySelector(".sidebar") ||
+                  $("dashboard");
 
-        } catch (error) {
-            message("Login error: " + error.message);
-        } finally {
-            if (button) {
-                button.disabled = false;
-                button.textContent = "Login";
-            }
-        }
+      if (nav) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "nav-btn";
+        button.dataset.page = "super-admin-email-section";
+        button.textContent = "Student Emails";
+        nav.appendChild(button);
+      }
+    }
+
+    $("sa-mail-status")?.addEventListener("change", renderEmailCentre);
+    $("sa-mail-send")?.addEventListener("click", sendSelectedEmails);
+  }
+
+  function renderEmailCentre() {
+    createEmailCentre();
+
+    const list = $("sa-mail-complaints");
+    if (!list) return;
+
+    const status = $("sa-mail-status")?.value || "";
+    const filtered = complaints.filter(c => !status || c.status === status);
+
+    if (!filtered.length) {
+      list.innerHTML = "<p>No complaints found.</p>";
+      return;
+    }
+
+    list.innerHTML = filtered.map(c => `
+      <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
+        <input type="checkbox" class="sa-mail-check"
+          value="${escapeHTML(c.complaint_id)}">
+        ${escapeHTML(c.complaint_id)} —
+        ${escapeHTML(c.title || c.category || "Complaint")}
+        (${escapeHTML(c.status)})
+      </label>
+    `).join("");
+  }
+
+  // SEND INDIVIDUAL EMAILS
+  async function sendSelectedEmails() {
+    const selected = [
+      ...document.querySelectorAll(".sa-mail-check:checked")
+    ].map(input => input.value);
+
+    if (!selected.length) {
+      alert("Kam se kam ek complaint select karo.");
+      return;
+    }
+
+    const { data } = await db.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      alert("Login session expired. Dobara login karo.");
+      return;
+    }
+
+    const remarksText = $("sa-mail-remarks")?.value.trim() || "";
+    const remarks = {};
+
+    selected.forEach(id => {
+      remarks[id] = remarksText;
     });
 
+    const button = $("sa-mail-send");
+    button.disabled = true;
+    button.textContent = "Sending...";
 
-    // =====================================
-    // ADMIN MANAGEMENT UI
-    // =====================================
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          type: "resolution_email",
+          accessToken,
+          complaintIds: selected,
+          remarks,
+          subject: $("sa-mail-subject")?.value.trim()
+        })
+      });
 
-    function createAdminManagementUI() {
+      const result = await response.json();
 
-        const section = $("admins");
-        if (!section) return null;
+      if (!result.success) {
+        throw new Error(result.message || "Email sending failed");
+      }
 
-        let box = section.querySelector(".content-box");
+      $("sa-mail-result").textContent =
+        "Email request accepted. Selected complaints: " + selected.length;
 
-        if (!box) {
-            box = document.createElement("div");
-            box.className = "content-box";
-            section.appendChild(box);
-        }
-
-        box.innerHTML = `
-            <h3>Admin Management</h3>
-
-            <div style="margin:15px 0;">
-                <button id="refresh-admin-requests"
-                    type="button"
-                    style="padding:10px 18px;cursor:pointer;">
-                    Refresh Requests
-                </button>
-            </div>
-
-            <h3>Pending Admin Requests</h3>
-
-            <div id="pending-admin-requests"
-                style="overflow-x:auto;">
-                Loading requests...
-            </div>
-
-            <br>
-
-            <h3>All Admin Requests</h3>
-
-            <div id="all-admin-requests"
-                style="overflow-x:auto;">
-                Loading requests...
-            </div>
-
-            <p id="admin-request-message"
-                style="margin-top:15px;"></p>
-        `;
-
-        $("refresh-admin-requests")?.addEventListener(
-            "click",
-            loadAdminRequests
-        );
-
-        return box;
+    } catch (error) {
+      $("sa-mail-result").textContent = "Error: " + error.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Send Email to Selected Students";
     }
+  }
 
+  // NAVIGATION
+  document.addEventListener("click", event => {
+    const button = event.target.closest(".nav-btn");
+    if (!button) return;
 
-    // =====================================
-    // SAFE TABLE CREATION
-    // =====================================
+    const targetId = button.dataset.page || button.dataset.section;
+    if (!targetId) return;
 
-    function makeTable(requests, showActions) {
-
-        const table = document.createElement("table");
-        table.style.width = "100%";
-        table.style.borderCollapse = "collapse";
-
-        const headings = [
-            "Name",
-            "Email",
-            "Mobile",
-            "Department",
-            "Reason",
-            "Date",
-            "Status"
-        ];
-
-        if (showActions) headings.push("Action");
-
-        const thead = document.createElement("thead");
-        const headerRow = document.createElement("tr");
-
-        headings.forEach((heading) => {
-            const th = document.createElement("th");
-            th.textContent = heading;
-            th.style.padding = "10px";
-            th.style.borderBottom = "1px solid #ddd";
-            headerRow.appendChild(th);
-        });
-
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-
-        const tbody = document.createElement("tbody");
-
-        requests.forEach((request) => {
-
-            const tr = document.createElement("tr");
-
-            const values = [
-                request.full_name,
-                request.email,
-                request.contact_number,
-                request.department,
-                request.reason,
-                request.created_at
-                    ? new Date(request.created_at).toLocaleString()
-                    : "-",
-                request.status
-            ];
-
-            values.forEach((value) => {
-                const td = document.createElement("td");
-                td.textContent = value || "-";
-                td.style.padding = "10px";
-                td.style.borderBottom = "1px solid #ddd";
-                tr.appendChild(td);
-            });
-
-            if (showActions) {
-
-                const actionCell = document.createElement("td");
-                actionCell.style.padding = "10px";
-
-                const approveButton = document.createElement("button");
-                approveButton.textContent = "Approve";
-                approveButton.style.margin = "4px";
-                approveButton.style.padding = "7px 12px";
-                approveButton.style.cursor = "pointer";
-
-                approveButton.addEventListener("click", () => {
-                    approveRequest(request, approveButton);
-                });
-
-                const rejectButton = document.createElement("button");
-                rejectButton.textContent = "Reject";
-                rejectButton.style.margin = "4px";
-                rejectButton.style.padding = "7px 12px";
-                rejectButton.style.cursor = "pointer";
-
-                rejectButton.addEventListener("click", () => {
-                    rejectRequest(request, rejectButton);
-                });
-
-                actionCell.append(approveButton, rejectButton);
-                tr.appendChild(actionCell);
-            }
-
-            tbody.appendChild(tr);
-        });
-
-        if (requests.length === 0) {
-            const tr = document.createElement("tr");
-            const td = document.createElement("td");
-            td.colSpan = headings.length;
-            td.textContent = "No requests found.";
-            td.style.padding = "12px";
-            tr.appendChild(td);
-            tbody.appendChild(tr);
-        }
-
-        table.appendChild(tbody);
-        return table;
-    }
-
-
-    // =====================================
-    // LOAD ADMIN REQUESTS
-    // =====================================
-
-    async function loadAdminRequests() {
-
-        createAdminManagementUI();
-
-        const pendingBox = $("pending-admin-requests");
-        const allBox = $("all-admin-requests");
-        const statusMessage = $("admin-request-message");
-
-        if (!pendingBox || !allBox) return;
-
-        pendingBox.textContent = "Loading...";
-        allBox.textContent = "Loading...";
-
-        const { data, error } = await db
-            .from("admin_requests")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-        if (error) {
-
-            pendingBox.textContent =
-                "Could not load requests: " + error.message;
-
-            allBox.textContent =
-                "Database permission or connection error.";
-
-            if (statusMessage) {
-                statusMessage.textContent = error.message;
-                statusMessage.style.color = "crimson";
-            }
-
-            return;
-        }
-
-        const requests = data || [];
-
-        const pending = requests.filter(
-            (request) => request.status === "pending"
-        );
-
-        pendingBox.innerHTML = "";
-        allBox.innerHTML = "";
-
-        pendingBox.appendChild(makeTable(pending, true));
-        allBox.appendChild(makeTable(requests, false));
-
-        if (statusMessage) {
-            statusMessage.textContent =
-                "Total requests: " + requests.length +
-                " | Pending: " + pending.length;
-
-            statusMessage.style.color = "green";
-        }
-    }
-
-
-    // =====================================
-    // APPROVE REQUEST
-    // =====================================
-
-    async function approveRequest(request, button) {
-
-        if (!currentUser) {
-            alert("Please login again.");
-            return;
-        }
-
-        const confirmed = confirm(
-            "Approve admin request for " +
-            request.full_name + "?"
-        );
-
-        if (!confirmed) return;
-
-        button.disabled = true;
-        button.textContent = "Approving...";
-
-        try {
-
-            // First activate the user's admin profile
-            const { data: profileData, error: profileError } = await db
-                .from("profiles")
-                .update({
-                    role: "admin",
-                    is_active: true
-                })
-                .eq("id", request.user_id)
-                .select("id");
-
-            if (profileError) {
-                throw new Error(
-                    "Profile update failed: " + profileError.message
-                );
-            }
-
-            if (!profileData || profileData.length === 0) {
-                throw new Error(
-                    "Profile was not updated. Check profiles UPDATE policy."
-                );
-            }
-
-            // Then mark the request approved
-            const { error: requestError } = await db
-                .from("admin_requests")
-                .update({
-                    status: "approved",
-                    reviewed_by: currentUser.id,
-                    reviewed_at: new Date().toISOString()
-                })
-                .eq("id", request.id);
-
-            if (requestError) {
-                throw new Error(
-                    "Profile activated, but request status update failed: " +
-                    requestError.message
-                );
-            }
-
-            alert("Admin request approved successfully!");
-
-            await loadAdminRequests();
-            await loadAdminCount();
-
-        } catch (error) {
-
-            alert("Approval error: " + error.message);
-
-            button.disabled = false;
-            button.textContent = "Approve";
-        }
-    }
-
-
-    // =====================================
-    // REJECT REQUEST
-    // =====================================
-
-    async function rejectRequest(request, button) {
-
-        if (!currentUser) {
-            alert("Please login again.");
-            return;
-        }
-
-        const confirmed = confirm(
-            "Reject admin request for " +
-            request.full_name + "?"
-        );
-
-        if (!confirmed) return;
-
-        button.disabled = true;
-        button.textContent = "Rejecting...";
-
-        const { error } = await db
-            .from("admin_requests")
-            .update({
-                status: "rejected",
-                reviewed_by: currentUser.id,
-                reviewed_at: new Date().toISOString()
-            })
-            .eq("id", request.id);
-
-        if (error) {
-
-            alert("Rejection error: " + error.message);
-
-            button.disabled = false;
-            button.textContent = "Reject";
-            return;
-        }
-
-        alert("Request rejected successfully!");
-
-        await loadAdminRequests();
-    }
-
-
-    // =====================================
-    // ADMIN COUNT
-    // =====================================
-
-    async function loadAdminCount() {
-
-        const countElement = $("admin-count");
-        if (!countElement) return;
-
-        const { count, error } = await db
-            .from("profiles")
-            .select("*", { count: "exact", head: true })
-            .eq("role", "admin")
-            .eq("is_active", true);
-
-        if (!error) {
-            countElement.textContent = count ?? 0;
-        }
-    }
-
-
-    // =====================================
-    // SIDEBAR NAVIGATION
-    // =====================================
-
-    document.querySelectorAll(".nav-btn").forEach((button) => {
-
-        button.addEventListener("click", () => {
-
-            document.querySelectorAll(".nav-btn").forEach((item) => {
-                item.classList.remove("active");
-            });
-
-            document.querySelectorAll(".page-section").forEach((section) => {
-                section.classList.remove("active");
-            });
-
-            button.classList.add("active");
-
-            const selectedPage = $(button.dataset.page);
-
-            selectedPage?.classList.add("active");
-
-            if (button.dataset.page === "admins" && currentUser) {
-                loadAdminRequests();
-            }
-        });
+    document.querySelectorAll(".page-section").forEach(section => {
+      section.classList.add("hidden");
     });
 
+    $(targetId)?.classList.remove("hidden");
+  });
 
-    // =====================================
-    // LOGOUT
-    // =====================================
+  // LOGOUT
+  $("logout-btn")?.addEventListener("click", async () => {
+    await db.auth.signOut();
+    window.location.reload();
+  });
 
-    $("logout-btn")?.addEventListener("click", async () => {
+  // FORGOT PASSWORD
+  $("forgot-password-btn")?.addEventListener("click", () => {
+    window.location.href = "/ltsu-campus-support/super-admin/reset-password.html";
+  });
 
-        const { error } = await db.auth.signOut();
+  // BASIC AI HELPER
+  $("ai-button")?.addEventListener("click", () => {
+    $("ai-window")?.classList.remove("hidden");
+  });
 
-        if (error) {
-            alert("Logout error: " + error.message);
-            return;
-        }
+  $("ai-close")?.addEventListener("click", () => {
+    $("ai-window")?.classList.add("hidden");
+  });
 
-        currentUser = null;
-        loginForm?.reset();
-        showLogin();
-        message("Successfully logged out.", true);
-    });
+  function sendAIMessage() {
+    const input = $("ai-input");
+    const messages = $("ai-messages");
+    if (!input || !messages || !input.value.trim()) return;
 
+    const question = input.value.trim();
+    const lower = question.toLowerCase();
 
-    // =====================================
-    // FORGOT PASSWORD
-    // =====================================
+    let answer = "Please check the Admin Management and Complaints sections.";
 
-    $("forgot-password-btn")?.addEventListener("click", async () => {
-
-        const email = $("admin-id").value.trim();
-
-        if (!email) {
-            message("Pehle email address enter karein.");
-            return;
-        }
-
-        const { error } = await db.auth.resetPasswordForEmail(email, {
-            redirectTo:
-                "https://harman-preet-51.github.io/ltsu-campus-support/super-admin/reset-password.html"
-        });
-
-        if (error) {
-            message(error.message);
-        } else {
-            message("Password reset email sent.", true);
-        }
-    });
-
-
-    // =====================================
-    // AI ASSISTANT
-    // =====================================
-
-    const aiButton = $("ai-button");
-    const aiWindow = $("ai-window");
-
-    aiButton?.addEventListener("click", () => {
-        aiWindow?.classList.toggle("hidden");
-    });
-
-    $("ai-close")?.addEventListener("click", () => {
-        aiWindow?.classList.add("hidden");
-    });
-
-    function sendAIMessage() {
-
-        const input = $("ai-input");
-        const messages = $("ai-messages");
-
-        if (!input || !messages) return;
-
-        const question = input.value.trim();
-        if (!question) return;
-
-        const userMessage = document.createElement("div");
-        userMessage.className = "bot-message";
-        userMessage.textContent = question;
-        messages.appendChild(userMessage);
-
-        const reply = document.createElement("div");
-        reply.className = "bot-message";
-
-        const q = question.toLowerCase();
-
-        if (q.includes("admin")) {
-            reply.textContent =
-                "Admin Management section mein admin requests approve ya reject karein.";
-        } else if (q.includes("complaint")) {
-            reply.textContent =
-                "Complaints section mein submitted complaints dekhein.";
-        } else if (q.includes("student")) {
-            reply.textContent =
-                "Students section mein student records dekhein.";
-        } else {
-            reply.textContent =
-                "Main LTSUCare Super Admin Assistant hoon.";
-        }
-
-        messages.appendChild(reply);
-        input.value = "";
-        messages.scrollTop = messages.scrollHeight;
+    if (lower.includes("request")) {
+      answer = "Admin Management section mein pending requests check karein.";
+    } else if (lower.includes("approve")) {
+      answer = "Admin Management mein request ke saamne Approve button dabayein.";
+    } else if (lower.includes("complaint")) {
+      answer = "Student complaint emails ke liye Student Emails section kholein.";
+    } else if (lower.includes("email")) {
+      answer = "Student Emails section mein complaints select karke email bhejein.";
     }
 
-    $("ai-send")?.addEventListener("click", sendAIMessage);
+    messages.innerHTML += `
+      <p><b>You:</b> ${escapeHTML(question)}</p>
+      <p><b>Assistant:</b> ${escapeHTML(answer)}</p>
+    `;
 
-    $("ai-input")?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") sendAIMessage();
-    });
+    input.value = "";
+  }
 
+  $("ai-send")?.addEventListener("click", sendAIMessage);
 
-    // =====================================
-    // RESTORE SESSION
-    // =====================================
+  $("ai-input")?.addEventListener("keydown", event => {
+    if (event.key === "Enter") sendAIMessage();
+  });
 
-    async function checkSession() {
+  // RESTORE EXISTING SESSION
+  const { data } = await db.auth.getSession();
 
-        const { data, error } = await db.auth.getSession();
-
-        if (error) {
-            showLogin();
-            message(error.message);
-            return;
-        }
-
-        if (data.session?.user) {
-            await verifySuperAdmin(data.session.user);
-        } else {
-            showLogin();
-        }
-    }
-
-    showLogin();
-    checkSession();
-
+  if (data.session?.user) {
+    await verifySuperAdmin(data.session.user);
+  }
 });
