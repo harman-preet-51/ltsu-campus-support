@@ -1,676 +1,980 @@
 
-/* =================================================
-   LTSU CAMPUS SUPPORT
-   ADMIN PORTAL JAVASCRIPT + AI FLOATING CHATBOT
-================================================= */
+document.addEventListener("DOMContentLoaded", () => {
 
-document.addEventListener("DOMContentLoaded", function () {
+    // ==========================================
+    // 1. SUPABASE CONNECTION
+    // ==========================================
 
-    const get = (id) => document.getElementById(id);
+    const supabase = window.supabaseClient;
 
-    // ==============================================
-    // 1. COMMON MESSAGE FUNCTION
-    // ==============================================
+    if (!supabase) {
+        alert(
+            "Supabase connection not found. Please check the Supabase scripts in admin.html."
+        );
+        return;
+    }
+
+
+    // ==========================================
+    // 2. HTML ELEMENTS
+    // ==========================================
+
+    const authSection = document.getElementById("admin-auth-section");
+    const dashboard = document.getElementById("admin-dashboard");
+
+    const loginTab = document.getElementById("admin-login-tab");
+    const registerTab = document.getElementById("admin-register-tab");
+
+    const loginPanel = document.getElementById("admin-login-panel");
+    const registerPanel = document.getElementById("admin-register-panel");
+
+    const loginForm = document.getElementById("admin-login-form");
+    const registerForm = document.getElementById("admin-register-form");
+
+    const logoutButton = document.getElementById("admin-logout");
+
+    let currentAdmin = null;
+    let selectedComplaintId = null;
+    let allComplaints = [];
+
+
+    // ==========================================
+    // 3. COMMON FUNCTIONS
+    // ==========================================
 
     function showMessage(message) {
-        let box = get("admin-js-message");
-
-        if (!box) {
-            box = document.createElement("div");
-            box.id = "admin-js-message";
-
-            box.style.cssText = `
-                position:fixed;
-                top:20px;
-                right:20px;
-                z-index:99999;
-                max-width:320px;
-                padding:14px 18px;
-                background:#102b3d;
-                color:white;
-                border:1px solid #20c997;
-                border-radius:12px;
-                font-size:14px;
-                box-shadow:0 8px 25px #0004;
-            `;
-
-            document.body.appendChild(box);
-        }
-
-        box.textContent = message;
-        box.style.display = "block";
-
-        clearTimeout(box.hideTimer);
-
-        box.hideTimer = setTimeout(function () {
-            box.style.display = "none";
-        }, 4500);
+        alert(message);
     }
 
-    // ==============================================
-    // 2. LOGIN AND REGISTRATION TABS
-    // ==============================================
+    function showLoginPanel() {
+        loginPanel.classList.remove("hidden");
+        registerPanel.classList.add("hidden");
 
-    const loginTab = get("admin-login-tab");
-    const registerTab = get("admin-register-tab");
-
-    const loginPanel = get("admin-login-panel");
-    const registerPanel = get("admin-register-panel");
-
-    function showLogin() {
-        if (loginPanel) loginPanel.classList.remove("hidden");
-        if (registerPanel) registerPanel.classList.add("hidden");
-
-        if (loginTab) loginTab.classList.add("active");
-        if (registerTab) registerTab.classList.remove("active");
+        loginTab.classList.add("active");
+        registerTab.classList.remove("active");
     }
 
-    function showRegister() {
-        if (registerPanel) registerPanel.classList.remove("hidden");
-        if (loginPanel) loginPanel.classList.add("hidden");
+    function showRegisterPanel() {
+        registerPanel.classList.remove("hidden");
+        loginPanel.classList.add("hidden");
 
-        if (registerTab) registerTab.classList.add("active");
-        if (loginTab) loginTab.classList.remove("active");
+        registerTab.classList.add("active");
+        loginTab.classList.remove("active");
     }
 
-    if (loginTab) {
-        loginTab.addEventListener("click", showLogin);
+    function showDashboard() {
+        authSection.classList.add("hidden");
+        dashboard.classList.remove("hidden");
     }
 
-    if (registerTab) {
-        registerTab.addEventListener("click", showRegister);
+    function showAuthentication() {
+        dashboard.classList.add("hidden");
+        authSection.classList.remove("hidden");
+        showLoginPanel();
     }
 
-    const openRegister = get("open-admin-register");
-    const openLogin = get("open-admin-login");
+    function cleanText(value) {
+        return String(value ?? "");
+    }
 
-    if (openRegister) {
-        openRegister.addEventListener("click", function (event) {
+
+    // ==========================================
+    // 4. AUTHENTICATION TABS
+    // ==========================================
+
+    loginTab.addEventListener("click", showLoginPanel);
+
+    registerTab.addEventListener("click", showRegisterPanel);
+
+    document.getElementById("open-admin-register")
+        .addEventListener("click", (event) => {
             event.preventDefault();
-            showRegister();
+            showRegisterPanel();
         });
-    }
 
-    if (openLogin) {
-        openLogin.addEventListener("click", function (event) {
+    document.getElementById("open-admin-login")
+        .addEventListener("click", (event) => {
             event.preventDefault();
-            showLogin();
-        });
-    }
-
-    // ==============================================
-    // 3. ADMIN LOGIN
-    // ==============================================
-
-    const loginForm = get("admin-login-form");
-
-    if (loginForm) {
-        loginForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            showMessage(
-                "Admin login is not connected yet. Secure backend authentication is pending."
-            );
-        });
-    }
-
-    // ==============================================
-    // 4. ADMIN REGISTRATION
-    // ==============================================
-
-    const registerForm = get("admin-register-form");
-
-    if (registerForm) {
-        registerForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            showMessage(
-                "Registration is not connected yet. Admin accounts will require Super Admin approval."
-            );
-        });
-    }
-
-    // ==============================================
-    // 5. DASHBOARD NAVIGATION
-    // ==============================================
-
-    const navigationButtons = document.querySelectorAll(".nav-btn");
-
-    const dashboardPanels = [
-        get("complaints-section"),
-        get("email-section"),
-        get("admin-profile-section")
-    ].filter(Boolean);
-
-    navigationButtons.forEach(function (button) {
-
-        button.addEventListener("click", function () {
-
-            const targetId = button.dataset.section;
-            const targetPanel = get(targetId);
-
-            if (!targetPanel) return;
-
-            dashboardPanels.forEach(function (panel) {
-                panel.classList.add("hidden");
-            });
-
-            targetPanel.classList.remove("hidden");
-
-            navigationButtons.forEach(function (nav) {
-                nav.classList.remove("active");
-            });
-
-            button.classList.add("active");
+            showLoginPanel();
         });
 
-    });
 
-    // ==============================================
-    // 6. ADMIN LOGOUT
-    // ==============================================
+    // ==========================================
+    // 5. ADMIN REGISTRATION
+    // ==========================================
 
-    const logoutButton = get("admin-logout");
-    const authSection = get("admin-auth-section");
-    const dashboard = get("admin-dashboard");
-
-    if (logoutButton) {
-        logoutButton.addEventListener("click", function () {
-
-            if (dashboard) dashboard.classList.add("hidden");
-            if (authSection) authSection.classList.remove("hidden");
-
-            showLogin();
-
-            showMessage("You have returned to the Admin login page.");
-        });
-    }
-
-    // ==============================================
-    // 7. COMPLAINT SEARCH AND FILTERS
-    // ==============================================
-
-    const searchInput = get("complaint-search");
-    const statusFilter = get("complaint-status-filter");
-    const categoryFilter = get("complaint-category-filter");
-    const complaintTable = get("complaints-table-body");
-
-    function filterComplaints() {
-
-        if (!complaintTable) return;
-
-        const searchText = searchInput
-            ? searchInput.value.toLowerCase().trim()
-            : "";
-
-        const selectedStatus = statusFilter
-            ? statusFilter.value.toLowerCase()
-            : "";
-
-        const selectedCategory = categoryFilter
-            ? categoryFilter.value.toLowerCase()
-            : "";
-
-        const rows = complaintTable.querySelectorAll("tr");
-
-        rows.forEach(function (row) {
-
-            const rowText = row.textContent.toLowerCase();
-
-            const matchesSearch = rowText.includes(searchText);
-
-            const matchesStatus =
-                !selectedStatus || rowText.includes(selectedStatus);
-
-            const matchesCategory =
-                !selectedCategory || rowText.includes(selectedCategory);
-
-            row.style.display =
-                matchesSearch && matchesStatus && matchesCategory
-                    ? ""
-                    : "none";
-
-        });
-    }
-
-    if (searchInput) {
-        searchInput.addEventListener("input", filterComplaints);
-    }
-
-    if (statusFilter) {
-        statusFilter.addEventListener("change", filterComplaints);
-    }
-
-    if (categoryFilter) {
-        categoryFilter.addEventListener("change", filterComplaints);
-    }
-
-    // ==============================================
-    // 8. COMPLAINT STATUS UPDATE
-    // ==============================================
-
-    const updateForm = get("complaint-update-form");
-
-    if (updateForm) {
-        updateForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            showMessage(
-                "Complaint updates cannot be saved yet. Database connection is pending."
-            );
-        });
-    }
-
-    // ==============================================
-    // 9. EMAIL PREVIEW
-    // ==============================================
-
-    const emailForm = get("admin-email-form");
-    const previewBox = get("email-preview");
-    const previewContent = get("email-preview-content");
-    const confirmSend = get("confirm-email-send");
-
-    if (emailForm) {
-
-        emailForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            const subject = get("email-subject");
-            const message = get("email-message");
-
-            if (!subject || !message || !previewContent || !previewBox) {
-                showMessage("Email preview elements are not available.");
-                return;
-            }
-
-            previewContent.textContent =
-                "Subject: " + subject.value +
-                "\n\nMessage: " + message.value;
-
-            previewBox.classList.remove("hidden");
-        });
-
-    }
-
-    if (confirmSend) {
-        confirmSend.addEventListener("click", function () {
-            showMessage(
-                "Email sending is not connected yet. No email has been sent."
-            );
-        });
-    }
-
-    // ==============================================
-    // 10. CURRENT YEAR
-    // ==============================================
-
-    const yearElement = get("current-year");
-
-    if (yearElement) {
-        yearElement.textContent = new Date().getFullYear();
-    }
-
-    // ==============================================
-    // 11. AI CHATBOT CSS
-    // Created dynamically using JavaScript
-    // ==============================================
-
-    const chatStyle = document.createElement("style");
-
-    chatStyle.textContent = `
-
-        #ltsu-chat-button {
-            position:fixed;
-            right:22px;
-            bottom:22px;
-            z-index:99990;
-            border:none;
-            border-radius:50px;
-            padding:15px 21px;
-            background:linear-gradient(135deg,#10b981,#087f68);
-            color:white;
-            font-size:15px;
-            font-weight:bold;
-            cursor:pointer;
-            box-shadow:0 8px 25px #0005;
-            transition:transform 0.2s ease;
-        }
-
-        #ltsu-chat-button:hover {
-            transform:translateY(-3px);
-        }
-
-        #ltsu-chat-window {
-            position:fixed;
-            right:20px;
-            bottom:85px;
-            width:min(360px,calc(100vw - 30px));
-            height:450px;
-            max-height:70vh;
-            z-index:99991;
-            background:#102b3d;
-            color:white;
-            border:1px solid #20c997;
-            border-radius:18px;
-            overflow:hidden;
-            display:none;
-            flex-direction:column;
-            box-shadow:0 12px 35px #0005;
-            font-family:Arial,sans-serif;
-        }
-
-        #ltsu-chat-header {
-            background:#087f68;
-            padding:15px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            font-weight:bold;
-        }
-
-        #ltsu-chat-close {
-            background:transparent;
-            border:none;
-            color:white;
-            font-size:24px;
-            cursor:pointer;
-        }
-
-        #ltsu-chat-notice {
-            padding:9px 12px;
-            background:#183c4e;
-            color:#c8e7df;
-            font-size:11px;
-            line-height:1.5;
-        }
-
-        #ltsu-chat-messages {
-            flex:1;
-            overflow-y:auto;
-            padding:13px;
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-        }
-
-        .ltsu-chat-message {
-            max-width:88%;
-            padding:10px 12px;
-            border-radius:13px;
-            font-size:13px;
-            line-height:1.5;
-            white-space:pre-wrap;
-            overflow-wrap:anywhere;
-        }
-
-        .ltsu-chat-bot {
-            align-self:flex-start;
-            background:#234457;
-        }
-
-        .ltsu-chat-user {
-            align-self:flex-end;
-            background:#087f68;
-        }
-
-        #ltsu-chat-input-area {
-            display:flex;
-            gap:7px;
-            padding:10px;
-            border-top:1px solid #315064;
-        }
-
-        #ltsu-chat-input {
-            min-width:0;
-            flex:1;
-            padding:11px;
-            border:1px solid #547080;
-            border-radius:10px;
-            outline:none;
-            background:#18394b;
-            color:white;
-        }
-
-        #ltsu-chat-input:focus {
-            border-color:#20c997;
-        }
-
-        #ltsu-chat-send {
-            border:0;
-            border-radius:10px;
-            padding:0 15px;
-            background:#10b981;
-            color:#062c27;
-            font-weight:bold;
-            cursor:pointer;
-        }
-
-        @media(max-width:480px) {
-            #ltsu-chat-window {
-                right:10px;
-                bottom:80px;
-                width:calc(100vw - 20px);
-            }
-
-            #ltsu-chat-button {
-                right:14px;
-                bottom:14px;
-            }
-        }
-    `;
-
-    document.head.appendChild(chatStyle);
-
-    // ==============================================
-    // 12. CREATE FLOATING AI CHATBOT
-    // ==============================================
-
-    const chatButton = document.createElement("button");
-
-    chatButton.id = "ltsu-chat-button";
-    chatButton.type = "button";
-    chatButton.textContent = "✦ AI Assistant";
-
-    const chatWindow = document.createElement("div");
-    chatWindow.id = "ltsu-chat-window";
-
-    const chatHeader = document.createElement("div");
-    chatHeader.id = "ltsu-chat-header";
-
-    const chatTitle = document.createElement("span");
-    chatTitle.textContent = "LTSU AI Assistant";
-
-    const closeButton = document.createElement("button");
-    closeButton.id = "ltsu-chat-close";
-    closeButton.type = "button";
-    closeButton.textContent = "×";
-    closeButton.setAttribute("aria-label", "Close chatbot");
-
-    chatHeader.append(chatTitle, closeButton);
-
-    const notice = document.createElement("div");
-    notice.id = "ltsu-chat-notice";
-
-    notice.textContent =
-        "Demo assistant: basic guidance only. Secure AI connection is coming later.";
-
-    const chatMessages = document.createElement("div");
-    chatMessages.id = "ltsu-chat-messages";
-
-    const inputArea = document.createElement("form");
-    inputArea.id = "ltsu-chat-input-area";
-
-    const chatInput = document.createElement("input");
-
-    chatInput.id = "ltsu-chat-input";
-    chatInput.type = "text";
-    chatInput.placeholder = "Ask about campus complaints...";
-    chatInput.autocomplete = "off";
-    chatInput.setAttribute("aria-label", "Type your message");
-
-    const sendButton = document.createElement("button");
-
-    sendButton.id = "ltsu-chat-send";
-    sendButton.type = "submit";
-    sendButton.textContent = "Send";
-
-    inputArea.append(chatInput, sendButton);
-
-    chatWindow.append(
-        chatHeader,
-        notice,
-        chatMessages,
-        inputArea
-    );
-
-    document.body.append(chatButton, chatWindow);
-
-    // ==============================================
-    // 13. CHATBOT MESSAGE DISPLAY
-    // ==============================================
-
-    function addChatMessage(message, sender) {
-
-        const bubble = document.createElement("div");
-
-        bubble.className =
-            "ltsu-chat-message " +
-            (sender === "user"
-                ? "ltsu-chat-user"
-                : "ltsu-chat-bot");
-
-        bubble.textContent = message;
-
-        chatMessages.appendChild(bubble);
-
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    // ==============================================
-    // 14. DEMO CHATBOT REPLIES
-    // ==============================================
-
-    function getBotReply(message) {
-
-        const text = message.toLowerCase();
-
-        if (
-            text.includes("complaint") ||
-            text.includes("report") ||
-            text.includes("problem")
-        ) {
-            return "To report a campus problem, use the Student Portal. Select the correct category, enter the campus location and describe the issue clearly. Actual complaint submission will work after the database is connected.";
-        }
-
-        if (
-            text.includes("water") ||
-            text.includes("electricity") ||
-            text.includes("wifi") ||
-            text.includes("clean")
-        ) {
-            return "You can report water, electricity, Wi-Fi and cleanliness issues through the Student Portal. Mention the exact campus location to help the responsible team understand the issue.";
-        }
-
-        if (
-            text.includes("status") ||
-            text.includes("pending") ||
-            text.includes("solved")
-        ) {
-            return "The planned complaint statuses are Posted, Reviewed, Work in Progress and Solved. Live status tracking will become available after the database connection.";
-        }
-
-        if (
-            text.includes("admin") ||
-            text.includes("register") ||
-            text.includes("approval")
-        ) {
-            return "Admin registration requests will require Super Admin approval. This chatbot cannot approve accounts or change admin permissions.";
-        }
-
-        if (
-            text.includes("email") ||
-            text.includes("send")
-        ) {
-            return "The Admin Portal includes an email preview feature. Actual email delivery is not active until a secure backend email service is connected.";
-        }
-
-        if (
-            text.includes("hello") ||
-            text.includes("hi") ||
-            text.includes("namaste")
-        ) {
-            return "Hello! Welcome to LTSU Campus Support. I can guide you about campus complaints, complaint statuses and the Admin Portal.";
-        }
-
-        return "I can provide basic guidance about campus complaints, campus facilities, complaint statuses and the Admin Portal. Live AI connection is not active yet.";
-    }
-
-    // ==============================================
-    // 15. SEND CHAT MESSAGE
-    // ==============================================
-
-    function sendChatMessage(message) {
-
-        const cleanMessage = message.trim();
-
-        if (!cleanMessage) return;
-
-        addChatMessage(cleanMessage, "user");
-
-        chatInput.value = "";
-
-        const reply = getBotReply(cleanMessage);
-
-        setTimeout(function () {
-            addChatMessage(reply, "bot");
-        }, 350);
-    }
-
-    inputArea.addEventListener("submit", function (event) {
+    registerForm.addEventListener("submit", async (event) => {
 
         event.preventDefault();
 
-        sendChatMessage(chatInput.value);
+        const fullName = document.getElementById("admin-name").value.trim();
+        const email = document.getElementById("admin-email").value.trim().toLowerCase();
+        const mobile = document.getElementById("admin-mobile").value.trim();
+        const department = document.getElementById("admin-department").value;
+        const reason = document.getElementById("admin-reason").value.trim();
 
-    });
+        const password = document.getElementById("admin-create-password").value;
+        const confirmPassword = document.getElementById("admin-confirm-password").value;
 
-    // ==============================================
-    // 16. OPEN AND CLOSE CHATBOT
-    // ==============================================
 
-    chatButton.addEventListener("click", function () {
+        // Required field validation
+        if (
+            !fullName ||
+            !email ||
+            !mobile ||
+            !department ||
+            !reason ||
+            !password ||
+            !confirmPassword
+        ) {
+            showMessage("Please fill in all registration fields.");
+            return;
+        }
 
-        chatWindow.style.display = "flex";
+        if (password.length < 8) {
+            showMessage("Password must contain at least 8 characters.");
+            return;
+        }
 
-        chatInput.focus();
+        if (password !== confirmPassword) {
+            showMessage("Passwords do not match.");
+            return;
+        }
 
-        if (chatMessages.children.length === 0) {
-            addChatMessage(
-                "Hello! I can help with campus complaint guidance. What would you like to know?",
-                "bot"
+        const confirmRequest = window.confirm(
+            "Please confirm:\n\n" +
+            "1. Your password is private.\n" +
+            "2. The Super Admin cannot see your password.\n" +
+            "3. Your Admin access requires Super Admin approval.\n\n" +
+            "Do you want to submit your request?"
+        );
+
+        if (!confirmRequest) {
+            return;
+        }
+
+
+        const submitButton = registerForm.querySelector(
+            'button[type="submit"]'
+        );
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting Request...";
+
+
+        try {
+
+            // Create Supabase Auth account
+            const { data, error } = await supabase.auth.signUp({
+
+                email: email,
+                password: password,
+
+                options: {
+                    data: {
+                        full_name: fullName
+                    }
+                }
+
+            });
+
+
+            if (error) {
+                throw error;
+            }
+
+            if (!data.user) {
+                throw new Error("Account could not be created.");
+            }
+
+
+            // Email confirmation must be disabled
+            // for this immediate registration workflow.
+            if (!data.session) {
+
+                showMessage(
+                    "Your authentication account was created, but Supabase has not provided an active session.\n\n" +
+                    "Please ask the project administrator to check whether Email Confirmation is disabled in Supabase Authentication settings.\n\n" +
+                    "Do not submit the registration repeatedly."
+                );
+
+                return;
+            }
+
+
+            // Save admin access request
+            const { error: requestError } = await supabase
+                .from("admin_requests")
+                .insert({
+
+                    user_id: data.user.id,
+                    full_name: fullName,
+                    email: email,
+                    contact_number: mobile,
+                    department: department,
+                    reason: reason,
+                    status: "pending"
+
+                });
+
+
+            if (requestError) {
+                throw requestError;
+            }
+
+
+            showMessage(
+                "Your Admin Access Request has been submitted successfully!\n\n" +
+                "Status: Pending Approval\n\n" +
+                "The Super Admin will review your request. You can log in after your request is approved."
             );
+
+
+            registerForm.reset();
+
+            await supabase.auth.signOut();
+
+            showLoginPanel();
+
+        } catch (error) {
+
+            console.error("Registration Error:", error);
+
+            showMessage(
+                "Registration failed:\n\n" + error.message
+            );
+
+        } finally {
+
+            submitButton.disabled = false;
+            submitButton.textContent = "Submit Access Request";
+
         }
 
     });
 
-    closeButton.addEventListener("click", function () {
 
-        chatWindow.style.display = "none";
+    // ==========================================
+    // 6. ADMIN LOGIN
+    // ==========================================
+
+    loginForm.addEventListener("submit", async (event) => {
+
+        event.preventDefault();
+
+        const email = document.getElementById("admin-email-login")
+            .value.trim().toLowerCase();
+
+        const password = document.getElementById("admin-password-login")
+            .value;
+
+        const submitButton = loginForm.querySelector(
+            'button[type="submit"]'
+        );
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Checking Login...";
+
+
+        try {
+
+            // Sign in with Supabase
+            const { data, error } = await supabase.auth.signInWithPassword({
+
+                email: email,
+                password: password
+
+            });
+
+
+            if (error) {
+                throw error;
+            }
+
+            const user = data.user;
+
+            if (!user) {
+                throw new Error("User account not found.");
+            }
+
+
+            // Check admin request
+            const { data: request, error: requestError } = await supabase
+                .from("admin_requests")
+                .select("status, full_name, email, department, contact_number")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+
+            if (requestError) {
+                throw requestError;
+            }
+
+
+            if (!request) {
+
+                await supabase.auth.signOut();
+
+                showMessage(
+                    "No Admin Access Request was found for this account."
+                );
+
+                return;
+            }
+
+
+            if (request.status === "pending") {
+
+                await supabase.auth.signOut();
+
+                showMessage(
+                    "Your Admin Access Request is still pending.\n\nPlease wait for Super Admin approval."
+                );
+
+                return;
+            }
+
+
+            if (request.status === "rejected") {
+
+                await supabase.auth.signOut();
+
+                showMessage(
+                    "Your Admin Access Request has been rejected.\n\nPlease contact the Super Admin."
+                );
+
+                return;
+            }
+
+
+            if (request.status !== "approved") {
+
+                await supabase.auth.signOut();
+
+                showMessage("Your account does not have an approved request.");
+
+                return;
+            }
+
+
+            // Check user profile role
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("id, full_name, email, role, department, is_active")
+                .eq("id", user.id)
+                .maybeSingle();
+
+
+            if (profileError) {
+                throw profileError;
+            }
+
+
+            if (!profile) {
+
+                await supabase.auth.signOut();
+
+                showMessage("Your user profile could not be found.");
+
+                return;
+            }
+
+
+            if (
+                profile.role !== "admin" ||
+                profile.is_active !== true
+            ) {
+
+                await supabase.auth.signOut();
+
+                showMessage(
+                    "Your request is approved, but your Admin profile is not active yet.\n\nPlease contact the Super Admin."
+                );
+
+                return;
+            }
+
+
+            // Successful Admin Login
+            currentAdmin = {
+                id: user.id,
+                email: user.email,
+                name: profile.full_name || request.full_name,
+                department: profile.department || request.department
+            };
+
+            showDashboard();
+
+            updateAdminProfile();
+
+            await loadComplaints();
+
+            showMessage("Welcome to the Admin Dashboard!");
+
+        } catch (error) {
+
+            console.error("Login Error:", error);
+
+            showMessage(
+                "Login failed:\n\n" + error.message
+            );
+
+        } finally {
+
+            submitButton.disabled = false;
+            submitButton.textContent = "Login to Dashboard";
+
+        }
 
     });
 
-    // ==============================================
-    // 17. INITIAL PAGE STATE
-    // ==============================================
 
-    if (dashboard) {
-        dashboard.classList.add("hidden");
+    // ==========================================
+    // 7. ADMIN PROFILE
+    // ==========================================
+
+    function updateAdminProfile() {
+
+        if (!currentAdmin) {
+            return;
+        }
+
+        document.getElementById("profile-admin-id").textContent =
+            currentAdmin.id;
+
+        document.getElementById("profile-admin-name").textContent =
+            currentAdmin.name || "Admin";
+
+        document.getElementById("profile-admin-email").textContent =
+            currentAdmin.email;
+
+        document.getElementById("profile-admin-department").textContent =
+            currentAdmin.department || "Not Assigned";
+
+        document.getElementById("profile-admin-status").textContent =
+            "Active";
+
     }
 
-    if (authSection) {
-        authSection.classList.remove("hidden");
+
+    // ==========================================
+    // 8. DASHBOARD NAVIGATION
+    // ==========================================
+
+    const navigationButtons = document.querySelectorAll(".nav-btn");
+
+    navigationButtons.forEach((button) => {
+
+        button.addEventListener("click", () => {
+
+            const targetId = button.dataset.section;
+
+            document.querySelectorAll(".dashboard-panel")
+                .forEach((section) => {
+                    section.classList.add("hidden");
+                });
+
+            const targetSection = document.getElementById(targetId);
+
+            if (targetSection) {
+                targetSection.classList.remove("hidden");
+            }
+
+            navigationButtons.forEach((navButton) => {
+                navButton.classList.remove("active");
+            });
+
+            button.classList.add("active");
+
+        });
+
+    });
+
+
+    // ==========================================
+    // 9. LOAD COMPLAINTS
+    // ==========================================
+
+    async function loadComplaints() {
+
+        const tableBody = document.getElementById(
+            "complaints-table-body"
+        );
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">Loading complaints...</td>
+            </tr>
+        `;
+
+
+        try {
+
+            const { data, error } = await supabase
+                .from("complaints")
+                .select("*")
+                .order("created_at", { ascending: false });
+
+
+            if (error) {
+                throw error;
+            }
+
+            allComplaints = data || [];
+
+            displayComplaints(allComplaints);
+
+            updateDashboardStats(allComplaints);
+
+        } catch (error) {
+
+            console.error("Complaint Loading Error:", error);
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        Unable to load complaints. Please check database permissions.
+                    </td>
+                </tr>
+            `;
+
+        }
+
     }
 
-    showLogin();
+
+    // ==========================================
+    // 10. DISPLAY COMPLAINTS
+    // ==========================================
+
+    function displayComplaints(complaints) {
+
+        const tableBody = document.getElementById(
+            "complaints-table-body"
+        );
+
+        tableBody.innerHTML = "";
+
+        if (!complaints || complaints.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6">No complaints found.</td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        complaints.forEach((complaint) => {
+
+            const row = document.createElement("tr");
+
+            const complaintId = complaint.complaint_id || complaint.id;
+
+            const category = complaint.category || "General";
+
+            const location = complaint.location || "Not specified";
+
+            const date = complaint.created_at
+                ? new Date(complaint.created_at).toLocaleDateString()
+                : "--";
+
+            const status = complaint.status || "Submitted";
+
+
+            row.innerHTML = `
+                <td>${escapeHTML(complaintId)}</td>
+                <td>${escapeHTML(category)}</td>
+                <td>${escapeHTML(location)}</td>
+                <td>${escapeHTML(date)}</td>
+                <td>${escapeHTML(status)}</td>
+                <td>
+                    <button
+                        type="button"
+                        class="view-complaint-btn"
+                        data-id="${escapeHTML(complaint.id)}"
+                    >
+                        View
+                    </button>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+
+        });
+
+
+        tableBody.querySelectorAll(".view-complaint-btn")
+            .forEach((button) => {
+
+                button.addEventListener("click", () => {
+
+                    const complaint = allComplaints.find(
+                        (item) => item.id === button.dataset.id
+                    );
+
+                    if (complaint) {
+                        showComplaintDetails(complaint);
+                    }
+
+                });
+
+            });
+
+    }
+
+
+    function escapeHTML(value) {
+
+        return String(value ?? "").replace(/[&<>"']/g, (character) => {
+
+            const replacements = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            };
+
+            return replacements[character];
+
+        });
+
+    }
+
+
+    // ==========================================
+    // 11. DASHBOARD STATISTICS
+    // ==========================================
+
+    function updateDashboardStats(complaints) {
+
+        const total = complaints.length;
+
+        const pending = complaints.filter((item) =>
+            ["Submitted", "Pending", "Under Review"].includes(item.status)
+        ).length;
+
+        const inProgress = complaints.filter((item) =>
+            ["In Progress", "Work in Progress"].includes(item.status)
+        ).length;
+
+        const resolved = complaints.filter((item) =>
+            ["Resolved", "Solved", "Closed"].includes(item.status)
+        ).length;
+
+
+        document.getElementById("total-complaints").textContent = total;
+
+        document.getElementById("pending-complaints").textContent = pending;
+
+        document.getElementById("progress-complaints").textContent = inProgress;
+
+        document.getElementById("resolved-complaints").textContent = resolved;
+
+    }
+
+
+    // ==========================================
+    // 12. COMPLAINT SEARCH AND FILTER
+    // ==========================================
+
+    const complaintSearch = document.getElementById("complaint-search");
+
+    const statusFilter = document.getElementById(
+        "complaint-status-filter"
+    );
+
+    const categoryFilter = document.getElementById(
+        "complaint-category-filter"
+    );
+
+
+    function filterComplaints() {
+
+        const searchValue = complaintSearch.value.toLowerCase().trim();
+
+        const selectedStatus = statusFilter.value;
+
+        const selectedCategory = categoryFilter.value;
+
+
+        const filtered = allComplaints.filter((complaint) => {
+
+            const complaintId = cleanText(
+                complaint.complaint_id || complaint.id
+            ).toLowerCase();
+
+            const matchesSearch = complaintId.includes(searchValue);
+
+            const matchesStatus =
+                selectedStatus === "all" ||
+                complaint.status === selectedStatus;
+
+            const matchesCategory =
+                selectedCategory === "all" ||
+                complaint.category === selectedCategory;
+
+            return matchesSearch && matchesStatus && matchesCategory;
+
+        });
+
+
+        displayComplaints(filtered);
+
+    }
+
+
+    complaintSearch.addEventListener("input", filterComplaints);
+
+    statusFilter.addEventListener("change", filterComplaints);
+
+    categoryFilter.addEventListener("change", filterComplaints);
+
+
+    // ==========================================
+    // 13. COMPLAINT DETAILS
+    // ==========================================
+
+    function showComplaintDetails(complaint) {
+
+        selectedComplaintId = complaint.id;
+
+        const detailsCard = document.getElementById(
+            "complaint-details"
+        );
+
+        const detailContent = document.getElementById(
+            "complaint-detail-content"
+        );
+
+
+        detailContent.innerHTML = `
+            <p><strong>Complaint ID:</strong> ${escapeHTML(complaint.complaint_id || complaint.id)}</p>
+
+            <p><strong>Title:</strong> ${escapeHTML(complaint.title || "--")}</p>
+
+            <p><strong>Category:</strong> ${escapeHTML(complaint.category || "--")}</p>
+
+            <p><strong>Location:</strong> ${escapeHTML(complaint.location || "--")}</p>
+
+            <p><strong>Description:</strong> ${escapeHTML(complaint.description || "--")}</p>
+
+            <p><strong>Status:</strong> ${escapeHTML(complaint.status || "--")}</p>
+
+            <p><strong>Admin Notes:</strong> ${escapeHTML(complaint.notes || "--")}</p>
+        `;
+
+
+        document.getElementById("update-status").value = "";
+
+        document.getElementById("resolution-details").value =
+            complaint.notes || "";
+
+        detailsCard.classList.remove("hidden");
+
+    }
+
+
+    // ==========================================
+    // 14. UPDATE COMPLAINT STATUS
+    // ==========================================
+
+    const complaintUpdateForm = document.getElementById(
+        "complaint-update-form"
+    );
+
+
+    complaintUpdateForm.addEventListener("submit", async (event) => {
+
+        event.preventDefault();
+
+        if (!selectedComplaintId) {
+            showMessage("Please select a complaint first.");
+            return;
+        }
+
+        const newStatus = document.getElementById("update-status").value;
+
+        const notes = document.getElementById("resolution-details")
+            .value.trim();
+
+        if (!newStatus || !notes) {
+            showMessage("Please select a status and enter remarks.");
+            return;
+        }
+
+
+        const submitButton = complaintUpdateForm.querySelector(
+            'button[type="submit"]'
+        );
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Saving...";
+
+
+        try {
+
+            const { error } = await supabase
+                .from("complaints")
+                .update({
+                    status: newStatus,
+                    notes: notes,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", selectedComplaintId);
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            showMessage("Complaint status updated successfully.");
+
+            document.getElementById("complaint-details")
+                .classList.add("hidden");
+
+            selectedComplaintId = null;
+
+            await loadComplaints();
+
+        } catch (error) {
+
+            console.error("Complaint Update Error:", error);
+
+            showMessage(
+                "Unable to update complaint:\n\n" + error.message
+            );
+
+        } finally {
+
+            submitButton.disabled = false;
+            submitButton.textContent = "Save Status Update";
+
+        }
+
+    });
+
+
+    // ==========================================
+    // 15. EMAIL CENTRE - PREVIEW
+    // ==========================================
+
+    const emailForm = document.getElementById("admin-email-form");
+
+    const emailPreview = document.getElementById("email-preview");
+
+    const emailPreviewContent = document.getElementById(
+        "email-preview-content"
+    );
+
+
+    emailForm.addEventListener("submit", (event) => {
+
+        event.preventDefault();
+
+        const complaintId = document.getElementById(
+            "email-complaint-id"
+        ).value.trim();
+
+        const subject = document.getElementById(
+            "email-subject"
+        ).value.trim();
+
+        const message = document.getElementById(
+            "email-message"
+        ).value.trim();
+
+
+        emailPreviewContent.innerHTML = `
+            <p><strong>Complaint ID:</strong> ${escapeHTML(complaintId)}</p>
+
+            <p><strong>Subject:</strong> ${escapeHTML(subject)}</p>
+
+            <p><strong>Message:</strong></p>
+
+            <p>${escapeHTML(message)}</p>
+        `;
+
+
+        emailPreview.classList.remove("hidden");
+
+    });
+
+
+    document.getElementById("confirm-email-send")
+        .addEventListener("click", () => {
+
+            showMessage(
+                "Email sending is not connected yet.\n\nA secure email backend needs to be configured before emails can actually be sent."
+            );
+
+        });
+
+
+    // ==========================================
+    // 16. ADMIN LOGOUT
+    // ==========================================
+
+    logoutButton.addEventListener("click", async () => {
+
+        const confirmLogout = window.confirm(
+            "Are you sure you want to logout?"
+        );
+
+        if (!confirmLogout) {
+            return;
+        }
+
+
+        try {
+
+            const { error } = await supabase.auth.signOut();
+
+            if (error) {
+                throw error;
+            }
+
+            currentAdmin = null;
+
+            loginForm.reset();
+
+            registerForm.reset();
+
+            showAuthentication();
+
+            showMessage("You have been logged out successfully.");
+
+        } catch (error) {
+
+            console.error("Logout Error:", error);
+
+            showMessage(
+                "Logout failed:\n\n" + error.message
+            );
+
+        }
+
+    });
+
+
+    // ==========================================
+    // 17. CURRENT YEAR
+    // ==========================================
+
+    document.getElementById("current-year").textContent =
+        new Date().getFullYear();
+
+
+    // ==========================================
+    // 18. INITIAL PAGE STATE
+    // ==========================================
+
+    showAuthentication();
+
+    console.log("LTSUCare Admin Portal JavaScript Loaded Successfully.");
 
 });
