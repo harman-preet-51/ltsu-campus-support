@@ -2,11 +2,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const db = window.supabaseClient;
   const $ = id => document.getElementById(id);
 
-  if (!db) {
-    alert("Supabase connection missing. Check supabase-config.js");
-    return;
-  }
-
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhM-icfed2rd2xA_aFwIFTpXGQourymAtY4xPnVV5eWFpk6yc5mDYv6_Dg3pXtLG_XTw/exec";
 
   let currentUser = null;
@@ -14,62 +9,133 @@ document.addEventListener("DOMContentLoaded", async () => {
   let complaints = [];
   let selectedComplaint = null;
 
-  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+  if (!db) {
+    alert("Supabase connection nahi mila. supabase-config.js check karo.");
+    return;
+  }
+
+  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;",
     '"': "&quot;", "'": "&#039;"
-  })[char]);
+  })[c]);
 
-  function message(text) {
+  function showMessage(text) {
     alert(text);
   }
 
-  function showDashboard() {
-    document.querySelector(".auth-section")?.classList.add("hidden");
-    $("admin-dashboard")?.classList.remove("hidden");
-    loadComplaints();
-    loadProfile();
+  // LOGIN / REQUEST ACCESS TABS
+  const loginForm = $("admin-login-form");
+  const registerForm = $("admin-register-form");
+
+  function showAuthTab(tab) {
+    const showLogin = tab === "login";
+
+    if (loginForm) {
+      loginForm.hidden = !showLogin;
+      loginForm.classList.toggle("hidden", !showLogin);
+    }
+
+    if (registerForm) {
+      registerForm.hidden = showLogin;
+      registerForm.classList.toggle("hidden", showLogin);
+    }
+
+    document.querySelectorAll(".auth-tabs button, .auth-tabs [role='tab']").forEach(button => {
+      const label = (button.textContent || "").toLowerCase();
+      const isLogin = label.includes("login") || label.includes("sign in");
+      const isRegister = label.includes("request") || label.includes("register") || label.includes("access");
+      if (isLogin || isRegister) {
+        button.classList.toggle("active", showLogin ? isLogin : isRegister);
+        button.setAttribute("aria-selected", String(showLogin ? isLogin : isRegister));
+      }
+    });
   }
 
+  showAuthTab("login");
+
+  document.addEventListener("click", event => {
+    const button = event.target.closest(".auth-tabs button, .auth-tabs [role='tab'], [data-auth-tab]");
+    if (!button) return;
+
+    const label = (
+      (button.dataset.authTab || "") + " " +
+      (button.dataset.tab || "") + " " +
+      (button.textContent || "")
+    ).toLowerCase();
+
+    if (label.includes("request") || label.includes("register") || label.includes("access") || label.includes("sign up")) {
+      event.preventDefault();
+      showAuthTab("register");
+    } else if (label.includes("login") || label.includes("sign in")) {
+      event.preventDefault();
+      showAuthTab("login");
+    }
+  });
+
+  // VERIFY ADMIN ACCOUNT
   async function verifyAdmin(user) {
-    const { data, error } = await db
+    const { data: profile, error } = await db
       .from("profiles")
       .select("id,full_name,email,role,department,is_active")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (error || !data || data.role !== "admin" || data.is_active !== true) {
+    if (error) {
       await db.auth.signOut();
-      message("Admin account approved/active nahi hai. Super Admin se approval check karvao.");
+      showMessage("Profile check error: " + error.message);
+      return false;
+    }
+
+    if (!profile || profile.role !== "admin" || profile.is_active !== true) {
+      await db.auth.signOut();
+      showMessage("Yeh account active approved Admin account nahi hai. Super Admin se approval check karvao.");
       return false;
     }
 
     currentUser = user;
-    currentProfile = data;
-    showDashboard();
+    currentProfile = profile;
+
+    document.querySelector(".auth-section")?.classList.add("hidden");
+    $("admin-dashboard")?.classList.remove("hidden");
+
+    loadProfile();
+    await loadComplaints();
+
     return true;
   }
 
   // ADMIN LOGIN
-  $("admin-login-form")?.addEventListener("submit", async event => {
+  loginForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const email = $("admin-email-login")?.value.trim();
+    const email = $("admin-email-login")?.value.trim().toLowerCase();
     const password = $("admin-password-login")?.value;
 
-    if (!email || !password) return message("Email aur password bharo.");
+    if (!email || !password) {
+      showMessage("Email aur password dono bharo.");
+      return;
+    }
+
+    const submitButton = loginForm.querySelector("[type='submit']");
+    if (submitButton) submitButton.disabled = true;
 
     const { data, error } = await db.auth.signInWithPassword({
       email,
       password
     });
 
-    if (error) return message(error.message);
+    if (submitButton) submitButton.disabled = false;
+
+    if (error) {
+      showMessage("Login nahi hua: " + error.message + "\nEmail aur password check karo.");
+      return;
+    }
 
     await verifyAdmin(data.user);
   });
 
-  // ADMIN ACCESS REQUEST
-  $("admin-register-form")?.addEventListener("submit", async event => {
+  // REQUEST ADMIN ACCESS
+  registerForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
     const name = $("admin-name")?.value.trim();
@@ -80,51 +146,78 @@ document.addEventListener("DOMContentLoaded", async () => {
     const password = $("admin-create-password")?.value;
     const confirmPassword = $("admin-confirm-password")?.value;
 
-    if (!name || !email || !mobile || !department || !password) {
-      return message("Saari required details bharo.");
+    if (!name || !email || !mobile || !department || !password || !confirmPassword) {
+      showMessage("Saari details bharo.");
+      return;
+    }
+
+    if (password.length < 6) {
+      showMessage("Password kam se kam 6 characters ka hona chahiye.");
+      return;
     }
 
     if (password !== confirmPassword) {
-      return message("Passwords match nahi kar rahe.");
+      showMessage("Dono passwords match nahi kar rahe.");
+      return;
     }
 
-    const { data, error } = await db.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name }
-      }
-    });
+    const submitButton = registerForm.querySelector("[type='submit']");
+    if (submitButton) submitButton.disabled = true;
 
-    if (error) return message(error.message);
-    if (!data.user) return message("Registration complete nahi hui.");
-
-    const { error: requestError } = await db
-      .from("admin_requests")
-      .insert({
-        user_id: data.user.id,
-        full_name: name,
+    try {
+      const { data, error } = await db.auth.signUp({
         email,
-        contact_number: mobile,
-        department,
-        reason,
-        status: "pending"
+        password,
+        options: {
+          data: { full_name: name }
+        }
       });
 
-    if (requestError) {
-      return message("Account bana, lekin request submit nahi hui: " + requestError.message);
-    }
+      if (error) {
+        if (error.message.toLowerCase().includes("already") ||
+            error.message.toLowerCase().includes("registered")) {
+          showMessage("Is email ka account pehle se bana hua hai. Nayi request banane ke bajay Admin Login karo. Password yaad nahi hai to password reset karna hoga.");
+        } else {
+          showMessage("Registration error: " + error.message);
+        }
+        return;
+      }
 
-    message("Admin access request submit ho gayi. Super Admin approval ka wait karein.");
-    $("admin-register-form").reset();
+      if (!data.user) {
+        showMessage("Account create nahi hua. Dobara try karo.");
+        return;
+      }
+
+      const { error: requestError } = await db
+        .from("admin_requests")
+        .insert({
+          user_id: data.user.id,
+          full_name: name,
+          email,
+          contact_number: mobile,
+          department,
+          reason,
+          status: "pending"
+        });
+
+      if (requestError) {
+        showMessage("Account ban gaya, lekin request submit nahi hui: " + requestError.message);
+        return;
+      }
+
+      showMessage("Admin access request submit ho gayi. Super Admin approval ka wait karein.");
+      registerForm.reset();
+      showAuthTab("login");
+
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
   });
 
   // LOAD COMPLAINTS
   async function loadComplaints() {
     const tbody = $("complaints-table-body");
-    if (!tbody) return;
-
-    tbody.innerHTML = "<tr><td colspan='8'>Loading complaints...</td></tr>";
+    if (tbody) tbody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
 
     const { data, error } = await db
       .from("complaints")
@@ -132,8 +225,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      tbody.innerHTML = "<tr><td colspan='8'>Unable to load complaints.</td></tr>";
-      return message("Complaints load error: " + error.message);
+      if (tbody) tbody.innerHTML = "<tr><td colspan='8'>Complaints load nahi hui.</td></tr>";
+      showMessage("Complaints error: " + error.message);
+      return;
     }
 
     complaints = data || [];
@@ -143,31 +237,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function updateStats() {
-    const total = complaints.length;
-    const pending = complaints.filter(c => c.status?.toLowerCase() === "pending").length;
-    const progress = complaints.filter(c => c.status?.toLowerCase() === "in progress").length;
-    const resolved = complaints.filter(c => c.status?.toLowerCase() === "resolved").length;
-
-    if ($("total-complaints")) $("total-complaints").textContent = total;
-    if ($("pending-complaints")) $("pending-complaints").textContent = pending;
-    if ($("progress-complaints")) $("progress-complaints").textContent = progress;
-    if ($("resolved-complaints")) $("resolved-complaints").textContent = resolved;
+    if ($("total-complaints")) $("total-complaints").textContent = complaints.length;
+    if ($("pending-complaints")) $("pending-complaints").textContent =
+      complaints.filter(c => (c.status || "").toLowerCase() === "pending").length;
+    if ($("progress-complaints")) $("progress-complaints").textContent =
+      complaints.filter(c => (c.status || "").toLowerCase() === "in progress").length;
+    if ($("resolved-complaints")) $("resolved-complaints").textContent =
+      complaints.filter(c => (c.status || "").toLowerCase() === "resolved").length;
   }
 
-  function filteredComplaints() {
+  function getFilteredComplaints() {
     const search = $("complaint-search")?.value.toLowerCase() || "";
     const status = $("complaint-status-filter")?.value || "";
     const category = $("complaint-category-filter")?.value || "";
 
     return complaints.filter(c => {
-      const matchesSearch = [
-        c.complaint_id, c.title, c.location, c.description
-      ].join(" ").toLowerCase().includes(search);
+      const text = [c.complaint_id, c.title, c.location, c.description]
+        .join(" ").toLowerCase();
 
-      const matchesStatus = !status || c.status === status;
-      const matchesCategory = !category || c.category === category;
-
-      return matchesSearch && matchesStatus && matchesCategory;
+      return text.includes(search) &&
+        (!status || c.status === status) &&
+        (!category || c.category === category);
     });
   }
 
@@ -175,7 +265,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tbody = $("complaints-table-body");
     if (!tbody) return;
 
-    const rows = filteredComplaints();
+    const rows = getFilteredComplaints();
 
     if (!rows.length) {
       tbody.innerHTML = "<tr><td colspan='8'>No complaints found.</td></tr>";
@@ -206,7 +296,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     selectedComplaint = complaints.find(c => c.complaint_id === button.dataset.view);
     if (!selectedComplaint) return;
 
-    if ($("complaint-details")) $("complaint-details").classList.remove("hidden");
+    $("complaint-details")?.classList.remove("hidden");
 
     if ($("complaint-detail-content")) {
       $("complaint-detail-content").innerHTML = `
@@ -223,10 +313,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($("resolution-details")) $("resolution-details").value = selectedComplaint.notes || "";
   });
 
-  // UPDATE COMPLAINT STATUS
+  // UPDATE COMPLAINT
   $("complaint-update-form")?.addEventListener("submit", async event => {
     event.preventDefault();
-    if (!selectedComplaint) return message("Pehle complaint select karo.");
+
+    if (!selectedComplaint) {
+      showMessage("Pehle complaint ke saamne View dabao.");
+      return;
+    }
 
     const status = $("update-status")?.value;
     const notes = $("resolution-details")?.value.trim();
@@ -240,9 +334,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       })
       .eq("id", selectedComplaint.id);
 
-    if (error) return message("Update error: " + error.message);
+    if (error) {
+      showMessage("Complaint update error: " + error.message);
+      return;
+    }
 
-    message("Complaint update ho gayi.");
+    showMessage("Complaint update ho gayi.");
     await loadComplaints();
   });
 
@@ -261,9 +358,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     area.innerHTML = `
       <h2>Student Complaint Email Centre</h2>
-      <p>Select complaints and send an individual email to each student.</p>
+      <p>Select complaints to send individual emails to students.</p>
 
-      <label>Filter by status</label>
+      <label for="mail-status-filter">Filter by status</label>
       <select id="mail-status-filter">
         <option value="">All statuses</option>
         <option value="Pending">Pending</option>
@@ -271,23 +368,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         <option value="Resolved">Resolved</option>
       </select>
 
-      <label>Email subject</label>
+      <label for="mail-subject">Email subject</label>
       <input id="mail-subject" value="Update on your LTSUCare complaint">
 
       <div id="mail-complaint-list"></div>
 
-      <label>Common remarks (optional)</label>
+      <label for="mail-common-remarks">Remarks</label>
       <textarea id="mail-common-remarks" rows="4"
-        placeholder="Write the update for selected students"></textarea>
+        placeholder="Write update for selected students"></textarea>
 
       <button type="button" id="mail-send-button">Send Email to Selected Students</button>
       <p id="mail-result"></p>
     `;
 
     renderEmailList();
-
-    $("mail-status-filter").addEventListener("change", renderEmailList);
-    $("mail-send-button").addEventListener("click", sendSelectedEmails);
+    $("mail-status-filter")?.addEventListener("change", renderEmailList);
+    $("mail-send-button")?.addEventListener("click", sendSelectedEmails);
   }
 
   function renderEmailList() {
@@ -308,22 +404,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function sendSelectedEmails() {
-    const checks = [...document.querySelectorAll(".mail-complaint-check:checked")];
-    const complaintIds = checks.map(item => item.value);
+    const selected = [...document.querySelectorAll(".mail-complaint-check:checked")]
+      .map(item => item.value);
 
-    if (!complaintIds.length) return message("Kam se kam ek complaint select karo.");
+    if (!selected.length) {
+      showMessage("Kam se kam ek complaint select karo.");
+      return;
+    }
 
-    const { data: sessionData } = await db.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
+    const { data } = await db.auth.getSession();
+    const accessToken = data.session?.access_token;
 
-    if (!accessToken) return message("Login session expired. Login again.");
+    if (!accessToken) {
+      showMessage("Login session expire ho gaya. Dobara login karo.");
+      return;
+    }
 
     const remarksText = $("mail-common-remarks")?.value.trim() || "";
     const remarks = {};
-
-    complaintIds.forEach(id => {
-      remarks[id] = remarksText;
-    });
+    selected.forEach(id => remarks[id] = remarksText);
 
     const button = $("mail-send-button");
     button.disabled = true;
@@ -332,24 +431,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const response = await fetch(SCRIPT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           type: "resolution_email",
           accessToken,
-          complaintIds,
+          complaintIds: selected,
           remarks,
           subject: $("mail-subject")?.value.trim()
         })
       });
 
       const result = await response.json();
-
       if (!result.success) throw new Error(result.message || "Email sending failed");
 
-      $("mail-result").textContent =
-        "Request accepted. Sent count: " + (result.sent ?? complaintIds.length);
+      $("mail-result").textContent = "Email request successful.";
     } catch (error) {
       $("mail-result").textContent = "Error: " + error.message;
     } finally {
@@ -369,15 +464,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($("profile-admin-status")) $("profile-admin-status").textContent = "Active";
   }
 
-  // NAVIGATION
+  // SIDEBAR NAVIGATION
   document.querySelectorAll(".nav-btn[data-section]").forEach(button => {
     button.addEventListener("click", () => {
+      const targetId = button.dataset.section;
+
       document.querySelectorAll(".page-section, .admin-section").forEach(section => {
         section.classList.add("hidden");
       });
 
-      const target = $(button.dataset.section);
-      target?.classList.remove("hidden");
+      $(targetId)?.classList.remove("hidden");
     });
   });
 
@@ -389,7 +485,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // RESTORE SESSION
   const { data } = await db.auth.getSession();
-
   if (data.session?.user) {
     await verifyAdmin(data.session.user);
   }
