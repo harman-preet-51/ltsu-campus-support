@@ -2,297 +2,493 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // =====================================
-    // SUPABASE CONNECTION
+    // SUPABASE
     // =====================================
 
-    const supabaseClient = window.supabaseClient;
+    const db = window.supabaseClient;
 
-    const loginPage = document.getElementById("login-page");
-    const dashboard = document.getElementById("dashboard");
-    const loginForm = document.getElementById("login-form");
+    const $ = (id) => document.getElementById(id);
 
-    const emailInput = document.getElementById("admin-id");
-    const passwordInput = document.getElementById("admin-pin");
+    const loginPage = $("login-page");
+    const dashboard = $("dashboard");
+    const loginForm = $("login-form");
+    const loginMessage = $("login-message");
 
-    const loginMessage = document.getElementById("login-message");
-    const forgotPasswordBtn = document.getElementById("forgot-password-btn");
-    const logoutBtn = document.getElementById("logout-btn");
+    let currentUser = null;
 
-
-    // =====================================
-    // MESSAGE FUNCTION
-    // =====================================
-
-    function showMessage(message, success = false) {
-
+    function message(text, success = false) {
         if (!loginMessage) return;
-
-        loginMessage.textContent = message;
-        loginMessage.style.display = "block";
-        loginMessage.style.color = success ? "#168c79" : "#d94b64";
-        loginMessage.style.marginTop = "12px";
-        loginMessage.style.fontSize = "13px";
+        loginMessage.textContent = text;
+        loginMessage.style.color = success ? "green" : "crimson";
     }
-
-
-    // =====================================
-    // SHOW LOGIN / DASHBOARD
-    // =====================================
 
     function showLogin() {
-
-        if (dashboard) {
-            dashboard.classList.add("hidden");
-        }
-
-        if (loginPage) {
-            loginPage.classList.remove("hidden");
-        }
+        dashboard?.classList.add("hidden");
+        loginPage?.classList.remove("hidden");
     }
-
 
     function showDashboard() {
-
-        if (loginPage) {
-            loginPage.classList.add("hidden");
-        }
-
-        if (dashboard) {
-            dashboard.classList.remove("hidden");
-        }
+        loginPage?.classList.add("hidden");
+        dashboard?.classList.remove("hidden");
     }
 
-
-    // =====================================
-    // CHECK SUPABASE CONNECTION
-    // =====================================
-
-    if (!supabaseClient) {
-
+    if (!db) {
         showLogin();
-
-        showMessage(
-            "Supabase connection nahi mili. Configuration check karein."
-        );
-
+        message("Supabase connection nahi mili. Configuration check karein.");
         return;
     }
 
 
     // =====================================
-    // VERIFY SUPER ADMIN ACCOUNT
+    // VERIFY SUPER ADMIN
     // =====================================
 
     async function verifySuperAdmin(user) {
 
+        const { data: profile, error } = await db
+            .from("profiles")
+            .select("id, full_name, role, is_active")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        if (error || !profile) {
+            await db.auth.signOut();
+            showLogin();
+            message("Profile error: " + (error?.message || "Profile not found"));
+            return false;
+        }
+
+        if (profile.role !== "super_admin" || profile.is_active !== true) {
+            await db.auth.signOut();
+            showLogin();
+            message("Access denied. Active Super Admin account required.");
+            return false;
+        }
+
+        currentUser = user;
+        showDashboard();
+
+        const label = document.querySelector(".admin-label");
+        if (label) {
+            label.textContent = profile.full_name || "Super Admin";
+        }
+
+        await loadAdminRequests();
+        await loadAdminCount();
+
+        return true;
+    }
+
+
+    // =====================================
+    // LOGIN
+    // =====================================
+
+    loginForm?.addEventListener("submit", async (event) => {
+
+        event.preventDefault();
+
+        const email = $("admin-id").value.trim();
+        const password = $("admin-pin").value;
+
+        const button = loginForm.querySelector('button[type="submit"]');
+
+        if (button) {
+            button.disabled = true;
+            button.textContent = "Please wait...";
+        }
+
         try {
 
-            const { data: profile, error } = await supabaseClient
-                .from("profiles")
-                .select("id, full_name, email, role, is_active")
-                .eq("id", user.id)
-                .maybeSingle();
+            const { data, error } = await db.auth.signInWithPassword({
+                email,
+                password
+            });
 
-            if (error || !profile) {
-
-                await supabaseClient.auth.signOut();
-
-                showLogin();
-
-                showMessage(
-                    "Profile verify nahi ho paayi. Administrator se contact karein."
-                );
-
-                return false;
+            if (error) {
+                message("Login failed: " + error.message);
+                return;
             }
 
-
-            if (
-                profile.role !== "super_admin" ||
-                profile.is_active !== true
-            ) {
-
-                await supabaseClient.auth.signOut();
-
-                showLogin();
-
-                showMessage(
-                    "Access denied. Sirf active Super Admin login kar sakta hai."
-                );
-
-                return false;
-            }
-
-
-            showDashboard();
-
-            const adminLabel = document.querySelector(".admin-label");
-
-            if (adminLabel) {
-                adminLabel.textContent =
-                    profile.full_name || "Super Admin";
-            }
-
-            return true;
+            await verifySuperAdmin(data.user);
 
         } catch (error) {
+            message("Login error: " + error.message);
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.textContent = "Login";
+            }
+        }
+    });
 
-            console.error("Profile verification error:", error);
 
-            await supabaseClient.auth.signOut();
+    // =====================================
+    // ADMIN MANAGEMENT UI
+    // =====================================
 
-            showLogin();
+    function createAdminManagementUI() {
 
-            showMessage(
-                "Account verify karte waqt error aayi. Please try again."
-            );
+        const section = $("admins");
+        if (!section) return null;
 
-            return false;
+        let box = section.querySelector(".content-box");
+
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "content-box";
+            section.appendChild(box);
+        }
+
+        box.innerHTML = `
+            <h3>Admin Management</h3>
+
+            <div style="margin:15px 0;">
+                <button id="refresh-admin-requests"
+                    type="button"
+                    style="padding:10px 18px;cursor:pointer;">
+                    Refresh Requests
+                </button>
+            </div>
+
+            <h3>Pending Admin Requests</h3>
+
+            <div id="pending-admin-requests"
+                style="overflow-x:auto;">
+                Loading requests...
+            </div>
+
+            <br>
+
+            <h3>All Admin Requests</h3>
+
+            <div id="all-admin-requests"
+                style="overflow-x:auto;">
+                Loading requests...
+            </div>
+
+            <p id="admin-request-message"
+                style="margin-top:15px;"></p>
+        `;
+
+        $("refresh-admin-requests")?.addEventListener(
+            "click",
+            loadAdminRequests
+        );
+
+        return box;
+    }
+
+
+    // =====================================
+    // SAFE TABLE CREATION
+    // =====================================
+
+    function makeTable(requests, showActions) {
+
+        const table = document.createElement("table");
+        table.style.width = "100%";
+        table.style.borderCollapse = "collapse";
+
+        const headings = [
+            "Name",
+            "Email",
+            "Mobile",
+            "Department",
+            "Reason",
+            "Date",
+            "Status"
+        ];
+
+        if (showActions) headings.push("Action");
+
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+
+        headings.forEach((heading) => {
+            const th = document.createElement("th");
+            th.textContent = heading;
+            th.style.padding = "10px";
+            th.style.borderBottom = "1px solid #ddd";
+            headerRow.appendChild(th);
+        });
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+
+        requests.forEach((request) => {
+
+            const tr = document.createElement("tr");
+
+            const values = [
+                request.full_name,
+                request.email,
+                request.contact_number,
+                request.department,
+                request.reason,
+                request.created_at
+                    ? new Date(request.created_at).toLocaleString()
+                    : "-",
+                request.status
+            ];
+
+            values.forEach((value) => {
+                const td = document.createElement("td");
+                td.textContent = value || "-";
+                td.style.padding = "10px";
+                td.style.borderBottom = "1px solid #ddd";
+                tr.appendChild(td);
+            });
+
+            if (showActions) {
+
+                const actionCell = document.createElement("td");
+                actionCell.style.padding = "10px";
+
+                const approveButton = document.createElement("button");
+                approveButton.textContent = "Approve";
+                approveButton.style.margin = "4px";
+                approveButton.style.padding = "7px 12px";
+                approveButton.style.cursor = "pointer";
+
+                approveButton.addEventListener("click", () => {
+                    approveRequest(request, approveButton);
+                });
+
+                const rejectButton = document.createElement("button");
+                rejectButton.textContent = "Reject";
+                rejectButton.style.margin = "4px";
+                rejectButton.style.padding = "7px 12px";
+                rejectButton.style.cursor = "pointer";
+
+                rejectButton.addEventListener("click", () => {
+                    rejectRequest(request, rejectButton);
+                });
+
+                actionCell.append(approveButton, rejectButton);
+                tr.appendChild(actionCell);
+            }
+
+            tbody.appendChild(tr);
+        });
+
+        if (requests.length === 0) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = headings.length;
+            td.textContent = "No requests found.";
+            td.style.padding = "12px";
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        }
+
+        table.appendChild(tbody);
+        return table;
+    }
+
+
+    // =====================================
+    // LOAD ADMIN REQUESTS
+    // =====================================
+
+    async function loadAdminRequests() {
+
+        createAdminManagementUI();
+
+        const pendingBox = $("pending-admin-requests");
+        const allBox = $("all-admin-requests");
+        const statusMessage = $("admin-request-message");
+
+        if (!pendingBox || !allBox) return;
+
+        pendingBox.textContent = "Loading...";
+        allBox.textContent = "Loading...";
+
+        const { data, error } = await db
+            .from("admin_requests")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) {
+
+            pendingBox.textContent =
+                "Could not load requests: " + error.message;
+
+            allBox.textContent =
+                "Database permission or connection error.";
+
+            if (statusMessage) {
+                statusMessage.textContent = error.message;
+                statusMessage.style.color = "crimson";
+            }
+
+            return;
+        }
+
+        const requests = data || [];
+
+        const pending = requests.filter(
+            (request) => request.status === "pending"
+        );
+
+        pendingBox.innerHTML = "";
+        allBox.innerHTML = "";
+
+        pendingBox.appendChild(makeTable(pending, true));
+        allBox.appendChild(makeTable(requests, false));
+
+        if (statusMessage) {
+            statusMessage.textContent =
+                "Total requests: " + requests.length +
+                " | Pending: " + pending.length;
+
+            statusMessage.style.color = "green";
         }
     }
 
 
     // =====================================
-    // SUPER ADMIN LOGIN
+    // APPROVE REQUEST
     // =====================================
 
-    if (loginForm) {
+    async function approveRequest(request, button) {
 
-        loginForm.addEventListener("submit", async (event) => {
+        if (!currentUser) {
+            alert("Please login again.");
+            return;
+        }
 
-            event.preventDefault();
+        const confirmed = confirm(
+            "Approve admin request for " +
+            request.full_name + "?"
+        );
 
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
+        if (!confirmed) return;
 
-            if (!email || !password) {
+        button.disabled = true;
+        button.textContent = "Approving...";
 
-                showMessage("Email aur password enter karein.");
+        try {
 
-                return;
-            }
+            // First activate the user's admin profile
+            const { data: profileData, error: profileError } = await db
+                .from("profiles")
+                .update({
+                    role: "admin",
+                    is_active: true
+                })
+                .eq("id", request.user_id)
+                .select("id");
 
-
-            const submitButton = loginForm.querySelector(
-                'button[type="submit"]'
-            );
-
-            if (submitButton) {
-
-                submitButton.disabled = true;
-                submitButton.textContent = "Please wait...";
-            }
-
-
-            try {
-
-                const { data, error } =
-                    await supabaseClient.auth.signInWithPassword({
-                        email: email,
-                        password: password
-                    });
-
-
-                if (error) {
-
-                    showMessage("Login failed: " + error.message);
-
-                } else {
-
-                    await verifySuperAdmin(data.user);
-                }
-
-            } catch (error) {
-
-                console.error("Login error:", error);
-
-                showMessage(
-                    "Login nahi ho paaya. Please dobara try karein."
+            if (profileError) {
+                throw new Error(
+                    "Profile update failed: " + profileError.message
                 );
-
-            } finally {
-
-                if (submitButton) {
-
-                    submitButton.disabled = false;
-                    submitButton.textContent = "Login";
-                }
             }
 
-        });
+            if (!profileData || profileData.length === 0) {
+                throw new Error(
+                    "Profile was not updated. Check profiles UPDATE policy."
+                );
+            }
+
+            // Then mark the request approved
+            const { error: requestError } = await db
+                .from("admin_requests")
+                .update({
+                    status: "approved",
+                    reviewed_by: currentUser.id,
+                    reviewed_at: new Date().toISOString()
+                })
+                .eq("id", request.id);
+
+            if (requestError) {
+                throw new Error(
+                    "Profile activated, but request status update failed: " +
+                    requestError.message
+                );
+            }
+
+            alert("Admin request approved successfully!");
+
+            await loadAdminRequests();
+            await loadAdminCount();
+
+        } catch (error) {
+
+            alert("Approval error: " + error.message);
+
+            button.disabled = false;
+            button.textContent = "Approve";
+        }
     }
 
 
     // =====================================
-    // FORGOT PASSWORD
+    // REJECT REQUEST
     // =====================================
 
-    if (forgotPasswordBtn) {
+    async function rejectRequest(request, button) {
 
-        forgotPasswordBtn.addEventListener("click", async () => {
+        if (!currentUser) {
+            alert("Please login again.");
+            return;
+        }
 
-            const email = emailInput.value.trim();
+        const confirmed = confirm(
+            "Reject admin request for " +
+            request.full_name + "?"
+        );
 
-            if (!email) {
+        if (!confirmed) return;
 
-                showMessage(
-                    "Pehle apna email address enter karein."
-                );
+        button.disabled = true;
+        button.textContent = "Rejecting...";
 
-                emailInput.focus();
+        const { error } = await db
+            .from("admin_requests")
+            .update({
+                status: "rejected",
+                reviewed_by: currentUser.id,
+                reviewed_at: new Date().toISOString()
+            })
+            .eq("id", request.id);
 
-                return;
-            }
+        if (error) {
 
+            alert("Rejection error: " + error.message);
 
-            forgotPasswordBtn.disabled = true;
-            forgotPasswordBtn.textContent = "Sending...";
+            button.disabled = false;
+            button.textContent = "Reject";
+            return;
+        }
 
+        alert("Request rejected successfully!");
 
-            try {
-
-                const redirectTo =
-                    "https://harman-preet-51.github.io/ltsu-campus-support/super-admin/reset-password.html";
-
-
-                const { error } =
-                    await supabaseClient.auth.resetPasswordForEmail(
-                        email,
-                        {
-                            redirectTo: redirectTo
-                        }
-                    );
+        await loadAdminRequests();
+    }
 
 
-                if (error) {
+    // =====================================
+    // ADMIN COUNT
+    // =====================================
 
-                    showMessage(
-                        "Reset email nahi bheji ja saki: " + error.message
-                    );
+    async function loadAdminCount() {
 
-                } else {
+        const countElement = $("admin-count");
+        if (!countElement) return;
 
-                    showMessage(
-                        "Password reset link email par bhej diya gaya hai. Inbox check karein.",
-                        true
-                    );
-                }
+        const { count, error } = await db
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .eq("role", "admin")
+            .eq("is_active", true);
 
-            } catch (error) {
-
-                console.error("Password reset error:", error);
-
-                showMessage(
-                    "Password reset request fail ho gayi. Dobara try karein."
-                );
-
-            } finally {
-
-                forgotPasswordBtn.disabled = false;
-                forgotPasswordBtn.textContent = "Forgot Password?";
-            }
-
-        });
+        if (!error) {
+            countElement.textContent = count ?? 0;
+        }
     }
 
 
@@ -300,40 +496,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // SIDEBAR NAVIGATION
     // =====================================
 
-    const navButtons = document.querySelectorAll(".nav-btn");
-
-    const pageSections = document.querySelectorAll(".page-section");
-
-
-    navButtons.forEach((button) => {
+    document.querySelectorAll(".nav-btn").forEach((button) => {
 
         button.addEventListener("click", () => {
 
-            const pageName = button.dataset.page;
-
-
-            navButtons.forEach((item) => {
+            document.querySelectorAll(".nav-btn").forEach((item) => {
                 item.classList.remove("active");
             });
 
-
-            pageSections.forEach((section) => {
+            document.querySelectorAll(".page-section").forEach((section) => {
                 section.classList.remove("active");
             });
 
-
             button.classList.add("active");
 
+            const selectedPage = $(button.dataset.page);
 
-            const selectedPage =
-                document.getElementById(pageName);
+            selectedPage?.classList.add("active");
 
-            if (selectedPage) {
-                selectedPage.classList.add("active");
+            if (button.dataset.page === "admins" && currentUser) {
+                loadAdminRequests();
             }
-
         });
-
     });
 
 
@@ -341,204 +525,131 @@ document.addEventListener("DOMContentLoaded", () => {
     // LOGOUT
     // =====================================
 
-    if (logoutBtn) {
+    $("logout-btn")?.addEventListener("click", async () => {
 
-        logoutBtn.addEventListener("click", async () => {
+        const { error } = await db.auth.signOut();
 
-            try {
+        if (error) {
+            alert("Logout error: " + error.message);
+            return;
+        }
 
-                const { error } =
-                    await supabaseClient.auth.signOut();
+        currentUser = null;
+        loginForm?.reset();
+        showLogin();
+        message("Successfully logged out.", true);
+    });
 
-                if (error) {
-                    showMessage("Logout error: " + error.message);
-                    return;
-                }
 
-                showLogin();
+    // =====================================
+    // FORGOT PASSWORD
+    // =====================================
 
-                if (loginForm) {
-                    loginForm.reset();
-                }
+    $("forgot-password-btn")?.addEventListener("click", async () => {
 
-                showMessage("You have successfully logged out.", true);
+        const email = $("admin-id").value.trim();
 
-            } catch (error) {
+        if (!email) {
+            message("Pehle email address enter karein.");
+            return;
+        }
 
-                console.error("Logout error:", error);
-
-                showMessage("Logout nahi ho paaya. Dobara try karein.");
-            }
-
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+            redirectTo:
+                "https://harman-preet-51.github.io/ltsu-campus-support/super-admin/reset-password.html"
         });
-    }
+
+        if (error) {
+            message(error.message);
+        } else {
+            message("Password reset email sent.", true);
+        }
+    });
 
 
     // =====================================
     // AI ASSISTANT
     // =====================================
 
-    const aiButton = document.getElementById("ai-button");
-    const aiWindow = document.getElementById("ai-window");
-    const aiClose = document.getElementById("ai-close");
+    const aiButton = $("ai-button");
+    const aiWindow = $("ai-window");
 
-    const aiSend = document.getElementById("ai-send");
-    const aiInput = document.getElementById("ai-input");
-    const aiMessages = document.getElementById("ai-messages");
+    aiButton?.addEventListener("click", () => {
+        aiWindow?.classList.toggle("hidden");
+    });
 
-
-    if (aiButton && aiWindow) {
-
-        aiButton.addEventListener("click", () => {
-
-            aiWindow.classList.toggle("hidden");
-
-        });
-    }
-
-
-    if (aiClose && aiWindow) {
-
-        aiClose.addEventListener("click", () => {
-
-            aiWindow.classList.add("hidden");
-
-        });
-    }
-
-
-    // AI MESSAGE FUNCTION
+    $("ai-close")?.addEventListener("click", () => {
+        aiWindow?.classList.add("hidden");
+    });
 
     function sendAIMessage() {
 
-        if (!aiInput || !aiMessages) return;
+        const input = $("ai-input");
+        const messages = $("ai-messages");
 
-        const question = aiInput.value.trim();
+        if (!input || !messages) return;
 
+        const question = input.value.trim();
         if (!question) return;
 
-
-        // USER MESSAGE
-
         const userMessage = document.createElement("div");
-
         userMessage.className = "bot-message";
-        userMessage.style.marginLeft = "auto";
-        userMessage.style.background = "#dff4ed";
-
         userMessage.textContent = question;
-
-        aiMessages.appendChild(userMessage);
-
-
-        // ASSISTANT REPLY
+        messages.appendChild(userMessage);
 
         const reply = document.createElement("div");
-
         reply.className = "bot-message";
 
-        const lowerQuestion = question.toLowerCase();
+        const q = question.toLowerCase();
 
-
-        if (lowerQuestion.includes("complaint")) {
-
+        if (q.includes("admin")) {
             reply.textContent =
-                "Complaints section mein submitted complaints review karein.";
-
-        } else if (lowerQuestion.includes("student")) {
-
+                "Admin Management section mein admin requests approve ya reject karein.";
+        } else if (q.includes("complaint")) {
             reply.textContent =
-                "Students section mein student records aur account status dekhein.";
-
-        } else if (lowerQuestion.includes("admin")) {
-
+                "Complaints section mein submitted complaints dekhein.";
+        } else if (q.includes("student")) {
             reply.textContent =
-                "Admin Management section mein admin access requests review karein.";
-
-        } else if (lowerQuestion.includes("help")) {
-
-            reply.textContent =
-                "Main LTSUCare Super Admin Assistant hoon. Main portal ke basic sections ke baare mein help kar sakta hoon.";
-
+                "Students section mein student records dekhein.";
         } else {
-
             reply.textContent =
-                "Complaints, students aur admin management ke baare mein pooch sakte hain.";
+                "Main LTSUCare Super Admin Assistant hoon.";
         }
 
-
-        aiMessages.appendChild(reply);
-
-        aiInput.value = "";
-
-        aiMessages.scrollTop = aiMessages.scrollHeight;
+        messages.appendChild(reply);
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
     }
 
+    $("ai-send")?.addEventListener("click", sendAIMessage);
 
-    if (aiSend) {
-
-        aiSend.addEventListener("click", sendAIMessage);
-    }
-
-
-    if (aiInput) {
-
-        aiInput.addEventListener("keydown", (event) => {
-
-            if (event.key === "Enter") {
-                sendAIMessage();
-            }
-
-        });
-    }
+    $("ai-input")?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") sendAIMessage();
+    });
 
 
     // =====================================
-    // CHECK EXISTING LOGIN SESSION
+    // RESTORE SESSION
     // =====================================
 
-    async function checkExistingSession() {
+    async function checkSession() {
 
-        try {
+        const { data, error } = await db.auth.getSession();
 
-            const { data, error } =
-                await supabaseClient.auth.getSession();
+        if (error) {
+            showLogin();
+            message(error.message);
+            return;
+        }
 
-
-            if (error) {
-
-                showLogin();
-
-                showMessage(
-                    "Session check nahi ho paaya. Please login karein."
-                );
-
-                return;
-            }
-
-
-            if (data.session) {
-
-                await verifySuperAdmin(data.session.user);
-
-            } else {
-
-                showLogin();
-            }
-
-        } catch (error) {
-
-            console.error("Session error:", error);
-
+        if (data.session?.user) {
+            await verifySuperAdmin(data.session.user);
+        } else {
             showLogin();
         }
     }
 
-
-    // START APPLICATION
-
     showLogin();
-
-    checkExistingSession();
+    checkSession();
 
 });
