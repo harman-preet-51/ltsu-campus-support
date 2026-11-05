@@ -1,980 +1,726 @@
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    // ==========================================
-    // 1. SUPABASE CONNECTION
-    // ==========================================
+    // =====================================
+    // SUPABASE CONNECTION
+    // =====================================
 
-    const supabase = window.supabaseClient;
+    const supabaseClient = window.supabaseClient;
 
-    if (!supabase) {
-        alert(
-            "Supabase connection not found. Please check the Supabase scripts in admin.html."
-        );
-        return;
+    const loginPage = document.getElementById("login-page");
+    const dashboard = document.getElementById("dashboard");
+    const loginForm = document.getElementById("login-form");
+    const emailInput = document.getElementById("admin-id");
+    const passwordInput = document.getElementById("admin-pin");
+    const loginMessage = document.getElementById("login-message");
+    const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    let currentSuperAdmin = null;
+
+    // =====================================
+    // MESSAGE FUNCTION
+    // =====================================
+
+    function showMessage(message, success = false) {
+        if (!loginMessage) return;
+
+        loginMessage.textContent = message;
+        loginMessage.style.display = "block";
+        loginMessage.style.color = success ? "#168c79" : "#d94b64";
+        loginMessage.style.marginTop = "12px";
+        loginMessage.style.fontSize = "13px";
     }
 
+    // =====================================
+    // SHOW LOGIN / DASHBOARD
+    // =====================================
 
-    // ==========================================
-    // 2. HTML ELEMENTS
-    // ==========================================
-
-    const authSection = document.getElementById("admin-auth-section");
-    const dashboard = document.getElementById("admin-dashboard");
-
-    const loginTab = document.getElementById("admin-login-tab");
-    const registerTab = document.getElementById("admin-register-tab");
-
-    const loginPanel = document.getElementById("admin-login-panel");
-    const registerPanel = document.getElementById("admin-register-panel");
-
-    const loginForm = document.getElementById("admin-login-form");
-    const registerForm = document.getElementById("admin-register-form");
-
-    const logoutButton = document.getElementById("admin-logout");
-
-    let currentAdmin = null;
-    let selectedComplaintId = null;
-    let allComplaints = [];
-
-
-    // ==========================================
-    // 3. COMMON FUNCTIONS
-    // ==========================================
-
-    function showMessage(message) {
-        alert(message);
-    }
-
-    function showLoginPanel() {
-        loginPanel.classList.remove("hidden");
-        registerPanel.classList.add("hidden");
-
-        loginTab.classList.add("active");
-        registerTab.classList.remove("active");
-    }
-
-    function showRegisterPanel() {
-        registerPanel.classList.remove("hidden");
-        loginPanel.classList.add("hidden");
-
-        registerTab.classList.add("active");
-        loginTab.classList.remove("active");
+    function showLogin() {
+        dashboard?.classList.add("hidden");
+        loginPage?.classList.remove("hidden");
     }
 
     function showDashboard() {
-        authSection.classList.add("hidden");
-        dashboard.classList.remove("hidden");
+        loginPage?.classList.add("hidden");
+        dashboard?.classList.remove("hidden");
     }
 
-    function showAuthentication() {
-        dashboard.classList.add("hidden");
-        authSection.classList.remove("hidden");
-        showLoginPanel();
+    // =====================================
+    // CHECK SUPABASE
+    // =====================================
+
+    if (!supabaseClient) {
+        showLogin();
+        showMessage("Supabase connection nahi mili. Configuration check karein.");
+        return;
     }
 
-    function cleanText(value) {
-        return String(value ?? "");
+    // =====================================
+    // SAFE HTML
+    // =====================================
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[character]);
     }
 
+    // =====================================
+    // VERIFY SUPER ADMIN
+    // =====================================
 
-    // ==========================================
-    // 4. AUTHENTICATION TABS
-    // ==========================================
-
-    loginTab.addEventListener("click", showLoginPanel);
-
-    registerTab.addEventListener("click", showRegisterPanel);
-
-    document.getElementById("open-admin-register")
-        .addEventListener("click", (event) => {
-            event.preventDefault();
-            showRegisterPanel();
-        });
-
-    document.getElementById("open-admin-login")
-        .addEventListener("click", (event) => {
-            event.preventDefault();
-            showLoginPanel();
-        });
-
-
-    // ==========================================
-    // 5. ADMIN REGISTRATION
-    // ==========================================
-
-    registerForm.addEventListener("submit", async (event) => {
-
-        event.preventDefault();
-
-        const fullName = document.getElementById("admin-name").value.trim();
-        const email = document.getElementById("admin-email").value.trim().toLowerCase();
-        const mobile = document.getElementById("admin-mobile").value.trim();
-        const department = document.getElementById("admin-department").value;
-        const reason = document.getElementById("admin-reason").value.trim();
-
-        const password = document.getElementById("admin-create-password").value;
-        const confirmPassword = document.getElementById("admin-confirm-password").value;
-
-
-        // Required field validation
-        if (
-            !fullName ||
-            !email ||
-            !mobile ||
-            !department ||
-            !reason ||
-            !password ||
-            !confirmPassword
-        ) {
-            showMessage("Please fill in all registration fields.");
-            return;
-        }
-
-        if (password.length < 8) {
-            showMessage("Password must contain at least 8 characters.");
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            showMessage("Passwords do not match.");
-            return;
-        }
-
-        const confirmRequest = window.confirm(
-            "Please confirm:\n\n" +
-            "1. Your password is private.\n" +
-            "2. The Super Admin cannot see your password.\n" +
-            "3. Your Admin access requires Super Admin approval.\n\n" +
-            "Do you want to submit your request?"
-        );
-
-        if (!confirmRequest) {
-            return;
-        }
-
-
-        const submitButton = registerForm.querySelector(
-            'button[type="submit"]'
-        );
-
-        submitButton.disabled = true;
-        submitButton.textContent = "Submitting Request...";
-
-
+    async function verifySuperAdmin(user) {
         try {
-
-            // Create Supabase Auth account
-            const { data, error } = await supabase.auth.signUp({
-
-                email: email,
-                password: password,
-
-                options: {
-                    data: {
-                        full_name: fullName
-                    }
-                }
-
-            });
-
-
-            if (error) {
-                throw error;
-            }
-
-            if (!data.user) {
-                throw new Error("Account could not be created.");
-            }
-
-
-            // Email confirmation must be disabled
-            // for this immediate registration workflow.
-            if (!data.session) {
-
-                showMessage(
-                    "Your authentication account was created, but Supabase has not provided an active session.\n\n" +
-                    "Please ask the project administrator to check whether Email Confirmation is disabled in Supabase Authentication settings.\n\n" +
-                    "Do not submit the registration repeatedly."
-                );
-
-                return;
-            }
-
-
-            // Save admin access request
-            const { error: requestError } = await supabase
-                .from("admin_requests")
-                .insert({
-
-                    user_id: data.user.id,
-                    full_name: fullName,
-                    email: email,
-                    contact_number: mobile,
-                    department: department,
-                    reason: reason,
-                    status: "pending"
-
-                });
-
-
-            if (requestError) {
-                throw requestError;
-            }
-
-
-            showMessage(
-                "Your Admin Access Request has been submitted successfully!\n\n" +
-                "Status: Pending Approval\n\n" +
-                "The Super Admin will review your request. You can log in after your request is approved."
-            );
-
-
-            registerForm.reset();
-
-            await supabase.auth.signOut();
-
-            showLoginPanel();
-
-        } catch (error) {
-
-            console.error("Registration Error:", error);
-
-            showMessage(
-                "Registration failed:\n\n" + error.message
-            );
-
-        } finally {
-
-            submitButton.disabled = false;
-            submitButton.textContent = "Submit Access Request";
-
-        }
-
-    });
-
-
-    // ==========================================
-    // 6. ADMIN LOGIN
-    // ==========================================
-
-    loginForm.addEventListener("submit", async (event) => {
-
-        event.preventDefault();
-
-        const email = document.getElementById("admin-email-login")
-            .value.trim().toLowerCase();
-
-        const password = document.getElementById("admin-password-login")
-            .value;
-
-        const submitButton = loginForm.querySelector(
-            'button[type="submit"]'
-        );
-
-        submitButton.disabled = true;
-        submitButton.textContent = "Checking Login...";
-
-
-        try {
-
-            // Sign in with Supabase
-            const { data, error } = await supabase.auth.signInWithPassword({
-
-                email: email,
-                password: password
-
-            });
-
-
-            if (error) {
-                throw error;
-            }
-
-            const user = data.user;
-
-            if (!user) {
-                throw new Error("User account not found.");
-            }
-
-
-            // Check admin request
-            const { data: request, error: requestError } = await supabase
-                .from("admin_requests")
-                .select("status, full_name, email, department, contact_number")
-                .eq("user_id", user.id)
-                .maybeSingle();
-
-
-            if (requestError) {
-                throw requestError;
-            }
-
-
-            if (!request) {
-
-                await supabase.auth.signOut();
-
-                showMessage(
-                    "No Admin Access Request was found for this account."
-                );
-
-                return;
-            }
-
-
-            if (request.status === "pending") {
-
-                await supabase.auth.signOut();
-
-                showMessage(
-                    "Your Admin Access Request is still pending.\n\nPlease wait for Super Admin approval."
-                );
-
-                return;
-            }
-
-
-            if (request.status === "rejected") {
-
-                await supabase.auth.signOut();
-
-                showMessage(
-                    "Your Admin Access Request has been rejected.\n\nPlease contact the Super Admin."
-                );
-
-                return;
-            }
-
-
-            if (request.status !== "approved") {
-
-                await supabase.auth.signOut();
-
-                showMessage("Your account does not have an approved request.");
-
-                return;
-            }
-
-
-            // Check user profile role
-            const { data: profile, error: profileError } = await supabase
+            const { data: profile, error } = await supabaseClient
                 .from("profiles")
-                .select("id, full_name, email, role, department, is_active")
+                .select("id, full_name, email, role, is_active")
                 .eq("id", user.id)
                 .maybeSingle();
 
-
-            if (profileError) {
-                throw profileError;
+            if (error || !profile) {
+                await supabaseClient.auth.signOut();
+                showLogin();
+                showMessage("Profile verify nahi ho paayi. Administrator se contact karein.");
+                return false;
             }
-
-
-            if (!profile) {
-
-                await supabase.auth.signOut();
-
-                showMessage("Your user profile could not be found.");
-
-                return;
-            }
-
 
             if (
-                profile.role !== "admin" ||
+                profile.role !== "super_admin" ||
                 profile.is_active !== true
             ) {
-
-                await supabase.auth.signOut();
-
-                showMessage(
-                    "Your request is approved, but your Admin profile is not active yet.\n\nPlease contact the Super Admin."
-                );
-
-                return;
+                await supabaseClient.auth.signOut();
+                showLogin();
+                showMessage("Access denied. Sirf active Super Admin login kar sakta hai.");
+                return false;
             }
 
-
-            // Successful Admin Login
-            currentAdmin = {
-                id: user.id,
-                email: user.email,
-                name: profile.full_name || request.full_name,
-                department: profile.department || request.department
-            };
+            currentSuperAdmin = user;
 
             showDashboard();
 
-            updateAdminProfile();
-
-            await loadComplaints();
-
-            showMessage("Welcome to the Admin Dashboard!");
-
-        } catch (error) {
-
-            console.error("Login Error:", error);
-
-            showMessage(
-                "Login failed:\n\n" + error.message
-            );
-
-        } finally {
-
-            submitButton.disabled = false;
-            submitButton.textContent = "Login to Dashboard";
-
-        }
-
-    });
-
-
-    // ==========================================
-    // 7. ADMIN PROFILE
-    // ==========================================
-
-    function updateAdminProfile() {
-
-        if (!currentAdmin) {
-            return;
-        }
-
-        document.getElementById("profile-admin-id").textContent =
-            currentAdmin.id;
-
-        document.getElementById("profile-admin-name").textContent =
-            currentAdmin.name || "Admin";
-
-        document.getElementById("profile-admin-email").textContent =
-            currentAdmin.email;
-
-        document.getElementById("profile-admin-department").textContent =
-            currentAdmin.department || "Not Assigned";
-
-        document.getElementById("profile-admin-status").textContent =
-            "Active";
-
-    }
-
-
-    // ==========================================
-    // 8. DASHBOARD NAVIGATION
-    // ==========================================
-
-    const navigationButtons = document.querySelectorAll(".nav-btn");
-
-    navigationButtons.forEach((button) => {
-
-        button.addEventListener("click", () => {
-
-            const targetId = button.dataset.section;
-
-            document.querySelectorAll(".dashboard-panel")
-                .forEach((section) => {
-                    section.classList.add("hidden");
-                });
-
-            const targetSection = document.getElementById(targetId);
-
-            if (targetSection) {
-                targetSection.classList.remove("hidden");
+            const adminLabel = document.querySelector(".admin-label");
+            if (adminLabel) {
+                adminLabel.textContent = profile.full_name || "Super Admin";
             }
 
-            navigationButtons.forEach((navButton) => {
-                navButton.classList.remove("active");
-            });
+            await loadAdminRequests();
+            await loadAdminCount();
+
+            return true;
+
+        } catch (error) {
+            console.error("Profile verification error:", error);
+            await supabaseClient.auth.signOut();
+            showLogin();
+            showMessage("Account verify karte waqt error aayi.");
+            return false;
+        }
+    }
+
+    // =====================================
+    // SUPER ADMIN LOGIN
+    // =====================================
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showMessage("Email aur password enter karein.");
+                return;
+            }
+
+            const submitButton = loginForm.querySelector(
+                'button[type="submit"]'
+            );
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "Please wait...";
+            }
+
+            try {
+                const { data, error } =
+                    await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                if (error) throw error;
+
+                await verifySuperAdmin(data.user);
+
+            } catch (error) {
+                console.error("Login error:", error);
+                showMessage("Login failed: " + error.message);
+
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = "Login";
+                }
+            }
+        });
+    }
+
+    // =====================================
+    // FORGOT PASSWORD
+    // =====================================
+
+    if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener("click", async () => {
+
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                showMessage("Pehle apna email address enter karein.");
+                emailInput.focus();
+                return;
+            }
+
+            forgotPasswordBtn.disabled = true;
+            forgotPasswordBtn.textContent = "Sending...";
+
+            try {
+                const redirectTo =
+                    "https://harman-preet-51.github.io/ltsu-campus-support/super-admin/reset-password.html";
+
+                const { error } =
+                    await supabaseClient.auth.resetPasswordForEmail(
+                        email,
+                        { redirectTo }
+                    );
+
+                if (error) throw error;
+
+                showMessage(
+                    "Password reset link email par bhej diya gaya hai. Inbox check karein.",
+                    true
+                );
+
+            } catch (error) {
+                showMessage("Reset email nahi bheji ja saki: " + error.message);
+
+            } finally {
+                forgotPasswordBtn.disabled = false;
+                forgotPasswordBtn.textContent = "Forgot Password?";
+            }
+        });
+    }
+
+    // =====================================
+    // SIDEBAR NAVIGATION
+    // =====================================
+
+    const navButtons = document.querySelectorAll(".nav-btn");
+    const pageSections = document.querySelectorAll(".page-section");
+
+    navButtons.forEach(button => {
+        button.addEventListener("click", async () => {
+
+            const pageName = button.dataset.page;
+
+            navButtons.forEach(item => item.classList.remove("active"));
+            pageSections.forEach(section => section.classList.remove("active"));
 
             button.classList.add("active");
 
-        });
+            const selectedPage = document.getElementById(pageName);
 
+            if (selectedPage) {
+                selectedPage.classList.add("active");
+            }
+
+            if (pageName === "admins") {
+                await loadAdminRequests();
+            }
+        });
     });
 
+    // =====================================
+    // ADMIN MANAGEMENT UI
+    // =====================================
 
-    // ==========================================
-    // 9. LOAD COMPLAINTS
-    // ==========================================
+    function prepareAdminManagement() {
 
-    async function loadComplaints() {
+        const adminsPage = document.getElementById("admins");
 
-        const tableBody = document.getElementById(
-            "complaints-table-body"
-        );
+        if (!adminsPage) return null;
 
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="6">Loading complaints...</td>
-            </tr>
+        let box = adminsPage.querySelector(".content-box");
+
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "content-box";
+            adminsPage.appendChild(box);
+        }
+
+        box.innerHTML = `
+            <h3>Admin Management</h3>
+
+            <p>Review and manage administrator access requests.</p>
+
+            <div style="margin:15px 0;">
+                <button type="button" id="refresh-admin-requests">
+                    Refresh Requests
+                </button>
+            </div>
+
+            <h3>Pending Admin Requests</h3>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>Department</th>
+                            <th>Reason</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="admin-requests-body">
+                        <tr>
+                            <td colspan="7">Loading requests...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top:25px;">All Admin Requests</h3>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="all-admin-requests-body">
+                        <tr>
+                            <td colspan="4">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         `;
 
+        document.getElementById("refresh-admin-requests")
+            .addEventListener("click", loadAdminRequests);
+
+        return adminsPage;
+    }
+
+    // =====================================
+    // LOAD ADMIN REQUESTS
+    // =====================================
+
+    async function loadAdminRequests() {
+
+        const adminsPage = document.getElementById("admins");
+        if (!adminsPage) return;
+
+        prepareAdminManagement();
+
+        const pendingBody = document.getElementById("admin-requests-body");
+        const allBody = document.getElementById("all-admin-requests-body");
+
+        pendingBody.innerHTML =
+            `<tr><td colspan="7">Loading requests...</td></tr>`;
+
+        allBody.innerHTML =
+            `<tr><td colspan="4">Loading...</td></tr>`;
 
         try {
 
-            const { data, error } = await supabase
-                .from("complaints")
+            const { data: requests, error } = await supabaseClient
+                .from("admin_requests")
                 .select("*")
                 .order("created_at", { ascending: false });
 
+            if (error) throw error;
 
-            if (error) {
-                throw error;
+            if (!requests || requests.length === 0) {
+
+                pendingBody.innerHTML =
+                    `<tr><td colspan="7">No pending requests found.</td></tr>`;
+
+                allBody.innerHTML =
+                    `<tr><td colspan="4">No admin requests found.</td></tr>`;
+
+                return;
             }
 
-            allComplaints = data || [];
+            const pendingRequests = requests.filter(
+                request => request.status === "pending"
+            );
 
-            displayComplaints(allComplaints);
+            if (pendingRequests.length === 0) {
+                pendingBody.innerHTML =
+                    `<tr><td colspan="7">No pending requests.</td></tr>`;
+            } else {
 
-            updateDashboardStats(allComplaints);
+                pendingBody.innerHTML = pendingRequests.map(request => {
+
+                    const date = request.created_at
+                        ? new Date(request.created_at).toLocaleDateString()
+                        : "--";
+
+                    return `
+                        <tr>
+                            <td>${escapeHTML(request.full_name)}</td>
+                            <td>${escapeHTML(request.email)}</td>
+                            <td>${escapeHTML(request.contact_number)}</td>
+                            <td>${escapeHTML(request.department)}</td>
+                            <td>${escapeHTML(request.reason)}</td>
+                            <td>${escapeHTML(date)}</td>
+                            <td>
+                                <button
+                                    type="button"
+                                    class="approve-admin-btn"
+                                    data-id="${escapeHTML(request.id)}"
+                                    data-user="${escapeHTML(request.user_id)}">
+                                    Approve
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="reject-admin-btn"
+                                    data-id="${escapeHTML(request.id)}">
+                                    Reject
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+
+            allBody.innerHTML = requests.map(request => `
+                <tr>
+                    <td>${escapeHTML(request.full_name)}</td>
+                    <td>${escapeHTML(request.email)}</td>
+                    <td>${escapeHTML(request.department)}</td>
+                    <td>${escapeHTML(request.status)}</td>
+                </tr>
+            `).join("");
+
+            pendingBody.querySelectorAll(".approve-admin-btn")
+                .forEach(button => {
+                    button.addEventListener("click", () => {
+                        approveAdmin(
+                            button.dataset.id,
+                            button.dataset.user
+                        );
+                    });
+                });
+
+            pendingBody.querySelectorAll(".reject-admin-btn")
+                .forEach(button => {
+                    button.addEventListener("click", () => {
+                        rejectAdmin(button.dataset.id);
+                    });
+                });
 
         } catch (error) {
 
-            console.error("Complaint Loading Error:", error);
+            console.error("Admin requests loading error:", error);
 
-            tableBody.innerHTML = `
+            pendingBody.innerHTML = `
                 <tr>
-                    <td colspan="6">
-                        Unable to load complaints. Please check database permissions.
+                    <td colspan="7">
+                        Error loading requests: ${escapeHTML(error.message)}
                     </td>
                 </tr>
             `;
 
+            allBody.innerHTML =
+                `<tr><td colspan="4">Unable to load requests.</td></tr>`;
         }
-
     }
 
+    // =====================================
+    // APPROVE ADMIN
+    // =====================================
 
-    // ==========================================
-    // 10. DISPLAY COMPLAINTS
-    // ==========================================
+    async function approveAdmin(requestId, userId) {
 
-    function displayComplaints(complaints) {
-
-        const tableBody = document.getElementById(
-            "complaints-table-body"
+        const confirmed = window.confirm(
+            "Are you sure you want to approve this Admin request?"
         );
 
-        tableBody.innerHTML = "";
-
-        if (!complaints || complaints.length === 0) {
-
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6">No complaints found.</td>
-                </tr>
-            `;
-
-            return;
-        }
-
-
-        complaints.forEach((complaint) => {
-
-            const row = document.createElement("tr");
-
-            const complaintId = complaint.complaint_id || complaint.id;
-
-            const category = complaint.category || "General";
-
-            const location = complaint.location || "Not specified";
-
-            const date = complaint.created_at
-                ? new Date(complaint.created_at).toLocaleDateString()
-                : "--";
-
-            const status = complaint.status || "Submitted";
-
-
-            row.innerHTML = `
-                <td>${escapeHTML(complaintId)}</td>
-                <td>${escapeHTML(category)}</td>
-                <td>${escapeHTML(location)}</td>
-                <td>${escapeHTML(date)}</td>
-                <td>${escapeHTML(status)}</td>
-                <td>
-                    <button
-                        type="button"
-                        class="view-complaint-btn"
-                        data-id="${escapeHTML(complaint.id)}"
-                    >
-                        View
-                    </button>
-                </td>
-            `;
-
-            tableBody.appendChild(row);
-
-        });
-
-
-        tableBody.querySelectorAll(".view-complaint-btn")
-            .forEach((button) => {
-
-                button.addEventListener("click", () => {
-
-                    const complaint = allComplaints.find(
-                        (item) => item.id === button.dataset.id
-                    );
-
-                    if (complaint) {
-                        showComplaintDetails(complaint);
-                    }
-
-                });
-
-            });
-
-    }
-
-
-    function escapeHTML(value) {
-
-        return String(value ?? "").replace(/[&<>"']/g, (character) => {
-
-            const replacements = {
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#039;"
-            };
-
-            return replacements[character];
-
-        });
-
-    }
-
-
-    // ==========================================
-    // 11. DASHBOARD STATISTICS
-    // ==========================================
-
-    function updateDashboardStats(complaints) {
-
-        const total = complaints.length;
-
-        const pending = complaints.filter((item) =>
-            ["Submitted", "Pending", "Under Review"].includes(item.status)
-        ).length;
-
-        const inProgress = complaints.filter((item) =>
-            ["In Progress", "Work in Progress"].includes(item.status)
-        ).length;
-
-        const resolved = complaints.filter((item) =>
-            ["Resolved", "Solved", "Closed"].includes(item.status)
-        ).length;
-
-
-        document.getElementById("total-complaints").textContent = total;
-
-        document.getElementById("pending-complaints").textContent = pending;
-
-        document.getElementById("progress-complaints").textContent = inProgress;
-
-        document.getElementById("resolved-complaints").textContent = resolved;
-
-    }
-
-
-    // ==========================================
-    // 12. COMPLAINT SEARCH AND FILTER
-    // ==========================================
-
-    const complaintSearch = document.getElementById("complaint-search");
-
-    const statusFilter = document.getElementById(
-        "complaint-status-filter"
-    );
-
-    const categoryFilter = document.getElementById(
-        "complaint-category-filter"
-    );
-
-
-    function filterComplaints() {
-
-        const searchValue = complaintSearch.value.toLowerCase().trim();
-
-        const selectedStatus = statusFilter.value;
-
-        const selectedCategory = categoryFilter.value;
-
-
-        const filtered = allComplaints.filter((complaint) => {
-
-            const complaintId = cleanText(
-                complaint.complaint_id || complaint.id
-            ).toLowerCase();
-
-            const matchesSearch = complaintId.includes(searchValue);
-
-            const matchesStatus =
-                selectedStatus === "all" ||
-                complaint.status === selectedStatus;
-
-            const matchesCategory =
-                selectedCategory === "all" ||
-                complaint.category === selectedCategory;
-
-            return matchesSearch && matchesStatus && matchesCategory;
-
-        });
-
-
-        displayComplaints(filtered);
-
-    }
-
-
-    complaintSearch.addEventListener("input", filterComplaints);
-
-    statusFilter.addEventListener("change", filterComplaints);
-
-    categoryFilter.addEventListener("change", filterComplaints);
-
-
-    // ==========================================
-    // 13. COMPLAINT DETAILS
-    // ==========================================
-
-    function showComplaintDetails(complaint) {
-
-        selectedComplaintId = complaint.id;
-
-        const detailsCard = document.getElementById(
-            "complaint-details"
-        );
-
-        const detailContent = document.getElementById(
-            "complaint-detail-content"
-        );
-
-
-        detailContent.innerHTML = `
-            <p><strong>Complaint ID:</strong> ${escapeHTML(complaint.complaint_id || complaint.id)}</p>
-
-            <p><strong>Title:</strong> ${escapeHTML(complaint.title || "--")}</p>
-
-            <p><strong>Category:</strong> ${escapeHTML(complaint.category || "--")}</p>
-
-            <p><strong>Location:</strong> ${escapeHTML(complaint.location || "--")}</p>
-
-            <p><strong>Description:</strong> ${escapeHTML(complaint.description || "--")}</p>
-
-            <p><strong>Status:</strong> ${escapeHTML(complaint.status || "--")}</p>
-
-            <p><strong>Admin Notes:</strong> ${escapeHTML(complaint.notes || "--")}</p>
-        `;
-
-
-        document.getElementById("update-status").value = "";
-
-        document.getElementById("resolution-details").value =
-            complaint.notes || "";
-
-        detailsCard.classList.remove("hidden");
-
-    }
-
-
-    // ==========================================
-    // 14. UPDATE COMPLAINT STATUS
-    // ==========================================
-
-    const complaintUpdateForm = document.getElementById(
-        "complaint-update-form"
-    );
-
-
-    complaintUpdateForm.addEventListener("submit", async (event) => {
-
-        event.preventDefault();
-
-        if (!selectedComplaintId) {
-            showMessage("Please select a complaint first.");
-            return;
-        }
-
-        const newStatus = document.getElementById("update-status").value;
-
-        const notes = document.getElementById("resolution-details")
-            .value.trim();
-
-        if (!newStatus || !notes) {
-            showMessage("Please select a status and enter remarks.");
-            return;
-        }
-
-
-        const submitButton = complaintUpdateForm.querySelector(
-            'button[type="submit"]'
-        );
-
-        submitButton.disabled = true;
-        submitButton.textContent = "Saving...";
-
+        if (!confirmed) return;
 
         try {
 
-            const { error } = await supabase
-                .from("complaints")
+            // Activate the profile first
+            const { data: profile, error: profileError } =
+                await supabaseClient
+                    .from("profiles")
+                    .update({
+                        role: "admin",
+                        is_active: true
+                    })
+                    .eq("id", userId)
+                    .select("id");
+
+            if (profileError) throw profileError;
+
+            if (!profile || profile.length === 0) {
+                throw new Error(
+                    "Profile update nahi hui. Check profiles table permissions."
+                );
+            }
+
+            // Mark request as approved
+            const { error: requestError } =
+                await supabaseClient
+                    .from("admin_requests")
+                    .update({
+                        status: "approved",
+                        reviewed_by: currentSuperAdmin.id,
+                        reviewed_at: new Date().toISOString()
+                    })
+                    .eq("id", requestId);
+
+            if (requestError) throw requestError;
+
+            alert(
+                "Admin request approved successfully!\n\nThe user can now try Admin Login."
+            );
+
+            await loadAdminRequests();
+            await loadAdminCount();
+
+        } catch (error) {
+
+            console.error("Approval error:", error);
+
+            alert(
+                "Approval failed:\n\n" + error.message +
+                "\n\nCheck Supabase RLS policies."
+            );
+        }
+    }
+
+    // =====================================
+    // REJECT ADMIN
+    // =====================================
+
+    async function rejectAdmin(requestId) {
+
+        const confirmed = window.confirm(
+            "Are you sure you want to reject this Admin request?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+
+            const { error } = await supabaseClient
+                .from("admin_requests")
                 .update({
-                    status: newStatus,
-                    notes: notes,
-                    updated_at: new Date().toISOString()
+                    status: "rejected",
+                    reviewed_by: currentSuperAdmin.id,
+                    reviewed_at: new Date().toISOString()
                 })
-                .eq("id", selectedComplaintId);
+                .eq("id", requestId);
 
+            if (error) throw error;
 
-            if (error) {
-                throw error;
-            }
+            alert("Admin request rejected.");
 
-
-            showMessage("Complaint status updated successfully.");
-
-            document.getElementById("complaint-details")
-                .classList.add("hidden");
-
-            selectedComplaintId = null;
-
-            await loadComplaints();
+            await loadAdminRequests();
 
         } catch (error) {
 
-            console.error("Complaint Update Error:", error);
+            console.error("Rejection error:", error);
 
-            showMessage(
-                "Unable to update complaint:\n\n" + error.message
+            alert(
+                "Rejection failed:\n\n" + error.message
             );
-
-        } finally {
-
-            submitButton.disabled = false;
-            submitButton.textContent = "Save Status Update";
-
         }
+    }
 
-    });
+    // =====================================
+    // TOTAL ADMIN COUNT
+    // =====================================
 
+    async function loadAdminCount() {
 
-    // ==========================================
-    // 15. EMAIL CENTRE - PREVIEW
-    // ==========================================
+        const adminCount = document.getElementById("admin-count");
 
-    const emailForm = document.getElementById("admin-email-form");
-
-    const emailPreview = document.getElementById("email-preview");
-
-    const emailPreviewContent = document.getElementById(
-        "email-preview-content"
-    );
-
-
-    emailForm.addEventListener("submit", (event) => {
-
-        event.preventDefault();
-
-        const complaintId = document.getElementById(
-            "email-complaint-id"
-        ).value.trim();
-
-        const subject = document.getElementById(
-            "email-subject"
-        ).value.trim();
-
-        const message = document.getElementById(
-            "email-message"
-        ).value.trim();
-
-
-        emailPreviewContent.innerHTML = `
-            <p><strong>Complaint ID:</strong> ${escapeHTML(complaintId)}</p>
-
-            <p><strong>Subject:</strong> ${escapeHTML(subject)}</p>
-
-            <p><strong>Message:</strong></p>
-
-            <p>${escapeHTML(message)}</p>
-        `;
-
-
-        emailPreview.classList.remove("hidden");
-
-    });
-
-
-    document.getElementById("confirm-email-send")
-        .addEventListener("click", () => {
-
-            showMessage(
-                "Email sending is not connected yet.\n\nA secure email backend needs to be configured before emails can actually be sent."
-            );
-
-        });
-
-
-    // ==========================================
-    // 16. ADMIN LOGOUT
-    // ==========================================
-
-    logoutButton.addEventListener("click", async () => {
-
-        const confirmLogout = window.confirm(
-            "Are you sure you want to logout?"
-        );
-
-        if (!confirmLogout) {
-            return;
-        }
-
+        if (!adminCount) return;
 
         try {
 
-            const { error } = await supabase.auth.signOut();
+            const { count, error } = await supabaseClient
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .eq("role", "admin");
 
-            if (error) {
-                throw error;
+            if (error) throw error;
+
+            adminCount.textContent = count ?? 0;
+
+        } catch (error) {
+            console.error("Admin count error:", error);
+        }
+    }
+
+    // =====================================
+    // LOGOUT
+    // =====================================
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+
+            try {
+
+                const { error } = await supabaseClient.auth.signOut();
+
+                if (error) throw error;
+
+                currentSuperAdmin = null;
+
+                showLogin();
+
+                if (loginForm) loginForm.reset();
+
+                showMessage("You have successfully logged out.", true);
+
+            } catch (error) {
+                showMessage("Logout nahi ho paaya: " + error.message);
             }
+        });
+    }
 
-            currentAdmin = null;
+    // =====================================
+    // AI ASSISTANT
+    // =====================================
 
-            loginForm.reset();
+    const aiButton = document.getElementById("ai-button");
+    const aiWindow = document.getElementById("ai-window");
+    const aiClose = document.getElementById("ai-close");
+    const aiSend = document.getElementById("ai-send");
+    const aiInput = document.getElementById("ai-input");
+    const aiMessages = document.getElementById("ai-messages");
 
-            registerForm.reset();
+    if (aiButton && aiWindow) {
+        aiButton.addEventListener("click", () => {
+            aiWindow.classList.toggle("hidden");
+        });
+    }
 
-            showAuthentication();
+    if (aiClose && aiWindow) {
+        aiClose.addEventListener("click", () => {
+            aiWindow.classList.add("hidden");
+        });
+    }
 
-            showMessage("You have been logged out successfully.");
+    function sendAIMessage() {
+
+        if (!aiInput || !aiMessages) return;
+
+        const question = aiInput.value.trim();
+        if (!question) return;
+
+        const userMessage = document.createElement("div");
+        userMessage.className = "bot-message";
+        userMessage.style.marginLeft = "auto";
+        userMessage.style.background = "#dff4ed";
+        userMessage.textContent = question;
+
+        aiMessages.appendChild(userMessage);
+
+        const reply = document.createElement("div");
+        reply.className = "bot-message";
+
+        const lowerQuestion = question.toLowerCase();
+
+        if (lowerQuestion.includes("complaint")) {
+            reply.textContent =
+                "Complaints section mein submitted complaints review karein.";
+
+        } else if (lowerQuestion.includes("student")) {
+            reply.textContent =
+                "Students section mein student records aur account status dekhein.";
+
+        } else if (lowerQuestion.includes("admin")) {
+            reply.textContent =
+                "Admin Management section mein admin access requests review karein.";
+
+        } else if (lowerQuestion.includes("help")) {
+            reply.textContent =
+                "Main LTSUCare Super Admin Assistant hoon. Main portal ke basic sections ke baare mein help kar sakta hoon.";
+
+        } else {
+            reply.textContent =
+                "Complaints, students aur admin management ke baare mein pooch sakte hain.";
+        }
+
+        aiMessages.appendChild(reply);
+
+        aiInput.value = "";
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+    }
+
+    if (aiSend) {
+        aiSend.addEventListener("click", sendAIMessage);
+    }
+
+    if (aiInput) {
+        aiInput.addEventListener("keydown", event => {
+            if (event.key === "Enter") sendAIMessage();
+        });
+    }
+
+    // =====================================
+    // CHECK EXISTING LOGIN SESSION
+    // =====================================
+
+    async function checkExistingSession() {
+
+        try {
+
+            const { data, error } =
+                await supabaseClient.auth.getSession();
+
+            if (error) throw error;
+
+            if (data.session) {
+                await verifySuperAdmin(data.session.user);
+            } else {
+                showLogin();
+            }
 
         } catch (error) {
 
-            console.error("Logout Error:", error);
-
-            showMessage(
-                "Logout failed:\n\n" + error.message
-            );
-
+            console.error("Session error:", error);
+            showLogin();
         }
+    }
 
-    });
+    // =====================================
+    // START APPLICATION
+    // =====================================
 
+    showLogin();
 
-    // ==========================================
-    // 17. CURRENT YEAR
-    // ==========================================
-
-    document.getElementById("current-year").textContent =
-        new Date().getFullYear();
-
-
-    // ==========================================
-    // 18. INITIAL PAGE STATE
-    // ==========================================
-
-    showAuthentication();
-
-    console.log("LTSUCare Admin Portal JavaScript Loaded Successfully.");
+    checkExistingSession();
 
 });
