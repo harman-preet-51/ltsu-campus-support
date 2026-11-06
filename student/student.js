@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const STORAGE_BUCKET = "complaint-media";
     const AI_FUNCTION = "ltsucare-ai";
+
     const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
     const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
     const MAX_AI_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const showMessage = (id, message, success = false) => {
         const el = $(id);
         if (!el) return;
+
         el.textContent = message;
         el.style.color = success ? "green" : "crimson";
     };
@@ -25,12 +27,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentUser = null;
     let currentProfile = null;
+
     let mediaRecorder = null;
     let recordedChunks = [];
     let recordingStream = null;
+    let recordingTimer = null;
     let selectedAIImage = null;
 
     // ---------------- AUTH TABS ----------------
+
     function showLogin() {
         $("login-panel").classList.remove("hidden");
         $("register-panel").classList.add("hidden");
@@ -51,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("open-login").addEventListener("click", showLogin);
 
     // ---------------- DASHBOARD PANELS ----------------
+
     function hidePanels() {
         ["complaint-panel", "history-panel", "feedback-panel"]
             .forEach(id => $(id).classList.add("hidden"));
@@ -73,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---------------- PROFILE / DASHBOARD ----------------
+
     async function openDashboard(user) {
         currentUser = user;
 
@@ -88,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         currentProfile = data;
+
         $("auth-section").classList.add("hidden");
         $("student-dashboard").classList.remove("hidden");
 
@@ -103,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ---------------- STUDENT REGISTRATION ----------------
+
     $("student-register-form").addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -157,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---------------- STUDENT LOGIN ----------------
+
     $("student-login-form").addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -175,16 +185,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (error || !data || !data.access_token || !data.refresh_token) {
             showMessage(
                 "login-message",
-                (data && data.error) || (error && error.message) ||
+                (data && data.error) ||
+                (error && error.message) ||
                 "Login service is not ready yet, or Student ID/PIN is incorrect."
             );
             return;
         }
 
-        const { data: sessionData, error: sessionError } = await db.auth.setSession({
-            access_token: data.access_token,
-            refresh_token: data.refresh_token
-        });
+        const { data: sessionData, error: sessionError } =
+            await db.auth.setSession({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token
+            });
 
         if (sessionError) {
             showMessage("login-message", sessionError.message);
@@ -195,12 +207,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---------------- COMPLAINT PHOTO / VIDEO UPLOAD ----------------
+
     function safeExtension(file) {
         const fromName = file.name.includes(".")
             ? file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "")
             : "";
 
         if (fromName) return fromName;
+
         if (file.type === "image/jpeg") return "jpg";
         if (file.type === "image/png") return "png";
         if (file.type === "image/webp") return "webp";
@@ -228,7 +242,8 @@ document.addEventListener("DOMContentLoaded", () => {
             throw new Error("Video must be 25 MB or smaller.");
         }
 
-        const path = `${currentUser.id}/${Date.now()}-${crypto.randomUUID()}.${safeExtension(file)}`;
+        const path =
+            `${currentUser.id}/${Date.now()}-${crypto.randomUUID()}.${safeExtension(file)}`;
 
         const { data, error } = await db.storage
             .from(STORAGE_BUCKET)
@@ -241,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (error) {
             throw new Error(
                 "Media upload failed: " + error.message +
-                ". Check that the complaint-media Storage bucket and its policies are created."
+                ". Check complaint-media Storage bucket and its policies."
             );
         }
 
@@ -249,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ---------------- SUBMIT COMPLAINT ----------------
+
     $("complaint-form").addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -257,7 +273,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const submitButton = $("complaint-form").querySelector('button[type="submit"]');
+        const submitButton =
+            $("complaint-form").querySelector('button[type="submit"]');
+
         const mediaInput = $("complaint-media");
         const media = mediaInput.files[0] || null;
 
@@ -274,6 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         let uploadedPath = null;
+
         if (submitButton) submitButton.disabled = true;
 
         try {
@@ -293,8 +312,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (error) {
                 if (uploadedPath) {
-                    await db.storage.from(STORAGE_BUCKET).remove([uploadedPath]);
+                    await db.storage
+                        .from(STORAGE_BUCKET)
+                        .remove([uploadedPath]);
                 }
+
                 throw new Error(error.message);
             }
 
@@ -315,7 +337,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             showMessage(
                 "complaint-message",
-                error instanceof Error ? error.message : "Complaint could not be submitted."
+                error instanceof Error
+                    ? error.message
+                    : "Complaint could not be submitted."
             );
         } finally {
             if (submitButton) submitButton.disabled = false;
@@ -323,6 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---------------- COMPLAINT HISTORY ----------------
+
     async function loadComplaints() {
         if (!currentUser) return;
 
@@ -336,14 +361,16 @@ document.addEventListener("DOMContentLoaded", () => {
             .order("created_at", { ascending: false });
 
         if (error) {
-            container.textContent = "Could not load complaints: " + error.message;
+            container.textContent =
+                "Could not load complaints: " + error.message;
             return;
         }
 
         container.innerHTML = "";
 
         if (!data || data.length === 0) {
-            container.textContent = "You have not submitted any complaints yet.";
+            container.textContent =
+                "You have not submitted any complaints yet.";
             return;
         }
 
@@ -383,11 +410,18 @@ document.addEventListener("DOMContentLoaded", () => {
                         .createSignedUrl(item.media_path, 300);
 
                     if (signedError) {
-                        alert("Could not open attachment: " + signedError.message);
+                        alert(
+                            "Could not open attachment: " +
+                            signedError.message
+                        );
                         return;
                     }
 
-                    window.open(signed.signedUrl, "_blank", "noopener");
+                    window.open(
+                        signed.signedUrl,
+                        "_blank",
+                        "noopener"
+                    );
                 });
 
                 card.appendChild(mediaLink);
@@ -398,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ---------------- FEEDBACK ----------------
+
     $("feedback-form").addEventListener("submit", async (event) => {
         event.preventDefault();
 
@@ -439,11 +474,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---------------- AI ASSISTANT UI ----------------
+
     function addAssistantStyles() {
         if ($("ltsu-ai-styles")) return;
 
         const style = document.createElement("style");
         style.id = "ltsu-ai-styles";
+
         style.textContent = `
             #ltsu-ai-launcher{position:fixed;right:22px;bottom:22px;z-index:9998;border:0;border-radius:999px;padding:14px 19px;background:#087f8c;color:#fff;font-weight:700;box-shadow:0 5px 22px #0003;cursor:pointer}
             #ltsu-ai-panel{position:fixed;right:22px;bottom:82px;width:min(390px,calc(100vw - 28px));height:min(590px,calc(100vh - 115px));z-index:9999;background:#fff;color:#17212b;border:1px solid #d8e1e8;border-radius:18px;box-shadow:0 12px 40px #0003;display:none;overflow:hidden;font-family:Arial,sans-serif}
@@ -479,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
         launcher.id = "ltsu-ai-launcher";
         launcher.type = "button";
         launcher.textContent = "✦ LTSUCare AI";
+
         launcher.addEventListener("click", () => {
             $("ltsu-ai-panel").classList.toggle("open");
         });
@@ -492,14 +530,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 <strong>✦ LTSUCare AI Assistant</strong>
                 <button id="ltsu-ai-close" type="button" aria-label="Close">×</button>
             </div>
-            <div id="ltsu-ai-notice">Text, photo and voice help. Do not share passwords, PINs or sensitive personal data.</div>
+            <div id="ltsu-ai-notice">
+                Text, photo and voice help. Do not share passwords, PINs or sensitive personal data.
+            </div>
             <div id="ltsu-ai-messages" aria-live="polite">
-                <div class="ltsu-ai-msg ltsu-ai-bot">Hello! I can help with campus complaints. Type a message, attach a photo, or record your voice.</div>
+                <div class="ltsu-ai-msg ltsu-ai-bot">
+                    Hello! I can help with campus complaints. Type a message, attach a photo, or record your voice.
+                </div>
             </div>
             <div id="ltsu-ai-tools">
                 <textarea id="ltsu-ai-text" placeholder="Type your question here..."></textarea>
                 <div class="ltsu-ai-actions">
-                    <input id="ltsu-ai-file" type="file" accept="image/*" aria-label="Attach a photo">
+                    <input id="ltsu-ai-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Attach a photo">
                     <button id="ltsu-ai-record" type="button">🎙 Record</button>
                     <button id="ltsu-ai-stop" type="button" disabled>Stop</button>
                     <button id="ltsu-ai-send" class="ltsu-ai-send" type="button">Send</button>
@@ -515,23 +557,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         $("ltsu-ai-file").addEventListener("change", () => {
-            selectedAIImage = $("ltsu-ai-file").files[0] || null;
+            const file = $("ltsu-ai-file").files[0] || null;
 
-            if (selectedAIImage && (
-                !selectedAIImage.type.startsWith("image/") ||
-                selectedAIImage.size > MAX_AI_IMAGE_BYTES
-            )) {
-                $("ltsu-ai-status").textContent = "Choose an image up to 5 MB.";
-                $("ltsu-ai-file").value = "";
-                selectedAIImage = null;
-            } else {
-                $("ltsu-ai-status").textContent = selectedAIImage
-                    ? "Photo attached: " + selectedAIImage.name
-                    : "";
+            selectedAIImage = null;
+
+            if (!file) {
+                $("ltsu-ai-status").textContent = "";
+                return;
             }
+
+            const mime = getImageMime(file);
+
+            if (!mime || file.size > MAX_AI_IMAGE_BYTES) {
+                $("ltsu-ai-status").textContent =
+                    "Please choose a JPG, PNG, WEBP or GIF photo up to 5 MB.";
+                $("ltsu-ai-file").value = "";
+                return;
+            }
+
+            selectedAIImage = file;
+            $("ltsu-ai-status").textContent =
+                "Photo attached: " + file.name;
         });
 
-        $("ltsu-ai-send").addEventListener("click", sendAIMessage);
+        $("ltsu-ai-send").addEventListener("click", () => {
+            sendAIMessage();
+        });
 
         $("ltsu-ai-text").addEventListener("keydown", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -548,15 +599,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const list = $("ltsu-ai-messages");
         const bubble = document.createElement("div");
 
-        bubble.className = "ltsu-ai-msg " +
+        bubble.className =
+            "ltsu-ai-msg " +
             (type === "user" ? "ltsu-ai-user" : "ltsu-ai-bot");
 
         bubble.textContent = message;
+
         list.appendChild(bubble);
         list.scrollTop = list.scrollHeight;
 
         return bubble;
     }
+
+    // ---------------- AI FILE HELPERS ----------------
 
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
@@ -564,7 +619,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             reader.onload = () => {
                 const result = String(reader.result || "");
-                resolve(result.includes(",") ? result.split(",")[1] : result);
+                const comma = result.indexOf(",");
+
+                resolve(comma >= 0 ? result.substring(comma + 1) : result);
             };
 
             reader.onerror = () => {
@@ -575,6 +632,57 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function getImageMime(file) {
+        const type = (file.type || "").toLowerCase().split(";")[0].trim();
+
+        if (["image/jpeg", "image/png", "image/webp", "image/gif"].includes(type)) {
+            return type;
+        }
+
+        const name = (file.name || "").toLowerCase();
+
+        if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+        if (name.endsWith(".png")) return "image/png";
+        if (name.endsWith(".webp")) return "image/webp";
+        if (name.endsWith(".gif")) return "image/gif";
+
+        return null;
+    }
+
+    function getAudioMime(blob) {
+        let type = (blob.type || "").toLowerCase().split(";")[0].trim();
+
+        if (type === "audio/x-m4a" || type === "audio/m4a") {
+            type = "audio/mp4";
+        }
+
+        if (type === "audio/mp3") {
+            type = "audio/mpeg";
+        }
+
+        const allowed = [
+            "audio/webm",
+            "audio/mp4",
+            "audio/mpeg",
+            "audio/wav",
+            "audio/ogg",
+            "audio/aac",
+            "audio/flac"
+        ];
+
+        if (allowed.includes(type)) return type;
+
+        if (!type) return "audio/webm";
+
+        throw new Error(
+            "Your browser created an unsupported audio format (" +
+            type +
+            "). Please try recording again in Chrome."
+        );
+    }
+
+    // ---------------- SEND AI MESSAGE ----------------
+
     async function sendAIMessage(audioBlob = null) {
         if (!currentUser) {
             $("ltsu-ai-status").textContent = "Please log in first.";
@@ -584,63 +692,96 @@ document.addEventListener("DOMContentLoaded", () => {
         const text = $("ltsu-ai-text").value.trim();
         const image = selectedAIImage;
 
-        if (!text && !image && !audioBlob) {
+        // Audio is included ONLY when a fresh recording is passed here.
+        const hasAudio = audioBlob instanceof Blob && audioBlob.size > 0;
+
+        if (!text && !image && !hasAudio) {
             $("ltsu-ai-status").textContent =
                 "Type a message, attach a photo, or record your voice.";
             return;
         }
 
         const sendButton = $("ltsu-ai-send");
+        const recordButton = $("ltsu-ai-record");
+        const stopButton = $("ltsu-ai-stop");
+
         sendButton.disabled = true;
-        $("ltsu-ai-record").disabled = true;
+        recordButton.disabled = true;
+        stopButton.disabled = true;
+
         $("ltsu-ai-status").textContent = "LTSUCare AI is thinking...";
 
-        let imageBase64 = null;
-        let audioBase64 = null;
-
         try {
+            let imageBase64;
+            let imageMimeType;
+            let audioBase64;
+            let audioMimeType;
+
             if (image) {
+                if (image.size > MAX_AI_IMAGE_BYTES) {
+                    throw new Error("Photo must be 5 MB or smaller.");
+                }
+
+                imageMimeType = getImageMime(image);
+
+                if (!imageMimeType) {
+                    throw new Error(
+                        "Unsupported photo format. Please use JPG, PNG or WEBP."
+                    );
+                }
+
                 imageBase64 = await fileToBase64(image);
             }
 
-            if (audioBlob) {
+            if (hasAudio) {
                 if (audioBlob.size > MAX_AI_AUDIO_BYTES) {
-                    throw new Error("Voice recording is too large. Please record a shorter message.");
+                    throw new Error(
+                        "Voice recording is too large. Please record a shorter message."
+                    );
                 }
 
-                audioBase64 = await fileToBase64(
-                    new File([audioBlob], "voice-message.webm", {
-                        type: audioBlob.type || "audio/webm"
-                    })
-                );
+                audioMimeType = getAudioMime(audioBlob);
+                audioBase64 = await fileToBase64(audioBlob);
             }
 
-            const visibleText = text ||
-                (image
-                    ? "Please examine this campus problem photo."
-                    : "Please understand my voice message.");
+            let visibleText = text;
+
+            if (!visibleText && image) {
+                visibleText = "Please examine this campus problem photo and help me understand it.";
+            }
+
+            if (!visibleText && hasAudio) {
+                visibleText = "Please understand my voice message and respond to it.";
+            }
+
+            if (!visibleText) {
+                visibleText = "Hello";
+            }
 
             addAIMessage(
                 visibleText +
                 (image ? "\n[Photo attached]" : "") +
-                (audioBlob ? "\n[Voice recording attached]" : ""),
+                (hasAudio ? "\n[Voice recording attached]" : ""),
                 "user"
             );
 
-            $("ltsu-ai-text").value = "";
-            $("ltsu-ai-file").value = "";
-            selectedAIImage = null;
+            // Build a clean payload. No audio fields are sent for text/photo-only messages.
+            const requestBody = {
+                text: visibleText
+            };
+
+            if (imageBase64) {
+                requestBody.imageBase64 = imageBase64;
+                requestBody.imageMimeType = imageMimeType;
+            }
+
+            if (hasAudio && audioBase64) {
+                requestBody.audioBase64 = audioBase64;
+                requestBody.audioMimeType = audioMimeType;
+            }
 
             const { data, error } = await db.functions.invoke(AI_FUNCTION, {
-                body: {
-                    text: visibleText,
-                    imageBase64,
-                    imageMimeType: image ? image.type : undefined,
-                    audioBase64,
-                    audioMimeType: audioBlob
-                        ? (audioBlob.type || "audio/webm")
-                        : undefined
-                }
+                body: requestBody
             });
 
             if (error) {
@@ -648,16 +789,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 try {
                     if (error.context && typeof error.context.json === "function") {
-                        const body = await error.context.json();
-                        if (body.error) detail = body.error;
+                        const errorBody = await error.context.json();
+
+                        if (errorBody && errorBody.error) {
+                            detail = errorBody.error;
+                        }
                     }
-                } catch (_) {}
+                } catch (_) {
+                    // Keep the original error message.
+                }
 
                 throw new Error(detail);
             }
 
             if (!data || !data.success || !data.answer) {
-                throw new Error((data && data.error) || "AI did not return a response.");
+                throw new Error(
+                    (data && data.error) ||
+                    "AI did not return a response. Please check the AI Edge Function."
+                );
             }
 
             addAIMessage(data.answer, "assistant");
@@ -671,6 +820,7 @@ document.addEventListener("DOMContentLoaded", () => {
             listenButton.addEventListener("click", () => {
                 if ("speechSynthesis" in window) {
                     window.speechSynthesis.cancel();
+
                     window.speechSynthesis.speak(
                         new SpeechSynthesisUtterance(data.answer)
                     );
@@ -683,22 +833,33 @@ document.addEventListener("DOMContentLoaded", () => {
             $("ltsu-ai-messages").scrollTop =
                 $("ltsu-ai-messages").scrollHeight;
 
+            // Clear inputs only after a successful AI response.
+            $("ltsu-ai-text").value = "";
+            $("ltsu-ai-file").value = "";
+            selectedAIImage = null;
+
             $("ltsu-ai-status").textContent = "Reply received.";
         } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Unknown error.";
+
             addAIMessage(
-                "Sorry, I could not complete that request: " +
-                (error instanceof Error ? error.message : "Unknown error."),
+                "Sorry, I could not complete that request: " + message,
                 "assistant"
             );
 
-            $("ltsu-ai-status").textContent = "Please try again.";
+            $("ltsu-ai-status").textContent = "Error: " + message;
         } finally {
             sendButton.disabled = false;
-            $("ltsu-ai-record").disabled = false;
+            recordButton.disabled = false;
+            stopButton.disabled = true;
         }
     }
 
     // ---------------- VOICE RECORDING ----------------
+
     async function startVoiceRecording() {
         if (
             !navigator.mediaDevices ||
@@ -706,7 +867,11 @@ document.addEventListener("DOMContentLoaded", () => {
             !window.MediaRecorder
         ) {
             $("ltsu-ai-status").textContent =
-                "Voice recording is not supported in this browser. Try Chrome.";
+                "Voice recording is not supported in this browser. Please use Chrome.";
+            return;
+        }
+
+        if (mediaRecorder && mediaRecorder.state === "recording") {
             return;
         }
 
@@ -727,22 +892,52 @@ document.addEventListener("DOMContentLoaded", () => {
                 options.mimeType = "audio/mp4";
             }
 
-            mediaRecorder = new MediaRecorder(recordingStream, options);
+            const recorder = new MediaRecorder(recordingStream, options);
+            mediaRecorder = recorder;
 
-            mediaRecorder.ondataavailable = (event) => {
+            recorder.ondataavailable = (event) => {
                 if (event.data && event.data.size > 0) {
                     recordedChunks.push(event.data);
                 }
             };
 
-            mediaRecorder.onstop = async () => {
+            recorder.onerror = (event) => {
+                $("ltsu-ai-status").textContent =
+                    "Recording error: " +
+                    (event.error ? event.error.message : "Please try again.");
+            };
+
+            recorder.onstop = async () => {
+                if (recordingTimer) {
+                    clearTimeout(recordingTimer);
+                    recordingTimer = null;
+                }
+
+                const actualMime =
+                    recorder.mimeType ||
+                    (recordedChunks[0] && recordedChunks[0].type) ||
+                    "audio/webm";
+
                 const blob = new Blob(recordedChunks, {
-                    type: mediaRecorder.mimeType || "audio/webm"
+                    type: actualMime
                 });
+
+                recordedChunks = [];
 
                 if (recordingStream) {
                     recordingStream.getTracks().forEach(track => track.stop());
                     recordingStream = null;
+                }
+
+                mediaRecorder = null;
+
+                $("ltsu-ai-record").disabled = false;
+                $("ltsu-ai-stop").disabled = true;
+
+                if (!blob.size) {
+                    $("ltsu-ai-status").textContent =
+                        "No audio was recorded. Please try again.";
+                    return;
                 }
 
                 $("ltsu-ai-status").textContent =
@@ -751,21 +946,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 await sendAIMessage(blob);
             };
 
-            mediaRecorder.start();
+            recorder.start();
 
             $("ltsu-ai-record").disabled = true;
             $("ltsu-ai-stop").disabled = false;
 
             $("ltsu-ai-status").textContent =
-                "Recording... Speak now. Press Stop when finished (max 45 seconds).";
+                "Recording... Speak now. Press Stop when finished (maximum 45 seconds).";
 
-            window.setTimeout(() => {
-                if (mediaRecorder && mediaRecorder.state === "recording") {
+            recordingTimer = window.setTimeout(() => {
+                if (recorder.state === "recording") {
                     stopVoiceRecording();
                 }
             }, 45000);
 
         } catch (error) {
+            if (recordingStream) {
+                recordingStream.getTracks().forEach(track => track.stop());
+                recordingStream = null;
+            }
+
+            $("ltsu-ai-record").disabled = false;
+            $("ltsu-ai-stop").disabled = true;
+
             $("ltsu-ai-status").textContent =
                 "Microphone permission is needed: " +
                 (error instanceof Error
@@ -775,22 +978,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function stopVoiceRecording() {
+        if (recordingTimer) {
+            clearTimeout(recordingTimer);
+            recordingTimer = null;
+        }
+
         if (mediaRecorder && mediaRecorder.state === "recording") {
             $("ltsu-ai-stop").disabled = true;
             mediaRecorder.stop();
-            $("ltsu-ai-status").textContent = "Processing recording...";
+
+            $("ltsu-ai-status").textContent =
+                "Processing recording...";
         }
     }
 
     // ---------------- LOGOUT ----------------
+
     $("logout-btn").addEventListener("click", async () => {
+        if (recordingTimer) {
+            clearTimeout(recordingTimer);
+            recordingTimer = null;
+        }
+
         if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.onstop = null;
             mediaRecorder.stop();
+            mediaRecorder = null;
         }
 
         if (recordingStream) {
             recordingStream.getTracks().forEach(track => track.stop());
+            recordingStream = null;
         }
+
+        recordedChunks = [];
 
         const { error } = await db.auth.signOut();
 
@@ -815,16 +1036,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const assistantPanel = $("ltsu-ai-panel");
         const assistantLauncher = $("ltsu-ai-launcher");
+        const assistantStyles = $("ltsu-ai-styles");
 
         if (assistantPanel) assistantPanel.remove();
         if (assistantLauncher) assistantLauncher.remove();
+        if (assistantStyles) assistantStyles.remove();
 
         showLogin();
     });
 
     // ---------------- RESTORE EXISTING SESSION ----------------
+
     async function checkSession() {
-        const { data } = await db.auth.getSession();
+        const { data, error } = await db.auth.getSession();
+
+        if (error) {
+            console.error("Session check error:", error.message);
+            return;
+        }
 
         if (data.session && data.session.user) {
             await openDashboard(data.session.user);
@@ -832,6 +1061,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ---------------- INITIAL SETUP ----------------
+
     $("current-year").textContent = new Date().getFullYear();
 
     showLogin();
