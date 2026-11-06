@@ -9,8 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
     const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
-    const MAX_AI_IMAGE_BYTES = 5 * 1024 * 1024;
-    const MAX_AI_AUDIO_BYTES = 7 * 1024 * 1024;
 
     const showMessage = (id, message, success = false) => {
         const el = $(id);
@@ -28,11 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentUser = null;
     let currentProfile = null;
 
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    let recordingStream = null;
-    let recordingTimer = null;
-    let selectedAIImage = null;
+    // AI conversation history for the current login session.
+    let aiHistory = [];
 
     // ---------------- AUTH TABS ----------------
 
@@ -473,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("feedback-form").reset();
     });
 
-    // ---------------- AI ASSISTANT UI ----------------
+    // ---------------- AI ASSISTANT UI (TEXT ONLY) ----------------
 
     function addAssistantStyles() {
         if ($("ltsu-ai-styles")) return;
@@ -490,17 +485,16 @@ document.addEventListener("DOMContentLoaded", () => {
             #ltsu-ai-close{border:0;background:transparent;color:white;font-size:24px;cursor:pointer}
             #ltsu-ai-notice{font-size:11px;color:#667;padding:7px 12px;background:#f4f7f9}
             #ltsu-ai-messages{flex:1;overflow:auto;padding:12px;background:#f7fafc}
-            .ltsu-ai-msg{max-width:88%;padding:10px 12px;border-radius:13px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.45}
+            .ltsu-ai-msg{max-width:88%;padding:10px 12px;border-radius:13px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.5}
             .ltsu-ai-user{margin-left:auto;background:#d9f2f2}
             .ltsu-ai-bot{margin-right:auto;background:white;border:1px solid #e2e8ee}
             #ltsu-ai-tools{padding:10px;border-top:1px solid #e3e8ed;background:white}
             #ltsu-ai-text{width:100%;min-height:65px;resize:vertical;box-sizing:border-box;border:1px solid #cbd5df;border-radius:10px;padding:9px;font:14px Arial}
-            .ltsu-ai-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:8px}
-            .ltsu-ai-actions button,.ltsu-ai-send{border:0;border-radius:8px;padding:9px 11px;cursor:pointer;background:#e7eff3;color:#18313b;font-weight:600}
-            .ltsu-ai-send{background:#087f8c!important;color:white!important;margin-left:auto}
-            .ltsu-ai-actions button:disabled{opacity:.5;cursor:not-allowed}
-            #ltsu-ai-file{max-width:150px;font-size:11px}
+            .ltsu-ai-actions{display:flex;gap:7px;align-items:center;margin-top:8px}
+            .ltsu-ai-send{border:0;border-radius:8px;padding:10px 16px;cursor:pointer;background:#087f8c;color:white;font-weight:600;margin-left:auto}
+            .ltsu-ai-send:disabled{opacity:.5;cursor:not-allowed}
             #ltsu-ai-status{font-size:12px;color:#586774;min-height:16px;margin-top:6px}
+            .ltsu-ai-listen{display:block;margin:0 0 8px 8px;border:0;border-radius:7px;padding:7px 10px;cursor:pointer;background:#e7eff3;color:#18313b}
             @media(max-width:480px){#ltsu-ai-launcher{right:14px;bottom:14px}#ltsu-ai-panel{right:8px;bottom:72px;width:calc(100vw - 16px);height:70vh}}
         `;
 
@@ -519,6 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         launcher.addEventListener("click", () => {
             $("ltsu-ai-panel").classList.toggle("open");
+            $("ltsu-ai-text").focus();
         });
 
         const panel = document.createElement("section");
@@ -531,22 +526,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 <button id="ltsu-ai-close" type="button" aria-label="Close">×</button>
             </div>
             <div id="ltsu-ai-notice">
-                Text, photo and voice help. Do not share passwords, PINs or sensitive personal data.
+                Ask questions about campus support, complaints or anything you need help with. Please do not share passwords or PINs.
             </div>
             <div id="ltsu-ai-messages" aria-live="polite">
                 <div class="ltsu-ai-msg ltsu-ai-bot">
-                    Hello! I can help with campus complaints. Type a message, attach a photo, or record your voice.
+                    Hello! Welcome to LTSUCare. You can ask me about campus support, complaints or any question. How can I help you today?
                 </div>
             </div>
             <div id="ltsu-ai-tools">
-                <textarea id="ltsu-ai-text" placeholder="Type your question here..."></textarea>
+                <textarea id="ltsu-ai-text" maxlength="8000" placeholder="Type your question here..."></textarea>
                 <div class="ltsu-ai-actions">
-                    <input id="ltsu-ai-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Attach a photo">
-                    <button id="ltsu-ai-record" type="button">🎙 Record</button>
-                    <button id="ltsu-ai-stop" type="button" disabled>Stop</button>
                     <button id="ltsu-ai-send" class="ltsu-ai-send" type="button">Send</button>
                 </div>
-                <div id="ltsu-ai-status" role="status"></div>
+                <div id="ltsu-ai-status" role="status" aria-live="polite"></div>
             </div>
         `;
 
@@ -556,33 +548,7 @@ document.addEventListener("DOMContentLoaded", () => {
             panel.classList.remove("open");
         });
 
-        $("ltsu-ai-file").addEventListener("change", () => {
-            const file = $("ltsu-ai-file").files[0] || null;
-
-            selectedAIImage = null;
-
-            if (!file) {
-                $("ltsu-ai-status").textContent = "";
-                return;
-            }
-
-            const mime = getImageMime(file);
-
-            if (!mime || file.size > MAX_AI_IMAGE_BYTES) {
-                $("ltsu-ai-status").textContent =
-                    "Please choose a JPG, PNG, WEBP or GIF photo up to 5 MB.";
-                $("ltsu-ai-file").value = "";
-                return;
-            }
-
-            selectedAIImage = file;
-            $("ltsu-ai-status").textContent =
-                "Photo attached: " + file.name;
-        });
-
-        $("ltsu-ai-send").addEventListener("click", () => {
-            sendAIMessage();
-        });
+        $("ltsu-ai-send").addEventListener("click", sendAIMessage);
 
         $("ltsu-ai-text").addEventListener("keydown", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -590,9 +556,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 sendAIMessage();
             }
         });
-
-        $("ltsu-ai-record").addEventListener("click", startVoiceRecording);
-        $("ltsu-ai-stop").addEventListener("click", stopVoiceRecording);
     }
 
     function addAIMessage(message, type) {
@@ -604,185 +567,85 @@ document.addEventListener("DOMContentLoaded", () => {
             (type === "user" ? "ltsu-ai-user" : "ltsu-ai-bot");
 
         bubble.textContent = message;
-
         list.appendChild(bubble);
         list.scrollTop = list.scrollHeight;
 
         return bubble;
     }
 
-    // ---------------- AI FILE HELPERS ----------------
+    function addAIListenButton(answer) {
+        if (!("speechSynthesis" in window)) return;
 
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "ltsu-ai-listen";
+        button.textContent = "🔊 Listen";
 
-            reader.onload = () => {
-                const result = String(reader.result || "");
-                const comma = result.indexOf(",");
-
-                resolve(comma >= 0 ? result.substring(comma + 1) : result);
-            };
-
-            reader.onerror = () => {
-                reject(new Error("Could not read the selected file."));
-            };
-
-            reader.readAsDataURL(file);
+        button.addEventListener("click", () => {
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(
+                new SpeechSynthesisUtterance(answer)
+            );
         });
+
+        $("ltsu-ai-messages").appendChild(button);
+        $("ltsu-ai-messages").scrollTop =
+            $("ltsu-ai-messages").scrollHeight;
     }
 
-    function getImageMime(file) {
-        const type = (file.type || "").toLowerCase().split(";")[0].trim();
+    // ---------------- SEND TEXT MESSAGE TO AI ----------------
 
-        if (["image/jpeg", "image/png", "image/webp", "image/gif"].includes(type)) {
-            return type;
-        }
-
-        const name = (file.name || "").toLowerCase();
-
-        if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
-        if (name.endsWith(".png")) return "image/png";
-        if (name.endsWith(".webp")) return "image/webp";
-        if (name.endsWith(".gif")) return "image/gif";
-
-        return null;
-    }
-
-    function getAudioMime(blob) {
-        let type = (blob.type || "").toLowerCase().split(";")[0].trim();
-
-        if (type === "audio/x-m4a" || type === "audio/m4a") {
-            type = "audio/mp4";
-        }
-
-        if (type === "audio/mp3") {
-            type = "audio/mpeg";
-        }
-
-        const allowed = [
-            "audio/webm",
-            "audio/mp4",
-            "audio/mpeg",
-            "audio/wav",
-            "audio/ogg",
-            "audio/aac",
-            "audio/flac"
-        ];
-
-        if (allowed.includes(type)) return type;
-
-        if (!type) return "audio/webm";
-
-        throw new Error(
-            "Your browser created an unsupported audio format (" +
-            type +
-            "). Please try recording again in Chrome."
-        );
-    }
-
-    // ---------------- SEND AI MESSAGE ----------------
-
-    async function sendAIMessage(audioBlob = null) {
+    async function sendAIMessage() {
         if (!currentUser) {
             $("ltsu-ai-status").textContent = "Please log in first.";
             return;
         }
 
         const text = $("ltsu-ai-text").value.trim();
-        const image = selectedAIImage;
 
-        // Audio is included ONLY when a fresh recording is passed here.
-        const hasAudio = audioBlob instanceof Blob && audioBlob.size > 0;
-
-        if (!text && !image && !hasAudio) {
-            $("ltsu-ai-status").textContent =
-                "Type a message, attach a photo, or record your voice.";
+        if (!text) {
+            $("ltsu-ai-status").textContent = "Please type a message first.";
+            $("ltsu-ai-text").focus();
             return;
         }
 
         const sendButton = $("ltsu-ai-send");
-        const recordButton = $("ltsu-ai-record");
-        const stopButton = $("ltsu-ai-stop");
+        const textInput = $("ltsu-ai-text");
 
         sendButton.disabled = true;
-        recordButton.disabled = true;
-        stopButton.disabled = true;
+        textInput.disabled = true;
 
-        $("ltsu-ai-status").textContent = "LTSUCare AI is thinking...";
+        $("ltsu-ai-status").textContent =
+            "LTSUCare AI is preparing your reply...";
+
+        addAIMessage(text, "user");
+        textInput.value = "";
+
+        const requestHistory = aiHistory.slice(-12);
+
+        let requestTimeout = null;
 
         try {
-            let imageBase64;
-            let imageMimeType;
-            let audioBase64;
-            let audioMimeType;
-
-            if (image) {
-                if (image.size > MAX_AI_IMAGE_BYTES) {
-                    throw new Error("Photo must be 5 MB or smaller.");
+            // Frontend safety timeout.
+            const invokePromise = db.functions.invoke(AI_FUNCTION, {
+                body: {
+                    text,
+                    history: requestHistory
                 }
-
-                imageMimeType = getImageMime(image);
-
-                if (!imageMimeType) {
-                    throw new Error(
-                        "Unsupported photo format. Please use JPG, PNG or WEBP."
-                    );
-                }
-
-                imageBase64 = await fileToBase64(image);
-            }
-
-            if (hasAudio) {
-                if (audioBlob.size > MAX_AI_AUDIO_BYTES) {
-                    throw new Error(
-                        "Voice recording is too large. Please record a shorter message."
-                    );
-                }
-
-                audioMimeType = getAudioMime(audioBlob);
-                audioBase64 = await fileToBase64(audioBlob);
-            }
-
-            let visibleText = text;
-
-            if (!visibleText && image) {
-                visibleText = "Please examine this campus problem photo and help me understand it.";
-            }
-
-            if (!visibleText && hasAudio) {
-                visibleText = "Please understand my voice message and respond to it.";
-            }
-
-            if (!visibleText) {
-                visibleText = "Hello";
-            }
-
-            addAIMessage(
-                visibleText +
-                (image ? "\n[Photo attached]" : "") +
-                (hasAudio ? "\n[Voice recording attached]" : ""),
-                "user"
-            );
-
-            // Build a clean payload. No audio fields are sent for text/photo-only messages.
-            const requestBody = {
-                text: visibleText
-            };
-
-            if (imageBase64) {
-                requestBody.imageBase64 = imageBase64;
-                requestBody.imageMimeType = imageMimeType;
-            }
-
-            if (hasAudio && audioBase64) {
-                requestBody.audioBase64 = audioBase64;
-                requestBody.audioMimeType = audioMimeType;
-            }
-
-            const { data, error } = await db.functions.invoke(AI_FUNCTION, {
-                body: requestBody
             });
+
+            const timeoutPromise = new Promise((_, reject) => {
+                requestTimeout = window.setTimeout(() => {
+                    reject(new Error(
+                        "The reply is taking too long. Please try sending your message again."
+                    ));
+                }, 30000);
+            });
+
+            const { data, error } = await Promise.race([
+                invokePromise,
+                timeoutPromise
+            ]);
 
             if (error) {
                 let detail = error.message || "AI request failed.";
@@ -805,214 +668,55 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!data || !data.success || !data.answer) {
                 throw new Error(
                     (data && data.error) ||
-                    "AI did not return a response. Please check the AI Edge Function."
+                    "AI did not return a reply. Please try again."
                 );
             }
 
+            // Save successful conversation turns for follow-up questions.
+            aiHistory.push(
+                { role: "user", text },
+                { role: "model", text: data.answer }
+            );
+
+            aiHistory = aiHistory.slice(-12);
+
             addAIMessage(data.answer, "assistant");
-
-            const listenButton = document.createElement("button");
-            listenButton.type = "button";
-            listenButton.textContent = "🔊 Listen";
-            listenButton.style.cssText =
-                "margin:0 0 8px 8px;border:0;border-radius:7px;padding:7px 10px;cursor:pointer;";
-
-            listenButton.addEventListener("click", () => {
-                if ("speechSynthesis" in window) {
-                    window.speechSynthesis.cancel();
-
-                    window.speechSynthesis.speak(
-                        new SpeechSynthesisUtterance(data.answer)
-                    );
-                } else {
-                    alert("Text-to-speech is not supported in this browser.");
-                }
-            });
-
-            $("ltsu-ai-messages").appendChild(listenButton);
-            $("ltsu-ai-messages").scrollTop =
-                $("ltsu-ai-messages").scrollHeight;
-
-            // Clear inputs only after a successful AI response.
-            $("ltsu-ai-text").value = "";
-            $("ltsu-ai-file").value = "";
-            selectedAIImage = null;
+            addAIListenButton(data.answer);
 
             $("ltsu-ai-status").textContent = "Reply received.";
+
         } catch (error) {
             const message =
                 error instanceof Error
                     ? error.message
-                    : "Unknown error.";
+                    : "Something went wrong. Please try again.";
 
             addAIMessage(
-                "Sorry, I could not complete that request: " + message,
+                "I'm sorry, I couldn't get a reply right now. " + message,
                 "assistant"
             );
 
-            $("ltsu-ai-status").textContent = "Error: " + message;
+            $("ltsu-ai-status").textContent = "Please try again.";
+
+            // Restore the message so the student can resend it.
+            if (!textInput.value.trim()) {
+                textInput.value = text;
+            }
+
         } finally {
+            if (requestTimeout !== null) {
+                clearTimeout(requestTimeout);
+            }
+
             sendButton.disabled = false;
-            recordButton.disabled = false;
-            stopButton.disabled = true;
-        }
-    }
-
-    // ---------------- VOICE RECORDING ----------------
-
-    async function startVoiceRecording() {
-        if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia ||
-            !window.MediaRecorder
-        ) {
-            $("ltsu-ai-status").textContent =
-                "Voice recording is not supported in this browser. Please use Chrome.";
-            return;
-        }
-
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            return;
-        }
-
-        try {
-            recordingStream = await navigator.mediaDevices.getUserMedia({
-                audio: true
-            });
-
-            recordedChunks = [];
-
-            let options = {};
-
-            if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-                options.mimeType = "audio/webm;codecs=opus";
-            } else if (MediaRecorder.isTypeSupported("audio/webm")) {
-                options.mimeType = "audio/webm";
-            } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-                options.mimeType = "audio/mp4";
-            }
-
-            const recorder = new MediaRecorder(recordingStream, options);
-            mediaRecorder = recorder;
-
-            recorder.ondataavailable = (event) => {
-                if (event.data && event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
-            };
-
-            recorder.onerror = (event) => {
-                $("ltsu-ai-status").textContent =
-                    "Recording error: " +
-                    (event.error ? event.error.message : "Please try again.");
-            };
-
-            recorder.onstop = async () => {
-                if (recordingTimer) {
-                    clearTimeout(recordingTimer);
-                    recordingTimer = null;
-                }
-
-                const actualMime =
-                    recorder.mimeType ||
-                    (recordedChunks[0] && recordedChunks[0].type) ||
-                    "audio/webm";
-
-                const blob = new Blob(recordedChunks, {
-                    type: actualMime
-                });
-
-                recordedChunks = [];
-
-                if (recordingStream) {
-                    recordingStream.getTracks().forEach(track => track.stop());
-                    recordingStream = null;
-                }
-
-                mediaRecorder = null;
-
-                $("ltsu-ai-record").disabled = false;
-                $("ltsu-ai-stop").disabled = true;
-
-                if (!blob.size) {
-                    $("ltsu-ai-status").textContent =
-                        "No audio was recorded. Please try again.";
-                    return;
-                }
-
-                $("ltsu-ai-status").textContent =
-                    "Sending voice recording to AI...";
-
-                await sendAIMessage(blob);
-            };
-
-            recorder.start();
-
-            $("ltsu-ai-record").disabled = true;
-            $("ltsu-ai-stop").disabled = false;
-
-            $("ltsu-ai-status").textContent =
-                "Recording... Speak now. Press Stop when finished (maximum 45 seconds).";
-
-            recordingTimer = window.setTimeout(() => {
-                if (recorder.state === "recording") {
-                    stopVoiceRecording();
-                }
-            }, 45000);
-
-        } catch (error) {
-            if (recordingStream) {
-                recordingStream.getTracks().forEach(track => track.stop());
-                recordingStream = null;
-            }
-
-            $("ltsu-ai-record").disabled = false;
-            $("ltsu-ai-stop").disabled = true;
-
-            $("ltsu-ai-status").textContent =
-                "Microphone permission is needed: " +
-                (error instanceof Error
-                    ? error.message
-                    : "Unable to start recording.");
-        }
-    }
-
-    function stopVoiceRecording() {
-        if (recordingTimer) {
-            clearTimeout(recordingTimer);
-            recordingTimer = null;
-        }
-
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            $("ltsu-ai-stop").disabled = true;
-            mediaRecorder.stop();
-
-            $("ltsu-ai-status").textContent =
-                "Processing recording...";
+            textInput.disabled = false;
+            textInput.focus();
         }
     }
 
     // ---------------- LOGOUT ----------------
 
     $("logout-btn").addEventListener("click", async () => {
-        if (recordingTimer) {
-            clearTimeout(recordingTimer);
-            recordingTimer = null;
-        }
-
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            mediaRecorder.onstop = null;
-            mediaRecorder.stop();
-            mediaRecorder = null;
-        }
-
-        if (recordingStream) {
-            recordingStream.getTracks().forEach(track => track.stop());
-            recordingStream = null;
-        }
-
-        recordedChunks = [];
-
         const { error } = await db.auth.signOut();
 
         if (error) {
@@ -1022,7 +726,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         currentUser = null;
         currentProfile = null;
-        selectedAIImage = null;
+        aiHistory = [];
 
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
