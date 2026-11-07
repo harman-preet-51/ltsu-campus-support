@@ -1,9 +1,8 @@
-/* =========================================
-   LTSU CAMPUS SUPPORT - STUDENT PORTAL CSS
-   Theme: Navy Blue + Emerald Green
-========================================= */
 
-/* ---------- BASIC RESET ---------- */
+/* =========================================
+   LTSUCARE STUDENT PORTAL
+   Premium Navy + Emerald Theme
+========================================= */
 
 * {
     margin: 0;
@@ -15,13 +14,15 @@
     --navy: #07152e;
     --navy-light: #102746;
     --green: #10b981;
+    --green-light: #34d399;
     --green-dark: #059669;
     --white: #ffffff;
     --text: #eaf2ff;
     --muted: #a8b8cc;
-    --border: rgba(255, 255, 255, 0.13);
-    --glass: rgba(255, 255, 255, 0.07);
+    --border: rgba(255,255,255,.12);
+    --glass: rgba(255,255,255,.065);
     --danger: #fb7185;
+    --shadow: 0 18px 45px rgba(0,0,0,.22);
 }
 
 html {
@@ -32,165 +33,171 @@ body {
     min-height: 100vh;
     font-family: "Segoe UI", Arial, sans-serif;
     color: var(--text);
+    line-height: 1.65;
     background:
-        radial-gradient(circle at 15% 10%, rgba(16, 185, 129, 0.16), transparent 35%),
-        radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.18), transparent 35%),
-        linear-gradient(135deg, #061329, #102746 55%, #07152e);
-    line-height: 1.6;
+        radial-gradient(ellipse at 12% 8%, rgba(16,185,129,.19), transparent 34%),
+        radial-gradient(ellipse at 88% 75%, rgba(59,130,246,.16), transparent 35%),
+        linear-gradient(135deg, #050f21, #102746 55%, #07152e);
 }
 
-/* ---------- HEADER ---------- */
+/* HEADER */
 
 .student-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     width: 100%;
-    padding: 18px 7%;
+    min-height: 72px;
+    padding: 14px 7%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 15px;
+    background: rgba(5,17,37,.88);
+    backdrop-filter: blur(18px);
     border-bottom: 1px solid var(--border);
-    background: rgba(5, 17, 37, 0.78);
-    backdrop-filter: blur(15px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
 }
 
 .brand {
     color: var(--white);
-    font-size: 21px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
+    text-decoration: none;
+    font-size: 22px;
+    font-weight: 850;
+    letter-spacing: .3px;
 }
 
-.brand::first-letter {
-    color: var(--green);
+.brand span {
+    color: var(--green-light);
 }
 
 .home-link {
-    color: var(--green);
+    color: var(--green-light);
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
     padding: 9px 17px;
-    border: 1px solid rgba(16, 185, 129, 0.45);
-    border-radius: 10px;
-    transition: 0.3s ease;
+    border: 1px solid rgba(52,211,153,.4);
+    border-radius: 30px;
+    transition: .25s ease;
 }
 
 .home-link:hover {
-    color: var(--white);
-    background: var(--green-dark);
+    color: #04251c;
+    background: var(--green-light);
 }
 
-/* ---------- MAIN CONTENT ---------- */
+/* MAIN */
 
 main {
     width: 100%;
-    max-width: 1150px;
+    max-width: 1180px;
     margin: auto;
-    padding: 35px 22px 60px;
+    padding: 38px 22px 65px;
 }
 
-/* ---------- WELCOME SECTION ---------- */
+/* WELCOME */
 
 .welcome-section {
     text-align: center;
-    padding: 35px 15px 40px;
+    padding: 42px 15px 48px;
 }
 
 .welcome-tag {
     display: inline-block;
     color: #6ee7b7;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.35);
+    background: rgba(16,185,129,.12);
+    border: 1px solid rgba(16,185,129,.35);
     border-radius: 30px;
     padding: 7px 18px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
     margin-bottom: 18px;
 }
 
 .welcome-section h1 {
-    font-size: clamp(30px, 5vw, 48px);
-    line-height: 1.2;
     color: var(--white);
-    margin-bottom: 14px;
+    font-size: clamp(32px,5vw,52px);
+    font-weight: 850;
+    line-height: 1.16;
+    margin-bottom: 17px;
+    letter-spacing: -.8px;
 }
 
 .welcome-section p {
     color: var(--muted);
-    max-width: 650px;
+    max-width: 670px;
     margin: auto;
     font-size: 16px;
 }
 
-/* ---------- AUTHENTICATION SECTION ---------- */
+/* AUTH SECTION */
 
 .auth-section {
-    max-width: 620px;
-    margin: 0 auto 35px;
+    max-width: 610px;
+    margin: 0 auto 38px;
 }
 
 .auth-tabs {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     padding: 7px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255,255,255,.055);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    margin-bottom: 20px;
+    border-radius: 15px;
+    margin-bottom: 19px;
 }
 
 .auth-tab {
     flex: 1;
     padding: 13px 10px;
-    border: none;
+    border: 0;
     border-radius: 10px;
     color: var(--muted);
     background: transparent;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 750;
     cursor: pointer;
-    transition: 0.3s ease;
+    transition: .25s ease;
 }
 
 .auth-tab:hover {
     color: var(--white);
+    background: rgba(255,255,255,.06);
 }
 
 .auth-tab.active {
-    color: #06251d;
-    background: linear-gradient(135deg, #34d399, #10b981);
-    box-shadow: 0 5px 18px rgba(16, 185, 129, 0.2);
+    color: #04251c;
+    background: linear-gradient(135deg,var(--green-light),var(--green));
+    box-shadow: 0 5px 18px rgba(16,185,129,.2);
 }
 
-/* ---------- GLASS CARDS ---------- */
+/* CARDS */
 
 .auth-card,
 .dashboard-panel {
     padding: 30px;
-    background: var(--glass);
+    background: linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.035));
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: 21px;
     backdrop-filter: blur(18px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--shadow);
 }
 
 .auth-card h2,
 .dashboard-panel h2 {
     color: var(--white);
     font-size: 24px;
+    font-weight: 800;
     margin-bottom: 8px;
 }
 
 .auth-card > p,
 .dashboard-panel > p {
     color: var(--muted);
-    margin-bottom: 23px;
+    margin-bottom: 20px;
 }
 
-/* ---------- FORMS ---------- */
+/* FORMS */
 
 form {
     width: 100%;
@@ -199,8 +206,8 @@ form {
 form label {
     display: block;
     color: #dce8f7;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     margin: 17px 0 7px;
 }
 
@@ -210,13 +217,13 @@ form textarea {
     width: 100%;
     padding: 13px 14px;
     color: var(--white);
-    background: rgba(3, 14, 32, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.17);
-    border-radius: 10px;
+    background: rgba(3,14,32,.68);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 11px;
     outline: none;
     font-family: inherit;
-    font-size: 15px;
-    transition: 0.25s ease;
+    font-size: 14px;
+    transition: .22s ease;
 }
 
 form input::placeholder,
@@ -227,8 +234,9 @@ form textarea::placeholder {
 form input:focus,
 form select:focus,
 form textarea:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.13);
+    border-color: var(--green-light);
+    box-shadow: 0 0 0 3px rgba(16,185,129,.14);
+    background: rgba(3,14,32,.9);
 }
 
 form select {
@@ -251,39 +259,46 @@ form input[type="file"] {
 }
 
 form input[type="file"]::file-selector-button {
-    color: #05251d;
-    background: #34d399;
-    border: none;
-    border-radius: 7px;
+    color: #04251c;
+    background: var(--green-light);
+    border: 0;
+    border-radius: 8px;
     padding: 8px 12px;
     margin-right: 12px;
-    font-weight: 700;
+    font-weight: 750;
     cursor: pointer;
 }
 
-/* ---------- PRIMARY BUTTON ---------- */
+/* BUTTONS */
+
+.primary-btn,
+.dashboard-card button {
+    border: 0;
+    color: #04251c;
+    background: linear-gradient(135deg,var(--green-light),var(--green));
+    font-weight: 800;
+    cursor: pointer;
+    transition: .25s ease;
+}
 
 .primary-btn {
     width: 100%;
     margin-top: 23px;
     padding: 14px 18px;
-    border: none;
     border-radius: 11px;
-    color: #05251d;
-    background: linear-gradient(135deg, #34d399, #10b981);
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: 0.3s ease;
+    font-size: 15px;
 }
 
-.primary-btn:hover {
+.primary-btn:hover,
+.dashboard-card button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 9px 22px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 9px 22px rgba(16,185,129,.25);
 }
 
-.primary-btn:active {
-    transform: scale(0.98);
+.primary-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .switch-text {
@@ -293,13 +308,16 @@ form input[type="file"]::file-selector-button {
     font-size: 14px;
 }
 
-.switch-text a {
-    color: #6ee7b7;
-    text-decoration: none;
-    font-weight: 700;
+.switch-text button {
+    color: var(--green-light);
+    background: none;
+    border: 0;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
 }
 
-.switch-text a:hover {
+.switch-text button:hover {
     text-decoration: underline;
 }
 
@@ -308,16 +326,17 @@ form input[type="file"]::file-selector-button {
     padding: 10px;
     border-radius: 9px;
     color: #a7f3d0;
-    background: rgba(16, 185, 129, 0.1);
-    font-size: 14px;
+    background: rgba(16,185,129,.1);
+    font-size: 13px;
     text-align: center;
+    overflow-wrap: anywhere;
 }
 
-/* ---------- STUDENT DASHBOARD ---------- */
+/* DASHBOARD */
 
 .dashboard {
     width: 100%;
-    margin-top: 25px;
+    margin-top: 28px;
 }
 
 .dashboard-heading {
@@ -325,13 +344,18 @@ form input[type="file"]::file-selector-button {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 16px;
     margin-bottom: 25px;
+    padding: 22px 24px;
+    background: rgba(255,255,255,.045);
+    border: 1px solid var(--border);
+    border-radius: 17px;
 }
 
 .dashboard-heading h2 {
     color: var(--white);
-    font-size: 27px;
+    font-size: 26px;
+    font-weight: 800;
 }
 
 .dashboard-heading p {
@@ -339,58 +363,76 @@ form input[type="file"]::file-selector-button {
 }
 
 .logout-btn {
-    padding: 10px 18px;
+    padding: 10px 19px;
     color: #fecdd3;
-    background: rgba(244, 63, 94, 0.12);
-    border: 1px solid rgba(251, 113, 133, 0.4);
-    border-radius: 9px;
-    font-weight: 700;
+    background: rgba(244,63,94,.12);
+    border: 1px solid rgba(251,113,133,.4);
+    border-radius: 10px;
+    font-weight: 750;
     cursor: pointer;
-    transition: 0.3s ease;
+    transition: .25s ease;
 }
 
 .logout-btn:hover {
-    background: rgba(244, 63, 94, 0.25);
+    background: rgba(244,63,94,.25);
 }
 
-/* ---------- DASHBOARD CARDS ---------- */
+/* DASHBOARD CARDS */
 
 .dashboard-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    margin-bottom: 25px;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 19px;
+    margin-bottom: 26px;
 }
 
 .dashboard-card {
-    min-height: 145px;
-    padding: 23px 18px;
+    min-height: 190px;
+    padding: 25px 19px;
     text-align: center;
-    background: var(--glass);
+    background: linear-gradient(145deg,rgba(255,255,255,.085),rgba(255,255,255,.035));
     border: 1px solid var(--border);
-    border-radius: 17px;
-    cursor: pointer;
-    transition: 0.3s ease;
+    border-radius: 19px;
+    transition: .25s ease;
 }
 
 .dashboard-card:hover {
     transform: translateY(-5px);
-    border-color: var(--green);
-    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(52,211,153,.65);
+    background: rgba(16,185,129,.09);
+}
+
+.dashboard-card > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 49px;
+    height: 49px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+    background: rgba(16,185,129,.13);
+    font-size: 23px;
 }
 
 .dashboard-card h3 {
     color: var(--white);
-    font-size: 18px;
-    margin-bottom: 7px;
+    font-size: 17px;
+    margin-bottom: 6px;
 }
 
 .dashboard-card p {
     color: var(--muted);
     font-size: 13px;
+    margin-bottom: 15px;
 }
 
-/* ---------- DASHBOARD PANELS ---------- */
+.dashboard-card button {
+    padding: 10px 17px;
+    border-radius: 9px;
+    font-size: 13px;
+}
+
+/* DASHBOARD PANELS */
 
 .dashboard-panel {
     margin-bottom: 25px;
@@ -398,7 +440,7 @@ form input[type="file"]::file-selector-button {
 }
 
 .dashboard-panel h2 {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 #complaint-history {
@@ -407,44 +449,134 @@ form input[type="file"]::file-selector-button {
 }
 
 #complaint-history > * {
-    padding: 17px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 18px;
+    border-radius: 13px;
+    background: rgba(255,255,255,.05);
     border: 1px solid var(--border);
+    overflow-wrap: anywhere;
 }
 
-/* ---------- FEEDBACK RATING ---------- */
-
-#feedback-rating {
-    cursor: pointer;
+.complaint-history-card h3 {
+    color: var(--green-light);
+    margin-bottom: 8px;
 }
 
-/* ---------- HIDDEN ELEMENTS ---------- */
+.complaint-history-card p {
+    color: var(--muted);
+    margin: 5px 0;
+}
+
+.complaint-history-card a {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--green-light);
+    font-weight: 700;
+}
+
+/* HIDDEN */
 
 .hidden {
     display: none !important;
 }
 
-/* ---------- FOOTER ---------- */
+/* FOOTER */
 
 footer {
-    padding: 22px 15px;
+    padding: 24px 15px;
     text-align: center;
     color: var(--muted);
-    background: rgba(3, 12, 27, 0.65);
+    background: rgba(3,12,27,.72);
     border-top: 1px solid var(--border);
     font-size: 13px;
 }
 
-/* ---------- RESPONSIVE DESIGN ---------- */
+footer p + p {
+    margin-top: 4px;
+    color: #7f94ad;
+}
+
+/* AI ASSISTANT - MATCH THE PORTAL THEME */
+
+#ltsu-ai-launcher {
+    background: linear-gradient(135deg,#34d399,#059669) !important;
+    color: #04251c !important;
+    border: 1px solid rgba(255,255,255,.25) !important;
+    border-radius: 999px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 8px 28px rgba(0,0,0,.3) !important;
+}
+
+#ltsu-ai-panel {
+    background: #0b1d35 !important;
+    color: #eaf2ff !important;
+    border: 1px solid rgba(52,211,153,.35) !important;
+    border-radius: 19px !important;
+    box-shadow: 0 18px 55px rgba(0,0,0,.42) !important;
+}
+
+#ltsu-ai-head {
+    background: linear-gradient(120deg,#07152e,#123b4a) !important;
+    color: white !important;
+    border-bottom: 1px solid rgba(52,211,153,.25) !important;
+}
+
+#ltsu-ai-notice {
+    color: #a8b8cc !important;
+    background: #102746 !important;
+}
+
+#ltsu-ai-messages {
+    background: #09182d !important;
+}
+
+.ltsu-ai-msg {
+    border-radius: 14px !important;
+    line-height: 1.6 !important;
+}
+
+.ltsu-ai-user {
+    color: #04251c !important;
+    background: #34d399 !important;
+}
+
+.ltsu-ai-bot {
+    color: #eaf2ff !important;
+    background: #142b46 !important;
+    border: 1px solid rgba(255,255,255,.1) !important;
+}
+
+#ltsu-ai-tools {
+    background: #102746 !important;
+    border-top: 1px solid rgba(255,255,255,.12) !important;
+}
+
+#ltsu-ai-text {
+    color: #eaf2ff !important;
+    background: #07152e !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
+    border-radius: 11px !important;
+}
+
+#ltsu-ai-text::placeholder {
+    color: #8294ab !important;
+}
+
+.ltsu-ai-send {
+    color: #04251c !important;
+    background: linear-gradient(135deg,#34d399,#10b981) !important;
+    border-radius: 9px !important;
+    font-weight: 800 !important;
+}
+
+#ltsu-ai-status {
+    color: #a8b8cc !important;
+}
+
+/* RESPONSIVE */
 
 @media (max-width: 768px) {
     .student-header {
-        padding: 15px 5%;
-    }
-
-    .brand {
-        font-size: 18px;
+        padding: 14px 5%;
     }
 
     main {
@@ -452,7 +584,7 @@ footer {
     }
 
     .welcome-section {
-        padding: 25px 8px 30px;
+        padding: 27px 8px 32px;
     }
 
     .dashboard-cards {
@@ -475,12 +607,16 @@ footer {
 
 @media (max-width: 420px) {
     .student-header {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .brand {
+        font-size: 19px;
     }
 
     .home-link {
         font-size: 13px;
+        padding: 7px 12px;
     }
 
     .auth-tabs {
@@ -488,7 +624,7 @@ footer {
     }
 
     .auth-tab {
-        font-size: 13px;
+        font-size: 12px;
         padding: 11px 5px;
     }
 
@@ -501,5 +637,17 @@ footer {
     form select,
     form textarea {
         font-size: 14px;
+    }
+
+    #ltsu-ai-launcher {
+        right: 14px !important;
+        bottom: 14px !important;
+    }
+
+    #ltsu-ai-panel {
+        right: 8px !important;
+        bottom: 72px !important;
+        width: calc(100vw - 16px) !important;
+        height: 70vh !important;
     }
 }
