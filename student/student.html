@@ -4,97 +4,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#071827">
+    <meta name="theme-color" content="#07152e">
 
-    <title>Student Portal | LTSU Campus Support</title>
+    <meta name="description" content="LTSUCare Student Portal - Report campus problems, track complaints and connect with campus support.">
 
+    <title>Student Portal | LTSUCare - LTSU</title>
+
+    <!-- Student Portal Design -->
     <link rel="stylesheet" href="student.css">
 
-    <!-- Supabase library -->
+    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Project JavaScript files -->
+    <!-- Supabase Configuration -->
     <script src="supabase-config.js" defer></script>
+
+    <!-- Student Portal JavaScript -->
     <script src="student.js" defer></script>
 </head>
 
 <body>
 
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- HEADER -->
     <header class="student-header">
-        <a href="../index.html" class="brand">
+
+        <a href="../index.html" class="brand" aria-label="LTSU Campus Support Home">
             LTSU <span>Campus Support</span>
         </a>
 
         <a href="../index.html" class="home-link">
             ← Back to Home
         </a>
+
     </header>
 
-    <!-- WELCOME SECTION -->
-    <main>
+    <!-- MAIN CONTENT -->
+    <main id="main-content">
 
+        <!-- WELCOME SECTION -->
         <section class="welcome-section">
+
             <span class="welcome-tag">STUDENT PORTAL</span>
 
             <h1>Your Campus. Your Voice.</h1>
 
             <p>
                 Welcome to the LTSU Student Support Portal.
-                Register, report campus problems and track
-                your complaints in one place.
+                Report campus problems, track your complaints
+                and share your feedback — all in one place.
             </p>
+
         </section>
 
-        <!-- AUTHENTICATION SECTION -->
-        <section class="auth-section" id="auth-section">
+        <!-- AUTHENTICATION -->
+        <section class="auth-section" id="auth-section"
+                 aria-label="Student account access">
 
-            <div class="auth-tabs">
-                <button type="button"
-                        class="auth-tab active"
-                        id="login-tab">
+            <div class="auth-tabs" role="tablist"
+                 aria-label="Login or registration">
+
+                <button
+                    type="button"
+                    class="auth-tab active"
+                    id="login-tab"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="login-panel">
                     Student Login
                 </button>
 
-                <button type="button"
-                        class="auth-tab"
-                        id="register-tab">
+                <button
+                    type="button"
+                    class="auth-tab"
+                    id="register-tab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="register-panel">
                     New Registration
                 </button>
+
             </div>
 
-            <!-- LOGIN FORM -->
+            <!-- LOGIN -->
             <div class="auth-card" id="login-panel">
 
                 <h2>Welcome Back!</h2>
 
                 <p class="section-description">
-                    Login using your Student ID and PIN.
+                    Login using your Student ID and Security PIN.
                 </p>
 
                 <form id="student-login-form">
 
-                    <label for="login-student-id">
-                        Student ID
-                    </label>
+                    <label for="login-student-id">Student ID</label>
 
                     <input
                         type="text"
                         id="login-student-id"
                         name="studentId"
                         placeholder="Enter your Student ID"
+                        autocomplete="username"
                         required
                     >
 
-                    <label for="login-pin">
-                        Security PIN
-                    </label>
+                    <label for="login-pin">Security PIN</label>
 
                     <input
                         type="password"
                         id="login-pin"
                         name="pin"
                         placeholder="Enter your PIN"
+                        autocomplete="current-password"
                         required
                     >
 
@@ -111,12 +133,14 @@
                     </button>
                 </p>
 
-                <p class="form-message" id="login-message"
-                   role="status" aria-live="polite"></p>
+                <p class="form-message"
+                   id="login-message"
+                   role="status"
+                   aria-live="polite"></p>
 
             </div>
 
-            <!-- REGISTRATION FORM -->
+            <!-- REGISTRATION -->
             <div class="auth-card hidden" id="register-panel">
 
                 <h2>Create Student Account</h2>
@@ -127,9 +151,7 @@
 
                 <form id="student-register-form">
 
-                    <label for="student-name">
-                        Full Name
-                    </label>
+                    <label for="student-name">Full Name</label>
 
                     <input
                         type="text"
@@ -140,9 +162,7 @@
                         required
                     >
 
-                    <label for="student-email">
-                        Email Address
-                    </label>
+                    <label for="student-email">Email Address</label>
 
                     <input
                         type="email"
@@ -153,9 +173,7 @@
                         required
                     >
 
-                    <label for="student-mobile">
-                        Mobile Number
-                    </label>
+                    <label for="student-mobile">Mobile Number</label>
 
                     <input
                         type="tel"
@@ -166,9 +184,7 @@
                         required
                     >
 
-                    <label for="student-course">
-                        Course
-                    </label>
+                    <label for="student-course">Course</label>
 
                     <input
                         type="text"
@@ -178,15 +194,13 @@
                         required
                     >
 
-                    <label for="student-semester">
-                        Semester
-                    </label>
+                    <label for="student-semester">Semester</label>
 
                     <select
                         id="student-semester"
                         name="semester"
-                        required
-                    >
+                        required>
+
                         <option value="">Select Semester</option>
                         <option value="1">1st Semester</option>
                         <option value="2">2nd Semester</option>
@@ -196,24 +210,22 @@
                         <option value="6">6th Semester</option>
                         <option value="7">7th Semester</option>
                         <option value="8">8th Semester</option>
+
                     </select>
 
-                    <label for="create-pin">
-                        Create Security PIN
-                    </label>
+                    <label for="create-pin">Create Security PIN</label>
 
                     <input
                         type="password"
                         id="create-pin"
                         name="pin"
-                        placeholder="Create your PIN"
+                        placeholder="Create a secure PIN"
                         minlength="6"
+                        autocomplete="new-password"
                         required
                     >
 
-                    <label for="confirm-pin">
-                        Confirm Security PIN
-                    </label>
+                    <label for="confirm-pin">Confirm Security PIN</label>
 
                     <input
                         type="password"
@@ -221,6 +233,7 @@
                         name="confirmPin"
                         placeholder="Re-enter your PIN"
                         minlength="6"
+                        autocomplete="new-password"
                         required
                     >
 
@@ -237,16 +250,21 @@
                     </button>
                 </p>
 
-                <p class="form-message" id="register-message"
-                   role="status" aria-live="polite"></p>
+                <p class="form-message"
+                   id="register-message"
+                   role="status"
+                   aria-live="polite"></p>
 
             </div>
 
         </section>
 
         <!-- STUDENT DASHBOARD -->
-        <section class="dashboard hidden" id="student-dashboard">
+        <section class="dashboard hidden"
+                 id="student-dashboard"
+                 aria-label="Student dashboard">
 
+            <!-- DASHBOARD HEADING -->
             <div class="dashboard-heading">
 
                 <div>
@@ -259,55 +277,73 @@
                     <p>Your campus support centre.</p>
                 </div>
 
-                <button type="button"
-                        id="logout-btn"
-                        class="logout-btn">
+                <button
+                    type="button"
+                    id="logout-btn"
+                    class="logout-btn">
                     Logout
                 </button>
 
             </div>
 
+            <!-- DASHBOARD OPTIONS -->
             <div class="dashboard-cards">
 
-                <div class="dashboard-card">
-                    <span>📢</span>
+                <article class="dashboard-card">
+
+                    <span aria-hidden="true">📢</span>
+
                     <h3>New Complaint</h3>
-                    <p>Report a problem on campus.</p>
+
+                    <p>Report a campus problem or personal concern.</p>
 
                     <button type="button" id="show-complaint">
                         Submit Complaint
                     </button>
-                </div>
 
-                <div class="dashboard-card">
-                    <span>📋</span>
+                </article>
+
+                <article class="dashboard-card">
+
+                    <span aria-hidden="true">📋</span>
+
                     <h3>My Complaints</h3>
-                    <p>View your submitted complaints.</p>
+
+                    <p>Check your submitted complaints and their status.</p>
 
                     <button type="button" id="show-history">
                         View History
                     </button>
-                </div>
 
-                <div class="dashboard-card">
-                    <span>⭐</span>
+                </article>
+
+                <article class="dashboard-card">
+
+                    <span aria-hidden="true">⭐</span>
+
                     <h3>Feedback</h3>
-                    <p>Share your experience with us.</p>
+
+                    <p>Share your experience and help us improve.</p>
 
                     <button type="button" id="show-feedback">
                         Give Feedback
                     </button>
-                </div>
+
+                </article>
 
             </div>
 
-            <!-- NEW COMPLAINT FORM -->
-            <div class="dashboard-panel hidden" id="complaint-panel">
+            <!-- NEW COMPLAINT -->
+            <section
+                class="dashboard-panel hidden"
+                id="complaint-panel"
+                aria-label="Submit a complaint">
 
                 <h2>Submit a New Complaint</h2>
 
                 <p>
-                    Tell us about the problem you are facing on campus.
+                    Describe the issue clearly so the university
+                    support team can help you.
                 </p>
 
                 <form id="complaint-form">
@@ -348,8 +384,10 @@
                         Problem Category
                     </label>
 
-                    <select id="problem-category"
-                            name="category" required>
+                    <select
+                        id="problem-category"
+                        name="category"
+                        required>
 
                         <option value="">Select Problem Category</option>
                         <option>Water</option>
@@ -377,9 +415,9 @@
                         id="problem-description"
                         name="description"
                         rows="5"
+                        maxlength="5000"
                         placeholder="Explain the problem clearly..."
-                        required
-                    ></textarea>
+                        required></textarea>
 
                     <label for="complaint-media">
                         Upload Photo / Video (Optional)
@@ -392,19 +430,28 @@
                         accept="image/*,video/*"
                     >
 
+                    <p class="section-description">
+                        Photos up to 5 MB and videos up to 25 MB.
+                    </p>
+
                     <button type="submit" class="primary-btn">
                         Submit Complaint
                     </button>
 
                 </form>
 
-                <p class="form-message" id="complaint-message"
-                   role="status" aria-live="polite"></p>
+                <p class="form-message"
+                   id="complaint-message"
+                   role="status"
+                   aria-live="polite"></p>
 
-            </div>
+            </section>
 
             <!-- COMPLAINT HISTORY -->
-            <div class="dashboard-panel hidden" id="history-panel">
+            <section
+                class="dashboard-panel hidden"
+                id="history-panel"
+                aria-label="Complaint history">
 
                 <h2>My Complaint History</h2>
 
@@ -413,16 +460,23 @@
                     will appear here.
                 </p>
 
-                <div id="complaint-history">
+                <div id="complaint-history" aria-live="polite">
                     <p>No complaint records are available yet.</p>
                 </div>
 
-            </div>
+            </section>
 
-            <!-- FEEDBACK FORM -->
-            <div class="dashboard-panel hidden" id="feedback-panel">
+            <!-- FEEDBACK -->
+            <section
+                class="dashboard-panel hidden"
+                id="feedback-panel"
+                aria-label="Student feedback">
 
                 <h2>Share Your Feedback</h2>
+
+                <p>
+                    Your feedback helps us improve campus support services.
+                </p>
 
                 <form id="feedback-form">
 
@@ -442,8 +496,10 @@
                         Your Rating
                     </label>
 
-                    <select id="feedback-rating"
-                            name="rating" required>
+                    <select
+                        id="feedback-rating"
+                        name="rating"
+                        required>
 
                         <option value="">Select Rating</option>
                         <option value="5">5 - Excellent</option>
@@ -462,9 +518,9 @@
                         id="feedback-message"
                         name="feedback"
                         rows="4"
+                        maxlength="3000"
                         placeholder="Share your experience..."
-                        required
-                    ></textarea>
+                        required></textarea>
 
                     <button type="submit" class="primary-btn">
                         Submit Feedback
@@ -472,10 +528,12 @@
 
                 </form>
 
-                <p class="form-message" id="feedback-message-status"
-                   role="status" aria-live="polite"></p>
+                <p class="form-message"
+                   id="feedback-message-status"
+                   role="status"
+                   aria-live="polite"></p>
 
-            </div>
+            </section>
 
         </section>
 
