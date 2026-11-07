@@ -5,553 +5,565 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#07152e">
-
     <meta name="description" content="LTSUCare Student Portal - Report campus problems, track complaints and connect with campus support.">
 
     <title>Student Portal | LTSUCare - LTSU</title>
 
-    <!-- Student Portal Design -->
     <link rel="stylesheet" href="student.css">
 
-    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Supabase Configuration -->
     <script src="supabase-config.js" defer></script>
-
-    <!-- Student Portal JavaScript -->
     <script src="student.js" defer></script>
 </head>
 
 <body>
 
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- HEADER -->
-    <header class="student-header">
+<header class="student-header">
+    <a href="../index.html" class="brand">
+        LTSU <span>Campus Support</span>
+    </a>
 
-        <a href="../index.html" class="brand" aria-label="LTSU Campus Support Home">
-            LTSU <span>Campus Support</span>
-        </a>
+    <a href="../index.html" class="home-link">
+        ← Back to Home
+    </a>
+</header>
 
-        <a href="../index.html" class="home-link">
-            ← Back to Home
-        </a>
+<main id="main-content">
 
-    </header>
+    <section class="welcome-section">
+        <span class="welcome-tag">STUDENT PORTAL</span>
 
-    <!-- MAIN CONTENT -->
-    <main id="main-content">
+        <h1>Your Campus. Your Voice.</h1>
 
-        <!-- WELCOME SECTION -->
-        <section class="welcome-section">
+        <p>
+            Welcome to the LTSU Student Support Portal.
+            Report campus problems, track your complaints
+            and share your feedback — all in one place.
+        </p>
+    </section>
 
-            <span class="welcome-tag">STUDENT PORTAL</span>
+    <!-- LOGIN AND REGISTRATION -->
 
-            <h1>Your Campus. Your Voice.</h1>
+    <section class="auth-section" id="auth-section"
+             aria-label="Student account access">
 
-            <p>
-                Welcome to the LTSU Student Support Portal.
-                Report campus problems, track your complaints
-                and share your feedback — all in one place.
-            </p>
+        <div class="auth-tabs" role="tablist"
+             aria-label="Login or registration">
 
-        </section>
-
-        <!-- AUTHENTICATION -->
-        <section class="auth-section" id="auth-section"
-                 aria-label="Student account access">
-
-            <div class="auth-tabs" role="tablist"
-                 aria-label="Login or registration">
-
-                <button
-                    type="button"
+            <button type="button"
                     class="auth-tab active"
                     id="login-tab"
                     role="tab"
                     aria-selected="true"
                     aria-controls="login-panel">
-                    Student Login
-                </button>
+                Student Login
+            </button>
 
-                <button
-                    type="button"
+            <button type="button"
                     class="auth-tab"
                     id="register-tab"
                     role="tab"
                     aria-selected="false"
                     aria-controls="register-panel">
-                    New Registration
+                New Registration
+            </button>
+        </div>
+
+        <!-- LOGIN PANEL -->
+
+        <div class="auth-card" id="login-panel">
+
+            <h2>Welcome Back!</h2>
+
+            <p class="section-description">
+                Login using your Student ID and Security PIN.
+            </p>
+
+            <form id="student-login-form">
+
+                <label for="login-student-id">Student ID</label>
+                <input
+                    type="text"
+                    id="login-student-id"
+                    name="studentId"
+                    placeholder="Enter your Student ID"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="login-pin">Security PIN</label>
+                <input
+                    type="password"
+                    id="login-pin"
+                    name="pin"
+                    placeholder="Enter your PIN"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit" class="primary-btn">
+                    Login to Student Portal
                 </button>
 
+            </form>
+
+            <p class="switch-text">
+                New student?
+                <button type="button" id="open-register">
+                    Create an account
+                </button>
+            </p>
+
+            <p class="form-message"
+               id="login-message"
+               role="status"
+               aria-live="polite"></p>
+
+        </div>
+
+        <!-- REGISTRATION PANEL -->
+
+        <div class="auth-card hidden" id="register-panel">
+
+            <h2>Create Student Account</h2>
+
+            <p class="section-description">
+                Register once to access campus support services.
+            </p>
+
+            <form id="student-register-form">
+
+                <label for="student-name">Full Name</label>
+                <input
+                    type="text"
+                    id="student-name"
+                    name="studentName"
+                    placeholder="Enter your full name"
+                    autocomplete="name"
+                    required
+                >
+
+                <label for="student-email">Email Address</label>
+                <input
+                    type="email"
+                    id="student-email"
+                    name="email"
+                    placeholder="Enter your email address"
+                    autocomplete="email"
+                    required
+                >
+
+                <label for="student-mobile">Mobile Number</label>
+                <input
+                    type="tel"
+                    id="student-mobile"
+                    name="mobile"
+                    placeholder="Enter your mobile number"
+                    autocomplete="tel"
+                    required
+                >
+
+                <label for="student-course">Course</label>
+                <input
+                    type="text"
+                    id="student-course"
+                    name="course"
+                    placeholder="Example: B.Tech AI and ML"
+                    required
+                >
+
+                <label for="student-semester">Semester</label>
+                <select id="student-semester" name="semester" required>
+                    <option value="">Select Semester</option>
+                    <option value="1">1st Semester</option>
+                    <option value="2">2nd Semester</option>
+                    <option value="3">3rd Semester</option>
+                    <option value="4">4th Semester</option>
+                    <option value="5">5th Semester</option>
+                    <option value="6">6th Semester</option>
+                    <option value="7">7th Semester</option>
+                    <option value="8">8th Semester</option>
+                </select>
+
+                <label for="create-pin">Create Security PIN</label>
+                <input
+                    type="password"
+                    id="create-pin"
+                    name="pin"
+                    placeholder="Create a secure PIN"
+                    minlength="6"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <label for="confirm-pin">Confirm Security PIN</label>
+                <input
+                    type="password"
+                    id="confirm-pin"
+                    name="confirmPin"
+                    placeholder="Re-enter your PIN"
+                    minlength="6"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <button type="submit" class="primary-btn">
+                    Register as Student
+                </button>
+
+            </form>
+
+            <p class="switch-text">
+                Already registered?
+                <button type="button" id="open-login">
+                    Login here
+                </button>
+            </p>
+
+            <p class="form-message"
+               id="register-message"
+               role="status"
+               aria-live="polite"></p>
+
+        </div>
+    </section>
+
+    <!-- STUDENT DASHBOARD -->
+
+    <section class="dashboard hidden"
+             id="student-dashboard"
+             aria-label="Student dashboard">
+
+        <div class="dashboard-heading">
+
+            <div>
+                <span class="welcome-tag">STUDENT DASHBOARD</span>
+                <h2 id="dashboard-student-name">Welcome, Student</h2>
+                <p>Your campus support centre.</p>
             </div>
 
-            <!-- LOGIN -->
-            <div class="auth-card" id="login-panel">
+            <button type="button"
+                    id="logout-btn"
+                    class="logout-btn">
+                Logout
+            </button>
 
-                <h2>Welcome Back!</h2>
+        </div>
 
-                <p class="section-description">
-                    Login using your Student ID and Security PIN.
-                </p>
+        <!-- DASHBOARD CARDS -->
 
-                <form id="student-login-form">
+        <div class="dashboard-cards">
 
-                    <label for="login-student-id">Student ID</label>
+            <article class="dashboard-card">
+                <span aria-hidden="true">📢</span>
+                <h3>New Complaint</h3>
+                <p>Report a campus problem or personal concern.</p>
+                <button type="button" id="show-complaint">
+                    Submit Complaint
+                </button>
+            </article>
 
-                    <input
-                        type="text"
-                        id="login-student-id"
-                        name="studentId"
-                        placeholder="Enter your Student ID"
-                        autocomplete="username"
-                        required
-                    >
+            <article class="dashboard-card">
+                <span aria-hidden="true">📋</span>
+                <h3>My Complaints</h3>
+                <p>Check your submitted complaints and their status.</p>
+                <button type="button" id="show-history">
+                    View History
+                </button>
+            </article>
 
-                    <label for="login-pin">Security PIN</label>
+            <article class="dashboard-card">
+                <span aria-hidden="true">⭐</span>
+                <h3>Feedback</h3>
+                <p>Share your experience and help us improve.</p>
+                <button type="button" id="show-feedback">
+                    Give Feedback
+                </button>
+            </article>
 
-                    <input
-                        type="password"
-                        id="login-pin"
-                        name="pin"
-                        placeholder="Enter your PIN"
-                        autocomplete="current-password"
-                        required
-                    >
+        </div>
 
-                    <button type="submit" class="primary-btn">
-                        Login to Student Portal
-                    </button>
+        <!-- NEW COMPLAINT FORM -->
 
-                </form>
+        <section class="dashboard-panel hidden"
+                 id="complaint-panel"
+                 aria-label="Submit a complaint">
 
-                <p class="switch-text">
-                    New student?
-                    <button type="button" id="open-register">
-                        Create an account
-                    </button>
-                </p>
+            <h2>Submit a New Complaint</h2>
 
-                <p class="form-message"
-                   id="login-message"
-                   role="status"
-                   aria-live="polite"></p>
+            <p>
+                Describe your issue clearly so the university
+                support team can help you.
+            </p>
 
-            </div>
+            <form id="complaint-form">
 
-            <!-- REGISTRATION -->
-            <div class="auth-card hidden" id="register-panel">
+                <!-- COMPLAINT RECIPIENT -->
 
-                <h2>Create Student Account</h2>
+                <label for="recipient-type">
+                    Who do you want to send this complaint to?
+                </label>
 
-                <p class="section-description">
-                    Register once to access campus support services.
-                </p>
-
-                <form id="student-register-form">
-
-                    <label for="student-name">Full Name</label>
-
-                    <input
-                        type="text"
-                        id="student-name"
-                        name="studentName"
-                        placeholder="Enter your full name"
-                        autocomplete="name"
-                        required
-                    >
-
-                    <label for="student-email">Email Address</label>
-
-                    <input
-                        type="email"
-                        id="student-email"
-                        name="email"
-                        placeholder="Enter your email address"
-                        autocomplete="email"
-                        required
-                    >
-
-                    <label for="student-mobile">Mobile Number</label>
-
-                    <input
-                        type="tel"
-                        id="student-mobile"
-                        name="mobile"
-                        placeholder="Enter your mobile number"
-                        autocomplete="tel"
-                        required
-                    >
-
-                    <label for="student-course">Course</label>
-
-                    <input
-                        type="text"
-                        id="student-course"
-                        name="course"
-                        placeholder="Example: B.Tech AI and ML"
-                        required
-                    >
-
-                    <label for="student-semester">Semester</label>
-
-                    <select
-                        id="student-semester"
-                        name="semester"
+                <select id="recipient-type"
+                        name="recipient_type"
                         required>
 
-                        <option value="">Select Semester</option>
-                        <option value="1">1st Semester</option>
-                        <option value="2">2nd Semester</option>
-                        <option value="3">3rd Semester</option>
-                        <option value="4">4th Semester</option>
-                        <option value="5">5th Semester</option>
-                        <option value="6">6th Semester</option>
-                        <option value="7">7th Semester</option>
-                        <option value="8">8th Semester</option>
+                    <option value="all_admins">
+                        All Admins
+                    </option>
+
+                    <option value="specific_admin">
+                        Specific Admin (Confidential)
+                    </option>
+
+                    <option value="super_admin">
+                        Super Admin Direct (Private)
+                    </option>
+
+                </select>
+
+                <!-- SPECIFIC ADMIN SELECTION -->
+
+                <div id="recipient-admin-wrap" class="hidden">
+
+                    <label for="recipient-admin-id">
+                        Select Admin
+                    </label>
+
+                    <select id="recipient-admin-id"
+                            name="recipient_admin_id">
+
+                        <option value="">
+                            Select an Admin
+                        </option>
 
                     </select>
 
-                    <label for="create-pin">Create Security PIN</label>
+                    <p class="section-description">
+                        Only the selected Admin and Super Admin
+                        will be able to view this complaint.
+                    </p>
 
-                    <input
-                        type="password"
-                        id="create-pin"
-                        name="pin"
-                        placeholder="Create a secure PIN"
-                        minlength="6"
-                        autocomplete="new-password"
-                        required
-                    >
-
-                    <label for="confirm-pin">Confirm Security PIN</label>
-
-                    <input
-                        type="password"
-                        id="confirm-pin"
-                        name="confirmPin"
-                        placeholder="Re-enter your PIN"
-                        minlength="6"
-                        autocomplete="new-password"
-                        required
-                    >
-
-                    <button type="submit" class="primary-btn">
-                        Register as Student
-                    </button>
-
-                </form>
-
-                <p class="switch-text">
-                    Already registered?
-                    <button type="button" id="open-login">
-                        Login here
-                    </button>
-                </p>
-
-                <p class="form-message"
-                   id="register-message"
-                   role="status"
-                   aria-live="polite"></p>
-
-            </div>
-
-        </section>
-
-        <!-- STUDENT DASHBOARD -->
-        <section class="dashboard hidden"
-                 id="student-dashboard"
-                 aria-label="Student dashboard">
-
-            <!-- DASHBOARD HEADING -->
-            <div class="dashboard-heading">
-
-                <div>
-                    <span class="welcome-tag">STUDENT DASHBOARD</span>
-
-                    <h2 id="dashboard-student-name">
-                        Welcome, Student
-                    </h2>
-
-                    <p>Your campus support centre.</p>
                 </div>
 
-                <button
-                    type="button"
-                    id="logout-btn"
-                    class="logout-btn">
-                    Logout
-                </button>
-
-            </div>
-
-            <!-- DASHBOARD OPTIONS -->
-            <div class="dashboard-cards">
-
-                <article class="dashboard-card">
-
-                    <span aria-hidden="true">📢</span>
-
-                    <h3>New Complaint</h3>
-
-                    <p>Report a campus problem or personal concern.</p>
-
-                    <button type="button" id="show-complaint">
-                        Submit Complaint
-                    </button>
-
-                </article>
-
-                <article class="dashboard-card">
-
-                    <span aria-hidden="true">📋</span>
-
-                    <h3>My Complaints</h3>
-
-                    <p>Check your submitted complaints and their status.</p>
-
-                    <button type="button" id="show-history">
-                        View History
-                    </button>
-
-                </article>
-
-                <article class="dashboard-card">
-
-                    <span aria-hidden="true">⭐</span>
-
-                    <h3>Feedback</h3>
-
-                    <p>Share your experience and help us improve.</p>
-
-                    <button type="button" id="show-feedback">
-                        Give Feedback
-                    </button>
-
-                </article>
-
-            </div>
-
-            <!-- NEW COMPLAINT -->
-            <section
-                class="dashboard-panel hidden"
-                id="complaint-panel"
-                aria-label="Submit a complaint">
-
-                <h2>Submit a New Complaint</h2>
-
-                <p>
-                    Describe the issue clearly so the university
-                    support team can help you.
+                <p class="section-description">
+                    Super Admin Direct complaints are private.
+                    All Admins complaints are visible to active
+                    approved Admins.
                 </p>
 
-                <form id="complaint-form">
+                <!-- COURSE -->
 
-                    <label for="complaint-course">Course</label>
+                <label for="complaint-course">Course</label>
+                <input
+                    type="text"
+                    id="complaint-course"
+                    name="course"
+                    placeholder="Your course"
+                    required
+                >
 
-                    <input
-                        type="text"
-                        id="complaint-course"
-                        name="course"
-                        placeholder="Your course"
-                        required
-                    >
+                <!-- SEMESTER -->
 
-                    <label for="complaint-semester">Semester</label>
+                <label for="complaint-semester">Semester</label>
+                <input
+                    type="text"
+                    id="complaint-semester"
+                    name="semester"
+                    placeholder="Your semester"
+                    required
+                >
 
-                    <input
-                        type="text"
-                        id="complaint-semester"
-                        name="semester"
-                        placeholder="Your semester"
-                        required
-                    >
+                <!-- LOCATION -->
 
-                    <label for="complaint-location">
-                        Location / Block Name
-                    </label>
+                <label for="complaint-location">
+                    Location / Block Name
+                </label>
 
-                    <input
-                        type="text"
-                        id="complaint-location"
-                        name="location"
-                        placeholder="Enter campus location or block"
-                        required
-                    >
+                <input
+                    type="text"
+                    id="complaint-location"
+                    name="location"
+                    placeholder="Enter campus location or block"
+                    required
+                >
 
-                    <label for="problem-category">
-                        Problem Category
-                    </label>
+                <!-- CATEGORY -->
 
-                    <select
-                        id="problem-category"
+                <label for="problem-category">
+                    Problem Category
+                </label>
+
+                <select id="problem-category"
                         name="category"
                         required>
 
-                        <option value="">Select Problem Category</option>
-                        <option>Water</option>
-                        <option>Cleanliness</option>
-                        <option>Electricity</option>
-                        <option>Roads</option>
-                        <option>Wi-Fi</option>
-                        <option>Security</option>
-                        <option>Buildings</option>
-                        <option>Hostel</option>
-                        <option>Classrooms</option>
-                        <option>Washrooms</option>
-                        <option>Furniture</option>
-                        <option>Lab</option>
-                        <option>Parking</option>
-                        <option>Other</option>
+                    <option value="">Select Problem Category</option>
+                    <option value="Water">Water</option>
+                    <option value="Cleanliness">Cleanliness</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Roads">Roads</option>
+                    <option value="Wi-Fi">Wi-Fi</option>
+                    <option value="Security">Security</option>
+                    <option value="Buildings">Buildings</option>
+                    <option value="Hostel">Hostel</option>
+                    <option value="Classrooms">Classrooms</option>
+                    <option value="Washrooms">Washrooms</option>
+                    <option value="Furniture">Furniture</option>
+                    <option value="Lab">Lab</option>
+                    <option value="Parking">Parking</option>
+                    <option value="Personal Concern">Personal Concern</option>
+                    <option value="Bullying">Bullying</option>
+                    <option value="Harassment">Harassment</option>
+                    <option value="Other">Other</option>
 
-                    </select>
+                </select>
 
-                    <label for="problem-description">
-                        Describe Your Problem
-                    </label>
+                <!-- DESCRIPTION -->
 
-                    <textarea
-                        id="problem-description"
-                        name="description"
-                        rows="5"
-                        maxlength="5000"
-                        placeholder="Explain the problem clearly..."
-                        required></textarea>
+                <label for="problem-description">
+                    Describe Your Problem
+                </label>
 
-                    <label for="complaint-media">
-                        Upload Photo / Video (Optional)
-                    </label>
+                <textarea
+                    id="problem-description"
+                    name="description"
+                    rows="5"
+                    maxlength="5000"
+                    placeholder="Explain the problem clearly..."
+                    required></textarea>
 
-                    <input
-                        type="file"
-                        id="complaint-media"
-                        name="media"
-                        accept="image/*,video/*"
-                    >
+                <!-- MEDIA UPLOAD -->
 
-                    <p class="section-description">
-                        Photos up to 5 MB and videos up to 25 MB.
-                    </p>
+                <label for="complaint-media">
+                    Upload Photo / Video (Optional)
+                </label>
 
-                    <button type="submit" class="primary-btn">
-                        Submit Complaint
-                    </button>
+                <input
+                    type="file"
+                    id="complaint-media"
+                    name="media"
+                    accept="image/*,video/*"
+                >
 
-                </form>
-
-                <p class="form-message"
-                   id="complaint-message"
-                   role="status"
-                   aria-live="polite"></p>
-
-            </section>
-
-            <!-- COMPLAINT HISTORY -->
-            <section
-                class="dashboard-panel hidden"
-                id="history-panel"
-                aria-label="Complaint history">
-
-                <h2>My Complaint History</h2>
-
-                <p>
-                    Your submitted complaints and their latest status
-                    will appear here.
+                <p class="section-description">
+                    Photos up to 5 MB and videos up to 25 MB.
                 </p>
 
-                <div id="complaint-history" aria-live="polite">
-                    <p>No complaint records are available yet.</p>
-                </div>
+                <button type="submit" class="primary-btn">
+                    Submit Complaint
+                </button>
 
-            </section>
+            </form>
 
-            <!-- FEEDBACK -->
-            <section
-                class="dashboard-panel hidden"
-                id="feedback-panel"
-                aria-label="Student feedback">
-
-                <h2>Share Your Feedback</h2>
-
-                <p>
-                    Your feedback helps us improve campus support services.
-                </p>
-
-                <form id="feedback-form">
-
-                    <label for="feedback-complaint-id">
-                        Complaint ID
-                    </label>
-
-                    <input
-                        type="text"
-                        id="feedback-complaint-id"
-                        name="complaintId"
-                        placeholder="Enter your Complaint ID"
-                        required
-                    >
-
-                    <label for="feedback-rating">
-                        Your Rating
-                    </label>
-
-                    <select
-                        id="feedback-rating"
-                        name="rating"
-                        required>
-
-                        <option value="">Select Rating</option>
-                        <option value="5">5 - Excellent</option>
-                        <option value="4">4 - Very Good</option>
-                        <option value="3">3 - Good</option>
-                        <option value="2">2 - Needs Improvement</option>
-                        <option value="1">1 - Poor</option>
-
-                    </select>
-
-                    <label for="feedback-message">
-                        Your Feedback
-                    </label>
-
-                    <textarea
-                        id="feedback-message"
-                        name="feedback"
-                        rows="4"
-                        maxlength="3000"
-                        placeholder="Share your experience..."
-                        required></textarea>
-
-                    <button type="submit" class="primary-btn">
-                        Submit Feedback
-                    </button>
-
-                </form>
-
-                <p class="form-message"
-                   id="feedback-message-status"
-                   role="status"
-                   aria-live="polite"></p>
-
-            </section>
+            <p class="form-message"
+               id="complaint-message"
+               role="status"
+               aria-live="polite"></p>
 
         </section>
 
-    </main>
+        <!-- COMPLAINT HISTORY -->
 
-    <!-- FOOTER -->
-    <footer>
+        <section class="dashboard-panel hidden"
+                 id="history-panel"
+                 aria-label="Complaint history">
 
-        <p>
-            © <span id="current-year"></span>
-            LTSU Campus Support
-        </p>
+            <h2>My Complaint History</h2>
 
-        <p>
-            A Better Campus Begins With a Voice That Is Heard.
-        </p>
+            <p>
+                Your submitted complaints and their latest status
+                will appear here.
+            </p>
 
-    </footer>
+            <div id="complaint-history" aria-live="polite">
+                <p>No complaint records are available yet.</p>
+            </div>
+
+        </section>
+
+        <!-- FEEDBACK -->
+
+        <section class="dashboard-panel hidden"
+                 id="feedback-panel"
+                 aria-label="Student feedback">
+
+            <h2>Share Your Feedback</h2>
+
+            <p>
+                Your feedback helps us improve campus support services.
+            </p>
+
+            <form id="feedback-form">
+
+                <label for="feedback-complaint-id">
+                    Complaint ID
+                </label>
+
+                <input
+                    type="text"
+                    id="feedback-complaint-id"
+                    name="complaintId"
+                    placeholder="Enter your Complaint ID"
+                    required
+                >
+
+                <label for="feedback-rating">Your Rating</label>
+
+                <select id="feedback-rating"
+                        name="rating"
+                        required>
+
+                    <option value="">Select Rating</option>
+                    <option value="5">5 - Excellent</option>
+                    <option value="4">4 - Very Good</option>
+                    <option value="3">3 - Good</option>
+                    <option value="2">2 - Needs Improvement</option>
+                    <option value="1">1 - Poor</option>
+
+                </select>
+
+                <label for="feedback-message">Your Feedback</label>
+
+                <textarea
+                    id="feedback-message"
+                    name="feedback"
+                    rows="4"
+                    maxlength="3000"
+                    placeholder="Share your experience..."
+                    required></textarea>
+
+                <button type="submit" class="primary-btn">
+                    Submit Feedback
+                </button>
+
+            </form>
+
+            <p class="form-message"
+               id="feedback-message-status"
+               role="status"
+               aria-live="polite"></p>
+
+        </section>
+
+    </section>
+
+</main>
+
+<!-- FOOTER -->
+
+<footer>
+    <p>
+        © <span id="current-year"></span>
+        LTSU Campus Support
+    </p>
+
+    <p>
+        A Better Campus Begins With a Voice That Is Heard.
+    </p>
+</footer>
 
 </body>
 </html>
