@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", async () => {
   const db = window.supabaseClient;
   const $ = id => document.getElementById(id);
@@ -134,11 +135,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (!confirm("Is Admin request ko approve karna hai?")) return;
 
+      if (!request.user_id) {
+        alert("Is request ke saath user ID nahi mili. Approval nahi ho sakta.");
+        return;
+      }
+
       const { error: profileError } = await db
         .from("profiles")
         .update({
           role: "admin",
-          is_active: true
+          is_active: true,
+          department: request.department
         })
         .eq("id", request.user_id);
 
@@ -161,7 +168,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      alert("Admin request approved.");
+      alert("Admin request approved successfully. Department assigned: " + (request.department || "Not specified"));
       await loadAdminRequests();
       await loadAdminCount();
     }
@@ -395,7 +402,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "/ltsu-campus-support/super-admin/reset-password.html";
   });
 
-  // BASIC AI HELPER
+  // BASIC AI HELPER - LEFT UNCHANGED FOR NOW
   $("ai-button")?.addEventListener("click", () => {
     $("ai-window")?.classList.remove("hidden");
   });
