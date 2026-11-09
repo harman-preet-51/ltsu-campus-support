@@ -12,14 +12,11 @@
 
 <body>
 
-    <!-- ================= LOGIN PAGE ================= -->
-
+    <!-- LOGIN PAGE -->
     <section id="login-page" class="login-page">
-
         <div class="login-box">
 
             <h1>LTSUCare</h1>
-
             <p>Super Admin Login Portal</p>
 
             <form id="login-form">
@@ -40,9 +37,7 @@
                     required
                 >
 
-                <button type="submit" id="login-button">
-                    Login
-                </button>
+                <button type="submit" id="login-button">Login</button>
 
             </form>
 
@@ -57,21 +52,16 @@
             </span>
 
         </div>
-
     </section>
 
 
-    <!-- ================= SUPER ADMIN DASHBOARD ================= -->
-
+    <!-- DASHBOARD -->
     <section id="dashboard" class="dashboard hidden">
 
         <!-- SIDEBAR -->
-
         <aside class="sidebar">
 
-            <div class="brand">
-                LTSUCare
-            </div>
+            <div class="brand">LTSUCare</div>
 
             <button class="nav-btn active" data-page="overview">
                 Overview
@@ -79,6 +69,10 @@
 
             <button class="nav-btn" data-page="complaints">
                 Complaints
+            </button>
+
+            <button class="nav-btn" data-page="my-personal-complaints">
+                My Personal Complaints
             </button>
 
             <button class="nav-btn" data-page="students">
@@ -105,22 +99,18 @@
 
 
         <!-- MAIN CONTENT -->
-
         <main class="main-content">
 
             <header class="topbar">
 
                 <h2>Super Admin Dashboard</h2>
 
-                <span class="admin-label">
-                    Super Admin
-                </span>
+                <span class="admin-label">Super Admin</span>
 
             </header>
 
 
-            <!-- OVERVIEW PAGE -->
-
+            <!-- OVERVIEW -->
             <section id="overview" class="page-section active">
 
                 <div class="welcome-banner">
@@ -157,6 +147,11 @@
                         <p id="admin-count">0</p>
                     </div>
 
+                    <div class="stat-card">
+                        <h3>Pending Admin Requests</h3>
+                        <p id="pending-admin-count">0</p>
+                    </div>
+
                 </div>
 
 
@@ -178,13 +173,11 @@
                             </thead>
 
                             <tbody id="recent-complaints">
-
                                 <tr>
                                     <td colspan="4">
-                                        No complaints available yet.
+                                        Loading complaints...
                                     </td>
                                 </tr>
-
                             </tbody>
 
                         </table>
@@ -196,13 +189,16 @@
             </section>
 
 
-            <!-- COMPLAINTS PAGE -->
-
+            <!-- NORMAL COMPLAINTS -->
             <section id="complaints" class="page-section">
 
                 <div class="content-box">
 
                     <h3>Complaint Management</h3>
+
+                    <p>
+                        View and manage complaints available to Super Admin.
+                    </p>
 
                     <div class="table-container">
 
@@ -215,17 +211,171 @@
                                     <th>Title</th>
                                     <th>Status</th>
                                     <th>Date</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
 
                             <tbody id="complaint-list">
-
                                 <tr>
-                                    <td colspan="5">
-                                        Complaints will appear here after database integration.
+                                    <td colspan="6">
+                                        Loading complaints...
                                     </td>
                                 </tr>
+                            </tbody>
 
+                        </table>
+
+                    </div>
+
+                    <div id="super-complaint-details" class="hidden">
+
+                        <h3>Complaint Details</h3>
+
+                        <div id="super-complaint-detail-content"></div>
+
+                        <form id="super-complaint-update-form">
+
+                            <label for="super-update-status">
+                                Update Status
+                            </label>
+
+                            <select id="super-update-status" required>
+                                <option value="Submitted">Submitted</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Work in Progress">Work in Progress</option>
+                                <option value="Solved">Solved</option>
+                            </select>
+
+                            <label for="super-resolution-notes">
+                                Resolution Details
+                            </label>
+
+                            <textarea
+                                id="super-resolution-notes"
+                                rows="4"
+                                placeholder="Enter resolution details"
+                            ></textarea>
+
+                            <button type="submit">
+                                Save Complaint Update
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- SUPER ADMIN PERSONAL COMPLAINTS -->
+            <section id="my-personal-complaints" class="page-section">
+
+                <div class="content-box">
+
+                    <h3>My Personal Complaints</h3>
+
+                    <p>
+                        Only your own confidential complaints will appear here.
+                    </p>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Complaint ID</th>
+                                    <th>Category</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="my-personal-complaint-list">
+                                <tr>
+                                    <td colspan="6">
+                                        Loading personal complaints...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div id="my-personal-complaint-details" class="hidden">
+
+                        <h3>Personal Complaint Details</h3>
+
+                        <div id="my-personal-detail-content"></div>
+
+                        <form id="my-personal-update-form">
+
+                            <label for="my-personal-status">
+                                Update Status
+                            </label>
+
+                            <select id="my-personal-status" required>
+                                <option value="Submitted">Submitted</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Work in Progress">Work in Progress</option>
+                                <option value="Solved">Solved</option>
+                            </select>
+
+                            <label for="my-personal-notes">
+                                Resolution Details
+                            </label>
+
+                            <textarea
+                                id="my-personal-notes"
+                                rows="4"
+                                placeholder="Enter resolution details"
+                            ></textarea>
+
+                            <button type="submit">
+                                Save Update
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- STUDENTS -->
+            <section id="students" class="page-section">
+
+                <div class="content-box">
+
+                    <h3>Student Management</h3>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Course</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="student-list">
+                                <tr>
+                                    <td colspan="5">
+                                        Loading students...
+                                    </td>
+                                </tr>
                             </tbody>
 
                         </table>
@@ -237,25 +387,7 @@
             </section>
 
 
-            <!-- STUDENTS PAGE -->
-
-            <section id="students" class="page-section">
-
-                <div class="content-box">
-
-                    <h3>Student Management</h3>
-
-                    <p>
-                        Student records will appear here after database integration.
-                    </p>
-
-                </div>
-
-            </section>
-
-
-            <!-- ADMINS PAGE -->
-
+            <!-- ADMIN MANAGEMENT -->
             <section id="admins" class="page-section">
 
                 <div class="content-box">
@@ -263,34 +395,141 @@
                     <h3>Admin Management</h3>
 
                     <p>
-                        Administrator records and access requests will appear here
-                        after database integration.
+                        Review administrator access requests and manage approved admins.
                     </p>
+
+                    <h3>Pending Admin Requests</h3>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Contact</th>
+                                    <th>Department</th>
+                                    <th>Reason</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="pending-admin-list">
+                                <tr>
+                                    <td colspan="8">
+                                        Loading admin requests...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <h3>Approved Administrators</h3>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="approved-admin-list">
+                                <tr>
+                                    <td colspan="5">
+                                        Loading approved admins...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <h3>Rejected Requests</h3>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="rejected-admin-list">
+                                <tr>
+                                    <td colspan="5">
+                                        Loading rejected requests...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
 
                 </div>
 
             </section>
 
 
-            <!-- ACTIVITY LOGS PAGE -->
-
+            <!-- ACTIVITY LOGS -->
             <section id="activity" class="page-section">
 
                 <div class="content-box">
 
                     <h3>Activity Logs</h3>
 
-                    <p>
-                        System activity records will appear here after database integration.
-                    </p>
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Actor</th>
+                                    <th>Target</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="activity-list">
+                                <tr>
+                                    <td colspan="4">
+                                        Loading activity logs...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
 
                 </div>
 
             </section>
 
 
-            <!-- SETTINGS PAGE -->
-
+            <!-- SETTINGS -->
             <section id="settings" class="page-section">
 
                 <div class="content-box">
@@ -298,8 +537,10 @@
                     <h3>Super Admin Settings</h3>
 
                     <p>
-                        Account and portal settings will be available here.
+                        Account and portal settings.
                     </p>
+
+                    <div id="super-admin-profile"></div>
 
                 </div>
 
@@ -310,11 +551,8 @@
     </section>
 
 
-    <!-- ================= AI ASSISTANT ================= -->
-
-    <button id="ai-button" type="button">
-        AI
-    </button>
+    <!-- AI ASSISTANT -->
+    <button id="ai-button" type="button">AI</button>
 
     <div id="ai-window" class="ai-chat-window hidden">
 
@@ -322,9 +560,7 @@
 
             <strong>LTSUCare Assistant</strong>
 
-            <button id="ai-close" type="button">
-                &times;
-            </button>
+            <button id="ai-close" type="button">&times;</button>
 
         </div>
 
@@ -345,21 +581,16 @@
                 placeholder="Ask something..."
             >
 
-            <button id="ai-send" type="button">
-                Send
-            </button>
+            <button id="ai-send" type="button">Send</button>
 
         </div>
 
     </div>
 
 
-    <!-- ================= JAVASCRIPT FILES ================= -->
-
+    <!-- JAVASCRIPT -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script src="../student/supabase-config.js"></script>
-
     <script src="super-admin.js"></script>
 
 </body>
