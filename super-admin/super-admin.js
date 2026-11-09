@@ -16,9 +16,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#039;"
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
   })[char]);
+
+  function showMessage(message) {
+    alert(message);
+  }
 
   // SUPER ADMIN LOGIN VERIFICATION
   async function verifySuperAdmin(user) {
@@ -26,11 +33,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       .from("profiles")
       .select("id,full_name,email,role,is_active")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (error || !data || data.role !== "super_admin" || data.is_active !== true) {
       await db.auth.signOut();
-      alert("Super Admin access denied.");
+      showMessage("Super Admin access denied. Active Super Admin account required.");
       return false;
     }
 
@@ -40,13 +47,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("login-page")?.classList.add("hidden");
     $("dashboard")?.classList.remove("hidden");
 
-    document.querySelectorAll(".admin-label").forEach(el => {
-      el.textContent = data.full_name || data.email;
+    document.querySelectorAll(".admin-label").forEach(element => {
+      element.textContent = data.full_name || data.email;
     });
 
-    await loadAdminRequests();
-    await loadAdminCount();
-    await loadComplaints();
+    await Promise.all([
+      loadAdminRequests(),
+      loadAdminCount(),
+      loadStudentCount(),
+      loadComplaints()
+    ]);
+
+    loadActivityLogs();
 
     return true;
   }
@@ -55,31 +67,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("login-form")?.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const email = $("admin-id")?.value.trim();
+    const email = $("admin-id")?.value.trim().toLowerCase();
     const password = $("admin-pin")?.value;
+    const button = $("login-button");
 
     if (!email || !password) {
-      alert("Email aur password bharo.");
+      showMessage("Email aur password bharo.");
       return;
     }
 
-    const { data, error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      alert(error.message);
-      return;
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Logging in...";
     }
 
-    await verifySuperAdmin(data.user);
+    try {
+      const { data, error } = await db.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        showMessage("Login failed: " + error.message);
+        return;
+      }
+
+      await verifySuperAdmin(data.user);
+
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Login";
+      }
+    }
   });
 
-  // LOAD ADMIN REQUESTS
+
+  // ================= ADMIN MANAGEMENT =================
+
   async function loadAdminRequests() {
-    const container = $("admins");
-    if (!container) return;
+    const pending = $("pending-admin-list");
+
+    if (pending) {
+      pending.innerHTML = `
+        <tr><td colspan="8">Loading admin requests...</td></tr>
+      `;
+    }
 
     const { data, error } = await db
       .from("admin_requests")
@@ -87,118 +120,276 @@ document.addEventListener("DOMContentLoaded", async () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      container.innerHTML = "<p>Admin requests load nahi hui: " +
-        escapeHTML(error.message) + "</p>";
+      if (pending) {
+        pending.innerHTML = `
+          <tr><td colspan="8">Error: ${escapeHTML(error.message)}</td></tr>
+        `;
+      }
+
+      console.error("Admin requests error:", error.message);
       return;
     }
 
     adminRequests = data || [];
+
     renderAdminRequests();
+    updatePendingRequestCount();
+    await loadApprovedAdmins();
   }
 
-  function renderAdminRequests() {
-    const container = $("admins");
-    if (!container) return;
 
-    if (!adminRequests.length) {
-      container.innerHTML = "<h2>Admin Management</h2><p>Abhi koi admin request nahi hai.</p>";
+  function renderAdminRequests() {
+    const pendingBody = $("pending-admin-list");
+    const rejectedBody = $("rejected-admin-list");
+
+    const pendingRequests = adminRequests.filter(request =>
+      String(request.status || "").toLowerCase() === "pending"
+    );
+
+    const rejectedRequests = adminRequests.filter(request =>
+      String(request.status || "").toLowerCase() === "rejected"
+    );
+
+    if (pendingBody) {
+      pendingBody.innerHTML = pendingRequests.length
+        ? pendingRequests.map(request => `
+            <tr>
+              <td>${escapeHTML(request.full_name)}</td>
+              <td>${escapeHTML(request.username || "Missing")}</td>
+              <td>${escapeHTML(request.email)}</td>
+              <td>${escapeHTML(request.contact_number)}</td>
+              <td>${escapeHTML(request.department)}</td>
+              <td>${escapeHTML(request.reason)}</td>
+              <td>${escapeHTML(formatDate(request.created_at))}</td>
+              <td>
+                <button
+                  type="button"
+                  data-approve="${escapeHTML(request.id)}"
+                >Approve</button>
+
+                <button
+                  type="button"
+                  data-reject="${escapeHTML(request.id)}"
+                >Reject</button>
+              </td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="8">No pending admin requests.</td></tr>`;
+    }
+
+    if (rejectedBody) {
+      rejectedBody.innerHTML = rejectedRequests.length
+        ? rejectedRequests.map(request => `
+            <tr>
+              <td>${escapeHTML(request.full_name)}</td>
+              <td>${escapeHTML(request.username || "—")}</td>
+              <td>${escapeHTML(request.email)}</td>
+              <td>${escapeHTML(request.department)}</td>
+              <td>${escapeHTML(formatDate(request.reviewed_at || request.created_at))}</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="5">No rejected requests.</td></tr>`;
+    }
+  }
+
+
+  async function loadApprovedAdmins() {
+    const tbody = $("approved-admin-list");
+
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">Loading approved admins...</td></tr>
+      `;
+    }
+
+    const { data, error } = await db
+      .from("profiles")
+      .select("id,full_name,username,email,department,is_active")
+      .eq("role", "admin")
+      .order("full_name", { ascending: true });
+
+    if (error) {
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr><td colspan="5">Error: ${escapeHTML(error.message)}</td></tr>
+        `;
+      }
       return;
     }
 
-    container.innerHTML = `
-      <h2>Admin Management</h2>
-      ${adminRequests.map(request => `
-        <div style="border:1px solid #ddd;padding:15px;margin:12px 0;border-radius:8px">
-          <h3>${escapeHTML(request.full_name)}</h3>
-          <p><b>Email:</b> ${escapeHTML(request.email)}</p>
-          <p><b>Contact:</b> ${escapeHTML(request.contact_number)}</p>
-          <p><b>Department:</b> ${escapeHTML(request.department)}</p>
-          <p><b>Reason:</b> ${escapeHTML(request.reason)}</p>
-          <p><b>Status:</b> ${escapeHTML(request.status)}</p>
-          ${request.status === "pending" ? `
-            <button type="button" data-approve="${escapeHTML(request.id)}">Approve</button>
-            <button type="button" data-reject="${escapeHTML(request.id)}">Reject</button>
-          ` : ""}
-        </div>
-      `).join("")}
-    `;
+    if (!tbody) return;
+
+    const admins = data || [];
+
+    tbody.innerHTML = admins.length
+      ? admins.map(admin => `
+          <tr>
+            <td>${escapeHTML(admin.full_name)}</td>
+            <td>${escapeHTML(admin.username || "Not assigned")}</td>
+            <td>${escapeHTML(admin.email)}</td>
+            <td>${escapeHTML(admin.department)}</td>
+            <td>${admin.is_active ? "Active" : "Inactive"}</td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="5">No approved admins found.</td></tr>`;
   }
 
-  // APPROVE / REJECT REQUESTS
+
+  function updatePendingRequestCount() {
+    const count = adminRequests.filter(request =>
+      String(request.status || "").toLowerCase() === "pending"
+    ).length;
+
+    if ($("pending-admin-count")) {
+      $("pending-admin-count").textContent = count;
+    }
+  }
+
+
+  // APPROVE / REJECT BUTTONS
   $("admins")?.addEventListener("click", async event => {
     const approveButton = event.target.closest("[data-approve]");
     const rejectButton = event.target.closest("[data-reject]");
 
+    // APPROVE
     if (approveButton) {
-      const request = adminRequests.find(r => r.id === approveButton.dataset.approve);
+      const request = adminRequests.find(item =>
+        String(item.id) === approveButton.dataset.approve
+      );
+
       if (!request) return;
 
-      if (!confirm("Is Admin request ko approve karna hai?")) return;
+      if (String(request.status).toLowerCase() !== "pending") {
+        showMessage("Ye request ab pending nahi hai.");
+        return;
+      }
 
       if (!request.user_id) {
-        alert("Is request ke saath user ID nahi mili. Approval nahi ho sakta.");
+        showMessage("Request ke saath User ID nahi mili. Approval possible nahi hai.");
         return;
       }
 
-      const { error: profileError } = await db
-        .from("profiles")
-        .update({
-          role: "admin",
-          is_active: true,
-          department: request.department
-        })
-        .eq("id", request.user_id);
+      const username = String(request.username || "").trim().toLowerCase();
 
-      if (profileError) {
-        alert("Profile approval error: " + profileError.message);
+      if (!username) {
+        showMessage(
+          "Is request mein username missing hai. Is request ko approve nahi kiya ja sakta. Applicant se username ke saath dobara request submit karvao."
+        );
         return;
       }
 
-      const { error: requestError } = await db
-        .from("admin_requests")
-        .update({
-          status: "approved",
-          reviewed_by: currentUser.id,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq("id", request.id);
-
-      if (requestError) {
-        alert("Request status update error: " + requestError.message);
+      if (!confirm(
+        "Kya aap is Admin request ko approve karna chahte hain?\n\nUsername: " + username
+      )) {
         return;
       }
 
-      alert("Admin request approved successfully. Department assigned: " + (request.department || "Not specified"));
-      await loadAdminRequests();
-      await loadAdminCount();
+      approveButton.disabled = true;
+      approveButton.textContent = "Approving...";
+
+      try {
+        // First activate the profile and save its username.
+        const { error: profileError } = await db
+          .from("profiles")
+          .update({
+            role: "admin",
+            is_active: true,
+            department: request.department,
+            username: username
+          })
+          .eq("id", request.user_id);
+
+        if (profileError) {
+          showMessage("Profile approval error: " + profileError.message);
+          return;
+        }
+
+        // Then mark the request approved.
+        const { error: requestError } = await db
+          .from("admin_requests")
+          .update({
+            status: "approved",
+            reviewed_by: currentUser.id,
+            reviewed_at: new Date().toISOString()
+          })
+          .eq("id", request.id);
+
+        if (requestError) {
+          showMessage(
+            "Profile activate ho gaya, lekin request status update nahi hua. Error: " +
+            requestError.message
+          );
+          await loadAdminRequests();
+          return;
+        }
+
+        showMessage(
+          "Admin successfully approved!\nUsername: " + username
+        );
+
+        await loadAdminRequests();
+        await loadAdminCount();
+
+      } finally {
+        if (approveButton.isConnected) {
+          approveButton.disabled = false;
+          approveButton.textContent = "Approve";
+        }
+      }
     }
 
+
+    // REJECT
     if (rejectButton) {
-      const request = adminRequests.find(r => r.id === rejectButton.dataset.reject);
+      const request = adminRequests.find(item =>
+        String(item.id) === rejectButton.dataset.reject
+      );
+
       if (!request) return;
 
-      if (!confirm("Is Admin request ko reject karna hai?")) return;
-
-      const { error } = await db
-        .from("admin_requests")
-        .update({
-          status: "rejected",
-          reviewed_by: currentUser.id,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq("id", request.id);
-
-      if (error) {
-        alert("Reject error: " + error.message);
+      if (String(request.status).toLowerCase() !== "pending") {
+        showMessage("Ye request ab pending nahi hai.");
         return;
       }
 
-      alert("Request rejected.");
-      await loadAdminRequests();
+      if (!confirm("Kya aap is Admin request ko reject karna chahte hain?")) {
+        return;
+      }
+
+      rejectButton.disabled = true;
+      rejectButton.textContent = "Rejecting...";
+
+      try {
+        const { error } = await db
+          .from("admin_requests")
+          .update({
+            status: "rejected",
+            reviewed_by: currentUser.id,
+            reviewed_at: new Date().toISOString()
+          })
+          .eq("id", request.id);
+
+        if (error) {
+          showMessage("Reject error: " + error.message);
+          return;
+        }
+
+        showMessage("Admin request rejected.");
+
+        await loadAdminRequests();
+
+      } finally {
+        if (rejectButton.isConnected) {
+          rejectButton.disabled = false;
+          rejectButton.textContent = "Reject";
+        }
+      }
     }
   });
 
-  // ACTIVE ADMIN COUNT
+
+  // ================= COUNTS =================
+
   async function loadAdminCount() {
     const { count, error } = await db
       .from("profiles")
@@ -206,13 +397,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       .eq("role", "admin")
       .eq("is_active", true);
 
-    if (!error) {
-      const target = $("admin-count");
-      if (target) target.textContent = count ?? 0;
+    if (!error && $("admin-count")) {
+      $("admin-count").textContent = count ?? 0;
     }
   }
 
-  // LOAD COMPLAINTS FOR EMAIL CENTRE
+
+  async function loadStudentCount() {
+    const { count, error } = await db
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "student");
+
+    if (!error && $("student-count")) {
+      $("student-count").textContent = count ?? 0;
+    }
+  }
+
+
+  // ================= COMPLAINTS =================
+
   async function loadComplaints() {
     const { data, error } = await db
       .from("complaints")
@@ -226,10 +430,142 @@ document.addEventListener("DOMContentLoaded", async () => {
       complaints = data || [];
     }
 
+    renderComplaints();
+    renderRecentComplaints();
+    updateComplaintStats();
     renderEmailCentre();
   }
 
-  // CREATE EMAIL CENTRE
+
+  function renderComplaints() {
+    const tbody = $("complaint-list");
+    if (!tbody) return;
+
+    tbody.innerHTML = complaints.length
+      ? complaints.map(complaint => `
+          <tr>
+            <td>${escapeHTML(complaint.complaint_id)}</td>
+            <td>${escapeHTML(complaint.category)}</td>
+            <td>${escapeHTML(complaint.title || complaint.description)}</td>
+            <td>${escapeHTML(complaint.status)}</td>
+            <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+            <td>
+              <button
+                type="button"
+                data-super-view="${escapeHTML(complaint.id)}"
+              >View</button>
+            </td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="6">No complaints available.</td></tr>`;
+  }
+
+
+  function renderRecentComplaints() {
+    const tbody = $("recent-complaints");
+    if (!tbody) return;
+
+    const recent = complaints.slice(0, 5);
+
+    tbody.innerHTML = recent.length
+      ? recent.map(complaint => `
+          <tr>
+            <td>${escapeHTML(complaint.complaint_id)}</td>
+            <td>${escapeHTML(complaint.category)}</td>
+            <td>${escapeHTML(complaint.status)}</td>
+            <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="4">No complaints available yet.</td></tr>`;
+  }
+
+
+  function updateComplaintStats() {
+    if ($("total-count")) {
+      $("total-count").textContent = complaints.length;
+    }
+
+    if ($("pending-count")) {
+      $("pending-count").textContent = complaints.filter(complaint => {
+        const status = String(complaint.status || "").toLowerCase();
+        return status === "pending" ||
+          status === "submitted" ||
+          status === "under review";
+      }).length;
+    }
+  }
+
+
+  let selectedComplaint = null;
+
+  $("complaint-list")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-super-view]");
+    if (!button) return;
+
+    selectedComplaint = complaints.find(complaint =>
+      String(complaint.id) === button.dataset.superView
+    );
+
+    if (!selectedComplaint) return;
+
+    $("super-complaint-details")?.classList.remove("hidden");
+
+    if ($("super-complaint-detail-content")) {
+      $("super-complaint-detail-content").innerHTML = `
+        <p><b>Complaint ID:</b> ${escapeHTML(selectedComplaint.complaint_id)}</p>
+        <p><b>Title:</b> ${escapeHTML(selectedComplaint.title)}</p>
+        <p><b>Description:</b> ${escapeHTML(selectedComplaint.description)}</p>
+        <p><b>Category:</b> ${escapeHTML(selectedComplaint.category)}</p>
+        <p><b>Location:</b> ${escapeHTML(selectedComplaint.location)}</p>
+        <p><b>Status:</b> ${escapeHTML(selectedComplaint.status)}</p>
+      `;
+    }
+
+    if ($("super-update-status")) {
+      $("super-update-status").value = selectedComplaint.status || "Submitted";
+    }
+
+    if ($("super-resolution-notes")) {
+      $("super-resolution-notes").value = selectedComplaint.notes || "";
+    }
+  });
+
+
+  $("super-complaint-update-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!selectedComplaint) {
+      showMessage("Pehle complaint select karo.");
+      return;
+    }
+
+    const status = $("super-update-status")?.value;
+    const notes = $("super-resolution-notes")?.value.trim() || "";
+
+    const { error } = await db
+      .from("complaints")
+      .update({
+        status,
+        notes,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", selectedComplaint.id);
+
+    if (error) {
+      showMessage("Complaint update error: " + error.message);
+      return;
+    }
+
+    showMessage("Complaint successfully updated.");
+    $("super-complaint-details")?.classList.add("hidden");
+
+    selectedComplaint = null;
+    await loadComplaints();
+  });
+
+
+  // ================= EMAIL CENTRE =================
+
   function createEmailCentre() {
     let section = $("super-admin-email-section");
 
@@ -237,43 +573,53 @@ document.addEventListener("DOMContentLoaded", async () => {
       section = document.createElement("section");
       section.id = "super-admin-email-section";
       section.className = "page-section hidden";
+
       section.innerHTML = `
-        <h2>Student Complaint Email Centre</h2>
-        <p>Select complaints. Each student will receive an individual email.</p>
+        <div class="content-box">
+          <h2>Student Complaint Email Centre</h2>
 
-        <label for="sa-mail-status">Filter by status</label>
-        <select id="sa-mail-status">
-          <option value="">All statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-        </select>
+          <p>Select complaints to send individual emails to students.</p>
 
-        <p id="sa-mail-complaints"></p>
+          <label for="sa-mail-status">Filter by status</label>
 
-        <label for="sa-mail-subject">Email subject</label>
-        <input id="sa-mail-subject"
-          value="Update on your LTSUCare complaint">
+          <select id="sa-mail-status">
+            <option value="">All statuses</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Work in Progress">Work in Progress</option>
+            <option value="Solved">Solved</option>
+          </select>
 
-        <label for="sa-mail-remarks">Remarks for selected students</label>
-        <textarea id="sa-mail-remarks" rows="4"
-          placeholder="Write resolution details or update"></textarea>
+          <div id="sa-mail-complaints"></div>
 
-        <button type="button" id="sa-mail-send">
-          Send Email to Selected Students
-        </button>
+          <label for="sa-mail-subject">Email subject</label>
 
-        <p id="sa-mail-result"></p>
+          <input
+            id="sa-mail-subject"
+            value="Update on your LTSUCare complaint"
+          >
+
+          <label for="sa-mail-remarks">Remarks for selected students</label>
+
+          <textarea
+            id="sa-mail-remarks"
+            rows="4"
+            placeholder="Write resolution details or update"
+          ></textarea>
+
+          <button type="button" id="sa-mail-send">
+            Send Email to Selected Students
+          </button>
+
+          <p id="sa-mail-result" role="status"></p>
+        </div>
       `;
 
       $("dashboard")?.appendChild(section);
     }
 
-    // Add navigation button if not already present
     if (!document.querySelector('[data-page="super-admin-email-section"]')) {
-      const nav = document.querySelector(".dashboard-navigation") ||
-                  document.querySelector(".sidebar") ||
-                  $("dashboard");
+      const nav = document.querySelector(".sidebar");
 
       if (nav) {
         const button = document.createElement("button");
@@ -281,47 +627,56 @@ document.addEventListener("DOMContentLoaded", async () => {
         button.className = "nav-btn";
         button.dataset.page = "super-admin-email-section";
         button.textContent = "Student Emails";
-        nav.appendChild(button);
+        nav.insertBefore(button, $("logout-btn"));
       }
     }
 
-    $("sa-mail-status")?.addEventListener("change", renderEmailCentre);
+    $("sa-mail-status")?.addEventListener("change", renderEmailList);
     $("sa-mail-send")?.addEventListener("click", sendSelectedEmails);
   }
 
+
   function renderEmailCentre() {
     createEmailCentre();
+    renderEmailList();
+  }
 
+
+  function renderEmailList() {
     const list = $("sa-mail-complaints");
     if (!list) return;
 
     const status = $("sa-mail-status")?.value || "";
-    const filtered = complaints.filter(c => !status || c.status === status);
 
-    if (!filtered.length) {
-      list.innerHTML = "<p>No complaints found.</p>";
-      return;
-    }
+    const filtered = complaints.filter(complaint =>
+      !status || complaint.status === status
+    );
 
-    list.innerHTML = filtered.map(c => `
-      <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
-        <input type="checkbox" class="sa-mail-check"
-          value="${escapeHTML(c.complaint_id)}">
-        ${escapeHTML(c.complaint_id)} —
-        ${escapeHTML(c.title || c.category || "Complaint")}
-        (${escapeHTML(c.status)})
-      </label>
-    `).join("");
+    list.innerHTML = filtered.length
+      ? filtered.map(complaint => `
+          <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
+            <input
+              type="checkbox"
+              class="sa-mail-check"
+              value="${escapeHTML(complaint.complaint_id)}"
+            >
+
+            ${escapeHTML(complaint.complaint_id)} —
+            ${escapeHTML(complaint.title || complaint.category || "Complaint")}
+            (${escapeHTML(complaint.status)})
+          </label>
+        `).join("")
+      : "<p>No complaints found.</p>";
   }
 
-  // SEND INDIVIDUAL EMAILS
+
   async function sendSelectedEmails() {
     const selected = [
       ...document.querySelectorAll(".sa-mail-check:checked")
     ].map(input => input.value);
 
     if (!selected.length) {
-      alert("Kam se kam ek complaint select karo.");
+      showMessage("Kam se kam ek complaint select karo.");
       return;
     }
 
@@ -329,7 +684,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const accessToken = data.session?.access_token;
 
     if (!accessToken) {
-      alert("Login session expired. Dobara login karo.");
+      showMessage("Login session expired. Dobara login karo.");
       return;
     }
 
@@ -341,8 +696,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     const button = $("sa-mail-send");
-    button.disabled = true;
-    button.textContent = "Sending...";
+    const resultElement = $("sa-mail-result");
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Sending...";
+    }
 
     try {
       const response = await fetch(SCRIPT_URL, {
@@ -365,18 +724,58 @@ document.addEventListener("DOMContentLoaded", async () => {
         throw new Error(result.message || "Email sending failed");
       }
 
-      $("sa-mail-result").textContent =
-        "Email request accepted. Selected complaints: " + selected.length;
+      if (resultElement) {
+        resultElement.textContent =
+          "Email request accepted. Selected complaints: " + selected.length;
+      }
 
     } catch (error) {
-      $("sa-mail-result").textContent = "Error: " + error.message;
+      if (resultElement) {
+        resultElement.textContent = "Error: " + error.message;
+      }
     } finally {
-      button.disabled = false;
-      button.textContent = "Send Email to Selected Students";
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Send Email to Selected Students";
+      }
     }
   }
 
-  // NAVIGATION
+
+  // ================= ACTIVITY LOGS =================
+
+  async function loadActivityLogs() {
+    const tbody = $("activity-list");
+    if (!tbody) return;
+
+    const { data, error } = await db
+      .from("activity_logs")
+      .select("id,actor_id,action,target,created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      tbody.innerHTML = `
+        <tr><td colspan="4">Activity logs unavailable.</td></tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = data && data.length
+      ? data.map(log => `
+          <tr>
+            <td>${escapeHTML(log.action)}</td>
+            <td>${escapeHTML(log.actor_id)}</td>
+            <td>${escapeHTML(log.target)}</td>
+            <td>${escapeHTML(formatDate(log.created_at))}</td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="4">No activity records found.</td></tr>`;
+  }
+
+
+  // ================= NAVIGATION =================
+
   document.addEventListener("click", event => {
     const button = event.target.closest(".nav-btn");
     if (!button) return;
@@ -386,23 +785,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.querySelectorAll(".page-section").forEach(section => {
       section.classList.add("hidden");
+      section.classList.remove("active");
     });
 
     $(targetId)?.classList.remove("hidden");
+    $(targetId)?.classList.add("active");
+
+    document.querySelectorAll(".nav-btn").forEach(navButton => {
+      navButton.classList.remove("active");
+    });
+
+    button.classList.add("active");
   });
 
-  // LOGOUT
+
+  // ================= LOGOUT =================
+
   $("logout-btn")?.addEventListener("click", async () => {
     await db.auth.signOut();
     window.location.reload();
   });
 
-  // FORGOT PASSWORD
+
+  // ================= FORGOT PASSWORD =================
+
   $("forgot-password-btn")?.addEventListener("click", () => {
-    window.location.href = "/ltsu-campus-support/super-admin/reset-password.html";
+    window.location.href =
+      "/ltsu-campus-support/super-admin/reset-password.html";
   });
 
-  // BASIC AI HELPER - LEFT UNCHANGED FOR NOW
+
+  // ================= AI HELPER =================
+
   $("ai-button")?.addEventListener("click", () => {
     $("ai-window")?.classList.remove("hidden");
   });
@@ -411,39 +825,64 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("ai-window")?.classList.add("hidden");
   });
 
+
   function sendAIMessage() {
     const input = $("ai-input");
     const messages = $("ai-messages");
+
     if (!input || !messages || !input.value.trim()) return;
 
     const question = input.value.trim();
     const lower = question.toLowerCase();
 
-    let answer = "Please check the Admin Management and Complaints sections.";
+    let answer = "Please check the relevant section of your Super Admin dashboard.";
 
     if (lower.includes("request")) {
       answer = "Admin Management section mein pending requests check karein.";
     } else if (lower.includes("approve")) {
       answer = "Admin Management mein request ke saamne Approve button dabayein.";
     } else if (lower.includes("complaint")) {
-      answer = "Student complaint emails ke liye Student Emails section kholein.";
+      answer = "Complaints section mein available complaints check karein.";
     } else if (lower.includes("email")) {
       answer = "Student Emails section mein complaints select karke email bhejein.";
+    } else if (lower.includes("student")) {
+      answer = "Students section mein student records check karein.";
     }
 
-    messages.innerHTML += `
-      <p><b>You:</b> ${escapeHTML(question)}</p>
-      <p><b>Assistant:</b> ${escapeHTML(answer)}</p>
-    `;
+    const userMessage = document.createElement("p");
+    userMessage.innerHTML = "<b>You:</b> " + escapeHTML(question);
+
+    const botMessage = document.createElement("p");
+    botMessage.innerHTML = "<b>Assistant:</b> " + escapeHTML(answer);
+
+    messages.appendChild(userMessage);
+    messages.appendChild(botMessage);
 
     input.value = "";
+    messages.scrollTop = messages.scrollHeight;
   }
+
 
   $("ai-send")?.addEventListener("click", sendAIMessage);
 
   $("ai-input")?.addEventListener("keydown", event => {
-    if (event.key === "Enter") sendAIMessage();
+    if (event.key === "Enter") {
+      sendAIMessage();
+    }
   });
+
+
+  // DATE FORMAT
+  function formatDate(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "—";
+
+    return date.toLocaleDateString("en-IN");
+  }
+
 
   // RESTORE EXISTING SESSION
   const { data } = await db.auth.getSession();
@@ -451,4 +890,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (data.session?.user) {
     await verifySuperAdmin(data.session.user);
   }
+
 });
