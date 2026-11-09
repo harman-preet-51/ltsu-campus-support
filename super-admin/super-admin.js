@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentProfile = null;
   let adminRequests = [];
   let complaints = [];
+  let myPersonalComplaints = [];
+  let selectedComplaint = null;
+  let selectedPersonalComplaint = null;
+  let emailCentreEventsBound = false;
 
   if (!db) {
     alert("Supabase connection missing. Check supabase-config.js");
@@ -27,7 +31,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     alert(message);
   }
 
-  // SUPER ADMIN LOGIN VERIFICATION
+  function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-IN");
+  }
+
+  // ================= SUPER ADMIN LOGIN =================
+
   async function verifySuperAdmin(user) {
     const { data, error } = await db
       .from("profiles")
@@ -55,15 +67,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadAdminRequests(),
       loadAdminCount(),
       loadStudentCount(),
-      loadComplaints()
+      loadComplaints(),
+      loadMyPersonalComplaints()
     ]);
 
-    loadActivityLogs();
+    await loadActivityLogs();
 
     return true;
   }
 
-  // LOGIN
   $("login-form")?.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -93,7 +105,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       await verifySuperAdmin(data.user);
-
     } finally {
       if (button) {
         button.disabled = false;
@@ -102,16 +113,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-
   // ================= ADMIN MANAGEMENT =================
 
   async function loadAdminRequests() {
     const pending = $("pending-admin-list");
 
     if (pending) {
-      pending.innerHTML = `
-        <tr><td colspan="8">Loading admin requests...</td></tr>
-      `;
+      pending.innerHTML = `<tr><td colspan="8">Loading admin requests...</td></tr>`;
     }
 
     const { data, error } = await db
@@ -121,22 +129,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (error) {
       if (pending) {
-        pending.innerHTML = `
-          <tr><td colspan="8">Error: ${escapeHTML(error.message)}</td></tr>
-        `;
+        pending.innerHTML = `<tr><td colspan="8">Error: ${escapeHTML(error.message)}</td></tr>`;
       }
-
       console.error("Admin requests error:", error.message);
       return;
     }
 
     adminRequests = data || [];
-
     renderAdminRequests();
     updatePendingRequestCount();
     await loadApprovedAdmins();
   }
-
 
   function renderAdminRequests() {
     const pendingBody = $("pending-admin-list");
@@ -162,15 +165,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               <td>${escapeHTML(request.reason)}</td>
               <td>${escapeHTML(formatDate(request.created_at))}</td>
               <td>
-                <button
-                  type="button"
-                  data-approve="${escapeHTML(request.id)}"
-                >Approve</button>
-
-                <button
-                  type="button"
-                  data-reject="${escapeHTML(request.id)}"
-                >Reject</button>
+                <button type="button" data-approve="${escapeHTML(request.id)}">Approve</button>
+                <button type="button" data-reject="${escapeHTML(request.id)}">Reject</button>
               </td>
             </tr>
           `).join("")
@@ -192,14 +188,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
   async function loadApprovedAdmins() {
     const tbody = $("approved-admin-list");
 
     if (tbody) {
-      tbody.innerHTML = `
-        <tr><td colspan="5">Loading approved admins...</td></tr>
-      `;
+      tbody.innerHTML = `<tr><td colspan="5">Loading approved admins...</td></tr>`;
     }
 
     const { data, error } = await db
@@ -210,9 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (error) {
       if (tbody) {
-        tbody.innerHTML = `
-          <tr><td colspan="5">Error: ${escapeHTML(error.message)}</td></tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="5">Error: ${escapeHTML(error.message)}</td></tr>`;
       }
       return;
     }
@@ -234,7 +225,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       : `<tr><td colspan="5">No approved admins found.</td></tr>`;
   }
 
-
   function updatePendingRequestCount() {
     const count = adminRequests.filter(request =>
       String(request.status || "").toLowerCase() === "pending"
@@ -245,13 +235,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
-  // APPROVE / REJECT BUTTONS
   $("admins")?.addEventListener("click", async event => {
     const approveButton = event.target.closest("[data-approve]");
     const rejectButton = event.target.closest("[data-reject]");
 
-    // APPROVE
     if (approveButton) {
       const request = adminRequests.find(item =>
         String(item.id) === approveButton.dataset.approve
@@ -272,15 +259,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const username = String(request.username || "").trim().toLowerCase();
 
       if (!username) {
-        showMessage(
-          "Is request mein username missing hai. Is request ko approve nahi kiya ja sakta. Applicant se username ke saath dobara request submit karvao."
-        );
+        showMessage("Username missing hai. Applicant se username ke saath dobara request submit karvao.");
         return;
       }
 
-      if (!confirm(
-        "Kya aap is Admin request ko approve karna chahte hain?\n\nUsername: " + username
-      )) {
+      if (!confirm("Kya aap is Admin request ko approve karna chahte hain?\n\nUsername: " + username)) {
         return;
       }
 
@@ -288,14 +271,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       approveButton.textContent = "Approving...";
 
       try {
-        // First activate the profile and save its username.
         const { error: profileError } = await db
           .from("profiles")
           .update({
             role: "admin",
             is_active: true,
             department: request.department,
-            username: username
+            username
           })
           .eq("id", request.user_id);
 
@@ -304,7 +286,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
 
-        // Then mark the request approved.
         const { error: requestError } = await db
           .from("admin_requests")
           .update({
@@ -315,18 +296,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           .eq("id", request.id);
 
         if (requestError) {
-          showMessage(
-            "Profile activate ho gaya, lekin request status update nahi hua. Error: " +
-            requestError.message
-          );
+          showMessage("Profile activate ho gaya, lekin request status update nahi hua. Error: " + requestError.message);
           await loadAdminRequests();
           return;
         }
 
-        showMessage(
-          "Admin successfully approved!\nUsername: " + username
-        );
-
+        showMessage("Admin successfully approved!\nUsername: " + username);
         await loadAdminRequests();
         await loadAdminCount();
 
@@ -338,8 +313,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-
-    // REJECT
     if (rejectButton) {
       const request = adminRequests.find(item =>
         String(item.id) === rejectButton.dataset.reject
@@ -375,7 +348,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         showMessage("Admin request rejected.");
-
         await loadAdminRequests();
 
       } finally {
@@ -386,7 +358,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   });
-
 
   // ================= COUNTS =================
 
@@ -402,7 +373,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
   async function loadStudentCount() {
     const { count, error } = await db
       .from("profiles")
@@ -414,20 +384,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
-  // ================= COMPLAINTS =================
+  // ================= NORMAL COMPLAINTS =================
 
   async function loadComplaints() {
     const { data, error } = await db
       .from("complaints")
-      .select("id,complaint_id,user_id,category,title,location,description,status,notes,created_at")
+      .select("id,complaint_id,user_id,category,title,location,description,status,notes,created_at,recipient_type,is_confidential,forwarded_to_super_admin")
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Complaints load error:", error.message);
       complaints = [];
     } else {
-      complaints = data || [];
+      // Personal Super Admin complaints are displayed separately.
+      complaints = (data || []).filter(complaint =>
+        !(
+          complaint.recipient_type === "super_admin" &&
+          complaint.is_confidential === true
+        )
+      );
     }
 
     renderComplaints();
@@ -435,7 +410,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateComplaintStats();
     renderEmailCentre();
   }
-
 
   function renderComplaints() {
     const tbody = $("complaint-list");
@@ -450,16 +424,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <td>${escapeHTML(complaint.status)}</td>
             <td>${escapeHTML(formatDate(complaint.created_at))}</td>
             <td>
-              <button
-                type="button"
-                data-super-view="${escapeHTML(complaint.id)}"
-              >View</button>
+              <button type="button" data-super-view="${escapeHTML(complaint.id)}">View</button>
             </td>
           </tr>
         `).join("")
       : `<tr><td colspan="6">No complaints available.</td></tr>`;
   }
-
 
   function renderRecentComplaints() {
     const tbody = $("recent-complaints");
@@ -479,7 +449,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       : `<tr><td colspan="4">No complaints available yet.</td></tr>`;
   }
 
-
   function updateComplaintStats() {
     if ($("total-count")) {
       $("total-count").textContent = complaints.length;
@@ -494,9 +463,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }).length;
     }
   }
-
-
-  let selectedComplaint = null;
 
   $("complaint-list")?.addEventListener("click", event => {
     const button = event.target.closest("[data-super-view]");
@@ -530,7 +496,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-
   $("super-complaint-update-form")?.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -558,11 +523,158 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     showMessage("Complaint successfully updated.");
     $("super-complaint-details")?.classList.add("hidden");
-
     selectedComplaint = null;
     await loadComplaints();
   });
 
+  // ================= MY PERSONAL COMPLAINTS =================
+
+  async function loadMyPersonalComplaints() {
+    const tbody = $("my-personal-complaint-list");
+
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6">Loading your personal complaints...</td></tr>`;
+    }
+
+    if (!currentUser) return;
+
+    const { data, error } = await db
+      .from("complaints")
+      .select("id,complaint_id,user_id,category,title,location,description,status,notes,created_at,updated_at,recipient_type,is_confidential")
+      .eq("user_id", currentUser.id)
+      .eq("recipient_type", "super_admin")
+      .eq("is_confidential", true)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Personal complaints error:", error.message);
+
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6">Unable to load personal complaints. ${escapeHTML(error.message)}</td></tr>`;
+      }
+
+      myPersonalComplaints = [];
+      return;
+    }
+
+    myPersonalComplaints = data || [];
+    renderMyPersonalComplaints();
+  }
+
+  function renderMyPersonalComplaints() {
+    const tbody = $("my-personal-complaint-list");
+    if (!tbody) return;
+
+    tbody.innerHTML = myPersonalComplaints.length
+      ? myPersonalComplaints.map(complaint => `
+          <tr>
+            <td>${escapeHTML(complaint.complaint_id)}</td>
+            <td>${escapeHTML(complaint.category)}</td>
+            <td>${escapeHTML(complaint.title)}</td>
+            <td>${escapeHTML(complaint.status)}</td>
+            <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+            <td>
+              <button
+                type="button"
+                data-my-personal-view="${escapeHTML(complaint.id)}"
+              >View / Update</button>
+            </td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="6">You have no personal complaints.</td></tr>`;
+  }
+
+  $("my-personal-complaint-list")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-my-personal-view]");
+    if (!button) return;
+
+    selectedPersonalComplaint = myPersonalComplaints.find(complaint =>
+      String(complaint.id) === button.dataset.myPersonalView
+    );
+
+    if (!selectedPersonalComplaint) return;
+
+    $("my-personal-complaint-details")?.classList.remove("hidden");
+
+    if ($("my-personal-detail-content")) {
+      $("my-personal-detail-content").innerHTML = `
+        <p><b>Complaint ID:</b> ${escapeHTML(selectedPersonalComplaint.complaint_id)}</p>
+        <p><b>Title:</b> ${escapeHTML(selectedPersonalComplaint.title)}</p>
+        <p><b>Category:</b> ${escapeHTML(selectedPersonalComplaint.category)}</p>
+        <p><b>Location:</b> ${escapeHTML(selectedPersonalComplaint.location)}</p>
+        <p><b>Description:</b> ${escapeHTML(selectedPersonalComplaint.description)}</p>
+        <p><b>Status:</b> ${escapeHTML(selectedPersonalComplaint.status)}</p>
+        <p><b>Submitted:</b> ${escapeHTML(formatDate(selectedPersonalComplaint.created_at))}</p>
+      `;
+    }
+
+    if ($("my-personal-status")) {
+      $("my-personal-status").value = selectedPersonalComplaint.status || "Submitted";
+    }
+
+    if ($("my-personal-notes")) {
+      $("my-personal-notes").value = selectedPersonalComplaint.notes || "";
+    }
+  });
+
+  $("my-personal-update-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!selectedPersonalComplaint || !currentUser) {
+      showMessage("Pehle apni personal complaint select karo.");
+      return;
+    }
+
+    const status = $("my-personal-status")?.value;
+    const notes = $("my-personal-notes")?.value.trim() || "";
+    const button = $("my-personal-update-form")?.querySelector('[type="submit"]');
+
+    if (!status) {
+      showMessage("Complaint status select karo.");
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Updating...";
+    }
+
+    try {
+      const { data, error } = await db
+        .from("complaints")
+        .update({
+          status,
+          notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", selectedPersonalComplaint.id)
+        .eq("user_id", currentUser.id)
+        .eq("recipient_type", "super_admin")
+        .eq("is_confidential", true)
+        .select("id");
+
+      if (error) {
+        showMessage("Personal complaint update error: " + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        showMessage("Complaint update nahi hui. Security permission ya complaint ownership check karo.");
+        return;
+      }
+
+      showMessage("Your personal complaint has been updated.");
+      $("my-personal-complaint-details")?.classList.add("hidden");
+      selectedPersonalComplaint = null;
+      await loadMyPersonalComplaints();
+
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Update Complaint";
+      }
+    }
+  });
 
   // ================= EMAIL CENTRE =================
 
@@ -577,11 +689,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       section.innerHTML = `
         <div class="content-box">
           <h2>Student Complaint Email Centre</h2>
-
           <p>Select complaints to send individual emails to students.</p>
 
           <label for="sa-mail-status">Filter by status</label>
-
           <select id="sa-mail-status">
             <option value="">All statuses</option>
             <option value="Submitted">Submitted</option>
@@ -593,24 +703,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div id="sa-mail-complaints"></div>
 
           <label for="sa-mail-subject">Email subject</label>
-
-          <input
-            id="sa-mail-subject"
-            value="Update on your LTSUCare complaint"
-          >
+          <input id="sa-mail-subject" value="Update on your LTSUCare complaint">
 
           <label for="sa-mail-remarks">Remarks for selected students</label>
+          <textarea id="sa-mail-remarks" rows="4" placeholder="Write resolution details or update"></textarea>
 
-          <textarea
-            id="sa-mail-remarks"
-            rows="4"
-            placeholder="Write resolution details or update"
-          ></textarea>
-
-          <button type="button" id="sa-mail-send">
-            Send Email to Selected Students
-          </button>
-
+          <button type="button" id="sa-mail-send">Send Email to Selected Students</button>
           <p id="sa-mail-result" role="status"></p>
         </div>
       `;
@@ -631,16 +729,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    $("sa-mail-status")?.addEventListener("change", renderEmailList);
-    $("sa-mail-send")?.addEventListener("click", sendSelectedEmails);
+    if (!emailCentreEventsBound) {
+      $("sa-mail-status")?.addEventListener("change", renderEmailList);
+      $("sa-mail-send")?.addEventListener("click", sendSelectedEmails);
+      emailCentreEventsBound = true;
+    }
   }
-
 
   function renderEmailCentre() {
     createEmailCentre();
     renderEmailList();
   }
-
 
   function renderEmailList() {
     const list = $("sa-mail-complaints");
@@ -660,7 +759,6 @@ document.addEventListener("DOMContentLoaded", async () => {
               class="sa-mail-check"
               value="${escapeHTML(complaint.complaint_id)}"
             >
-
             ${escapeHTML(complaint.complaint_id)} —
             ${escapeHTML(complaint.title || complaint.category || "Complaint")}
             (${escapeHTML(complaint.status)})
@@ -668,7 +766,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         `).join("")
       : "<p>No complaints found.</p>";
   }
-
 
   async function sendSelectedEmails() {
     const selected = [
@@ -741,7 +838,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-
   // ================= ACTIVITY LOGS =================
 
   async function loadActivityLogs() {
@@ -755,9 +851,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .limit(50);
 
     if (error) {
-      tbody.innerHTML = `
-        <tr><td colspan="4">Activity logs unavailable.</td></tr>
-      `;
+      tbody.innerHTML = `<tr><td colspan="4">Activity logs unavailable.</td></tr>`;
       return;
     }
 
@@ -772,7 +866,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         `).join("")
       : `<tr><td colspan="4">No activity records found.</td></tr>`;
   }
-
 
   // ================= NAVIGATION =================
 
@@ -796,8 +889,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     button.classList.add("active");
-  });
 
+    if (targetId === "my-personal-complaints") {
+      loadMyPersonalComplaints();
+    }
+  });
 
   // ================= LOGOUT =================
 
@@ -806,14 +902,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.reload();
   });
 
-
   // ================= FORGOT PASSWORD =================
 
   $("forgot-password-btn")?.addEventListener("click", () => {
     window.location.href =
       "/ltsu-campus-support/super-admin/reset-password.html";
   });
-
 
   // ================= AI HELPER =================
 
@@ -824,7 +918,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("ai-close")?.addEventListener("click", () => {
     $("ai-window")?.classList.add("hidden");
   });
-
 
   function sendAIMessage() {
     const input = $("ai-input");
@@ -847,6 +940,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       answer = "Student Emails section mein complaints select karke email bhejein.";
     } else if (lower.includes("student")) {
       answer = "Students section mein student records check karein.";
+    } else if (lower.includes("personal")) {
+      answer = "My Personal Complaints section mein apni confidential complaints check karein.";
     }
 
     const userMessage = document.createElement("p");
@@ -862,7 +957,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     messages.scrollTop = messages.scrollHeight;
   }
 
-
   $("ai-send")?.addEventListener("click", sendAIMessage);
 
   $("ai-input")?.addEventListener("keydown", event => {
@@ -871,24 +965,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // ================= RESTORE EXISTING SESSION =================
 
-  // DATE FORMAT
-  function formatDate(value) {
-    if (!value) return "—";
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) return "—";
-
-    return date.toLocaleDateString("en-IN");
-  }
-
-
-  // RESTORE EXISTING SESSION
   const { data } = await db.auth.getSession();
 
   if (data.session?.user) {
     await verifySuperAdmin(data.session.user);
   }
-
 });
