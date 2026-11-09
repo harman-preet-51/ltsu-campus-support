@@ -7,7 +7,6 @@
     <title>Admin Portal | LTSU Campus Support</title>
     <link rel="stylesheet" href="admin.css">
 </head>
-
 <body>
 
 <header class="admin-header">
@@ -19,7 +18,6 @@
 </header>
 
 <main>
-
     <section class="welcome-section">
         <span class="welcome-tag">ADMINISTRATION PORTAL</span>
         <h1>Manage Campus Complaints</h1>
@@ -34,7 +32,7 @@
             <button type="button" id="admin-register-tab" class="auth-tab">Request Admin Access</button>
         </div>
 
-        <!-- LOGIN PANEL -->
+        <!-- LOGIN -->
         <div id="admin-login-panel" class="auth-card">
 
             <h2>Welcome Back, Admin</h2>
@@ -43,14 +41,22 @@
             <form id="admin-login-form">
                 <label for="admin-email-login">Official Email Address</label>
                 <input type="email" id="admin-email-login" name="adminEmail"
-                    placeholder="Enter your official email" autocomplete="username" required>
+                    placeholder="Enter your official email"
+                    autocomplete="username" required>
 
                 <label for="admin-password-login">Password</label>
                 <input type="password" id="admin-password-login" name="adminPassword"
-                    placeholder="Enter your password" autocomplete="current-password" required>
+                    placeholder="Enter your password"
+                    autocomplete="current-password" required>
 
                 <button type="submit" class="primary-btn">Login to Dashboard</button>
             </form>
+
+            <button type="button" id="admin-forgot-password"
+                class="switch-text"
+                style="border:0;background:none;color:#1769aa;cursor:pointer;margin-top:12px">
+                Forgot Password?
+            </button>
 
             <p class="switch-text">
                 Don't have Admin Access?
@@ -58,7 +64,7 @@
             </p>
         </div>
 
-        <!-- REQUEST ACCESS PANEL -->
+        <!-- REQUEST ADMIN ACCESS -->
         <div id="admin-register-panel" class="auth-card hidden">
 
             <h2>Request Admin Access</h2>
@@ -73,6 +79,14 @@
                 <label for="admin-email">Official Email Address</label>
                 <input type="email" id="admin-email" name="adminEmail"
                     placeholder="Enter your official email address" required>
+
+                <label for="admin-username">Choose Username</label>
+                <input type="text" id="admin-username" name="username"
+                    placeholder="Choose a unique username"
+                    minlength="3" maxlength="30"
+                    pattern="[a-z0-9_]{3,30}"
+                    autocomplete="username" required>
+                <small>Use small letters, numbers and underscore only.</small>
 
                 <label for="admin-mobile">Mobile Number</label>
                 <input type="tel" id="admin-mobile" name="adminMobile"
@@ -98,11 +112,13 @@
 
                 <label for="admin-create-password">Create Password</label>
                 <input type="password" id="admin-create-password" name="adminPassword"
-                    placeholder="Minimum 8 characters" minlength="8" required>
+                    placeholder="Minimum 8 characters"
+                    minlength="8" autocomplete="new-password" required>
 
                 <label for="admin-confirm-password">Confirm Password</label>
                 <input type="password" id="admin-confirm-password" name="confirmPassword"
-                    placeholder="Enter password again" minlength="8" required>
+                    placeholder="Enter password again"
+                    minlength="8" autocomplete="new-password" required>
 
                 <div class="password-warning">
                     <strong>Admin Approval Required</strong>
@@ -116,6 +132,48 @@
                 Already have an account?
                 <a href="#" id="open-admin-login">Login Here</a>
             </p>
+        </div>
+
+        <!-- PASSWORD RECOVERY -->
+        <div id="admin-recovery-panel" class="auth-card hidden">
+
+            <h2>Admin Password Recovery</h2>
+            <p>Recover your password using your registered details and Recovery PIN.</p>
+
+            <form id="admin-recovery-form">
+
+                <label for="recovery-username">Registered Username</label>
+                <input type="text" id="recovery-username"
+                    autocomplete="username" required>
+
+                <label for="recovery-email">Registered Email</label>
+                <input type="email" id="recovery-email"
+                    autocomplete="email" required>
+
+                <label for="recovery-pin">6-digit Recovery PIN</label>
+                <input type="password" id="recovery-pin"
+                    inputmode="numeric" maxlength="6"
+                    pattern="[0-9]{6}" autocomplete="off" required>
+
+                <label for="recovery-new-password">New Password</label>
+                <input type="password" id="recovery-new-password"
+                    minlength="8" autocomplete="new-password" required>
+
+                <label for="recovery-confirm-password">Confirm New Password</label>
+                <input type="password" id="recovery-confirm-password"
+                    minlength="8" autocomplete="new-password" required>
+
+                <button type="submit" id="recovery-submit" class="primary-btn">
+                    Reset Password
+                </button>
+
+                <p id="recovery-result" role="status"></p>
+
+                <button type="button" id="recovery-back" class="switch-text"
+                    style="border:0;background:none;color:#1769aa;cursor:pointer">
+                    Back to Login
+                </button>
+            </form>
         </div>
     </section>
 
@@ -175,7 +233,8 @@
             </div>
 
             <div class="filter-area">
-                <input type="search" id="complaint-search" placeholder="Search Complaint ID...">
+                <input type="search" id="complaint-search"
+                    placeholder="Search Complaint ID...">
 
                 <select id="complaint-status-filter">
                     <option value="all">All Statuses</option>
@@ -232,6 +291,7 @@
                     <label for="update-status">Update Complaint Status</label>
                     <select id="update-status" required>
                         <option value="">Select New Status</option>
+                        <option value="Submitted">Submitted</option>
                         <option value="Under Review">Under Review</option>
                         <option value="Work in Progress">Work in Progress</option>
                         <option value="Solved">Solved</option>
@@ -253,13 +313,16 @@
 
             <form id="admin-email-form">
                 <label for="email-complaint-id">Complaint ID</label>
-                <input type="text" id="email-complaint-id" placeholder="Enter Complaint ID" required>
+                <input type="text" id="email-complaint-id"
+                    placeholder="Enter Complaint ID" required>
 
                 <label for="email-subject">Email Subject</label>
-                <input type="text" id="email-subject" placeholder="Enter email subject" required>
+                <input type="text" id="email-subject"
+                    placeholder="Enter email subject" required>
 
                 <label for="email-message">Message</label>
-                <textarea id="email-message" placeholder="Write your message..." required></textarea>
+                <textarea id="email-message"
+                    placeholder="Write your message..." required></textarea>
 
                 <button type="submit" class="primary-btn">Preview Email</button>
             </form>
@@ -294,48 +357,13 @@
     <p>Building a Better Campus Together.</p>
 </footer>
 
+<script>
+document.getElementById("current-year").textContent = new Date().getFullYear();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../student/supabase-config.js"></script>
 <script src="admin.js"></script>
-
-<!-- AUTH TAB FIX -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const loginTab = document.getElementById("admin-login-tab");
-    const registerTab = document.getElementById("admin-register-tab");
-    const loginPanel = document.getElementById("admin-login-panel");
-    const registerPanel = document.getElementById("admin-register-panel");
-    const openRegister = document.getElementById("open-admin-register");
-    const openLogin = document.getElementById("open-admin-login");
-
-    function showLogin() {
-        loginPanel.classList.remove("hidden");
-        registerPanel.classList.add("hidden");
-        loginTab.classList.add("active");
-        registerTab.classList.remove("active");
-    }
-
-    function showRegister() {
-        registerPanel.classList.remove("hidden");
-        loginPanel.classList.add("hidden");
-        registerTab.classList.add("active");
-        loginTab.classList.remove("active");
-    }
-
-    loginTab.addEventListener("click", showLogin);
-    registerTab.addEventListener("click", showRegister);
-
-    openRegister.addEventListener("click", function (event) {
-        event.preventDefault();
-        showRegister();
-    });
-
-    openLogin.addEventListener("click", function (event) {
-        event.preventDefault();
-        showLogin();
-    });
-});
-</script>
 
 </body>
 </html>
