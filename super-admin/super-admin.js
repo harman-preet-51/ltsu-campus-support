@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentUser = null;
   let currentProfile = null;
   let adminRequests = [];
+  let superAdminRequests = [];
   let complaints = [];
   let myPersonalComplaints = [];
   let selectedComplaint = null;
@@ -38,6 +39,352 @@ document.addEventListener("DOMContentLoaded", async () => {
     return date.toLocaleDateString("en-IN");
   }
 
+  // ============== SUPER ADMIN REGISTRATION PAGE LINK ==============
+
+  function addRegistrationLink() {
+    const forgotButton = $("forgot-password-btn");
+
+    if (!forgotButton || $("super-admin-register-link")) return;
+
+    const link = document.createElement("a");
+    link.id = "super-admin-register-link";
+    link.href = "register.html";
+    link.textContent = "New Super Admin? Register Here";
+    link.style.display = "block";
+    link.style.marginTop = "12px";
+    link.style.textAlign = "center";
+    link.style.color = "#5636a5";
+    link.style.fontWeight = "600";
+
+    forgotButton.insertAdjacentElement("afterend", link);
+  }
+
+  addRegistrationLink();
+
+  // ============== SUPER ADMIN REGISTRATION REQUESTS ==============
+
+  function createSuperAdminRequestsSection() {
+    const dashboard = $("dashboard");
+    const sidebar = document.querySelector(".sidebar");
+
+    if (!dashboard || !sidebar) return;
+
+    if (!document.querySelector('[data-page="super-admin-requests"]')) {
+      const navButton = document.createElement("button");
+
+      navButton.type = "button";
+      navButton.className = "nav-btn";
+      navButton.dataset.page = "super-admin-requests";
+      navButton.textContent = "Super Admin Requests";
+
+      sidebar.insertBefore(navButton, $("logout-btn") || null);
+    }
+
+    if (!$("super-admin-requests")) {
+      const section = document.createElement("section");
+
+      section.id = "super-admin-requests";
+      section.className = "page-section hidden";
+
+      section.innerHTML = `
+        <div class="content-box">
+          <h2>Super Admin Registration Requests</h2>
+
+          <p>
+            Review new Super Admin applications.
+            Applicants can access the dashboard only after approval.
+          </p>
+
+          <h3>Pending Requests</h3>
+
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Phone Number</th>
+                  <th>Applied On</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="sa-registration-pending">
+                <tr>
+                  <td colspan="5">Loading requests...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:25px;">Approved Requests</h3>
+
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Phone Number</th>
+                  <th>Reviewed On</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sa-registration-approved">
+                <tr>
+                  <td colspan="5">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:25px;">Rejected Requests</h3>
+
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Phone Number</th>
+                  <th>Reviewed On</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sa-registration-rejected">
+                <tr>
+                  <td colspan="5">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p id="sa-registration-message" role="status"></p>
+        </div>
+      `;
+
+      dashboard.appendChild(section);
+    }
+  }
+
+  function renderSuperAdminRegistrationRequests() {
+    const pendingBody = $("sa-registration-pending");
+    const approvedBody = $("sa-registration-approved");
+    const rejectedBody = $("sa-registration-rejected");
+
+    const pending = superAdminRequests.filter(item =>
+      item.status === "pending"
+    );
+
+    const approved = superAdminRequests.filter(item =>
+      item.status === "approved"
+    );
+
+    const rejected = superAdminRequests.filter(item =>
+      item.status === "rejected"
+    );
+
+    if (pendingBody) {
+      pendingBody.innerHTML = pending.length
+        ? pending.map(item => `
+            <tr>
+              <td>${escapeHTML(item.full_name)}</td>
+              <td>${escapeHTML(item.email)}</td>
+              <td>${escapeHTML(item.phone)}</td>
+              <td>${escapeHTML(formatDate(item.created_at))}</td>
+              <td>
+                <button
+                  type="button"
+                  data-sa-action="approve"
+                  data-request-id="${escapeHTML(item.id)}"
+                >Approve</button>
+
+                <button
+                  type="button"
+                  data-sa-action="reject"
+                  data-request-id="${escapeHTML(item.id)}"
+                >Reject</button>
+              </td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="5">No pending Super Admin requests.</td></tr>`;
+    }
+
+    if (approvedBody) {
+      approvedBody.innerHTML = approved.length
+        ? approved.map(item => `
+            <tr>
+              <td>${escapeHTML(item.full_name)}</td>
+              <td>${escapeHTML(item.email)}</td>
+              <td>${escapeHTML(item.phone)}</td>
+              <td>${escapeHTML(formatDate(item.reviewed_at))}</td>
+              <td>Approved</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="5">No approved requests.</td></tr>`;
+    }
+
+    if (rejectedBody) {
+      rejectedBody.innerHTML = rejected.length
+        ? rejected.map(item => `
+            <tr>
+              <td>${escapeHTML(item.full_name)}</td>
+              <td>${escapeHTML(item.email)}</td>
+              <td>${escapeHTML(item.phone)}</td>
+              <td>${escapeHTML(formatDate(item.reviewed_at))}</td>
+              <td>Rejected</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="5">No rejected requests.</td></tr>`;
+    }
+
+    const navButton = document.querySelector(
+      '[data-page="super-admin-requests"]'
+    );
+
+    if (navButton) {
+      navButton.textContent =
+        `Super Admin Requests (${pending.length})`;
+    }
+  }
+
+  async function loadSuperAdminRegistrationRequests() {
+    const pendingBody = $("sa-registration-pending");
+
+    if (pendingBody) {
+      pendingBody.innerHTML =
+        `<tr><td colspan="5">Loading requests...</td></tr>`;
+    }
+
+    const { data, error } = await db
+      .from("super_admin_requests")
+      .select("id,user_id,full_name,email,phone,status,created_at,reviewed_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Super Admin requests error:", error.message);
+
+      if (pendingBody) {
+        pendingBody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              Could not load requests: ${escapeHTML(error.message)}
+            </td>
+          </tr>
+        `;
+      }
+
+      return;
+    }
+
+    superAdminRequests = data || [];
+    renderSuperAdminRegistrationRequests();
+  }
+
+  $("dashboard")?.addEventListener("click", async event => {
+    const button = event.target.closest("[data-sa-action]");
+
+    if (!button) return;
+
+    const requestId = button.dataset.requestId;
+    const action = button.dataset.saAction;
+
+    if (!["approve", "reject"].includes(action)) return;
+
+    const request = superAdminRequests.find(item =>
+      String(item.id) === String(requestId)
+    );
+
+    if (!request || request.status !== "pending") {
+      showMessage("This request is no longer pending.");
+      await loadSuperAdminRegistrationRequests();
+      return;
+    }
+
+    const actionText = action === "approve" ? "approve" : "reject";
+
+    const confirmation = confirm(
+      `Are you sure you want to ${actionText} this registration?\n\n` +
+      `Name: ${request.full_name}\n` +
+      `Email: ${request.email}\n` +
+      `Phone: ${request.phone}`
+    );
+
+    if (!confirmation) return;
+
+    button.disabled = true;
+    const oldText = button.textContent;
+
+    button.textContent =
+      action === "approve" ? "Approving..." : "Rejecting...";
+
+    const message = $("sa-registration-message");
+
+    if (message) message.textContent = "";
+
+    try {
+      const { data, error } = await db.functions.invoke(
+        "super-admin-approval",
+        {
+          body: {
+            request_id: requestId,
+            action
+          }
+        }
+      );
+
+      if (error) {
+        let errorMessage = error.message || "Request review failed.";
+
+        if (error.context && typeof error.context.json === "function") {
+          try {
+            const details = await error.context.json();
+
+            if (details?.error) {
+              errorMessage = details.error;
+            }
+          } catch (_) {}
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      if (!data || data.success !== true) {
+        throw new Error(
+          data?.error || "Request could not be processed."
+        );
+      }
+
+      if (message) {
+        message.textContent =
+          data.message || `Request ${actionText}d successfully.`;
+
+        message.style.color = "green";
+      }
+
+      await loadSuperAdminRegistrationRequests();
+
+    } catch (error) {
+      console.error("Super Admin approval error:", error);
+
+      if (message) {
+        message.textContent =
+          error.message || "Could not process request.";
+
+        message.style.color = "red";
+      } else {
+        showMessage(error.message);
+      }
+
+      await loadSuperAdminRegistrationRequests();
+
+    } finally {
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = oldText;
+      }
+    }
+  });
+
   // ================= SUPER ADMIN LOGIN =================
 
   async function verifySuperAdmin(user) {
@@ -49,7 +396,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (error || !data || data.role !== "super_admin" || data.is_active !== true) {
       await db.auth.signOut();
-      showMessage("Super Admin access denied. Active Super Admin account required.");
+
+      showMessage(
+        "Super Admin access denied. Active Super Admin account required."
+      );
+
       return false;
     }
 
@@ -63,8 +414,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       element.textContent = data.full_name || data.email;
     });
 
+    createSuperAdminRequestsSection();
+
     await Promise.all([
       loadAdminRequests(),
+      loadSuperAdminRegistrationRequests(),
       loadAdminCount(),
       loadStudentCount(),
       loadComplaints(),
@@ -105,6 +459,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       await verifySuperAdmin(data.user);
+
     } finally {
       if (button) {
         button.disabled = false;
@@ -131,13 +486,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (pending) {
         pending.innerHTML = `<tr><td colspan="8">Error: ${escapeHTML(error.message)}</td></tr>`;
       }
+
       console.error("Admin requests error:", error.message);
       return;
     }
 
     adminRequests = data || [];
+
     renderAdminRequests();
     updatePendingRequestCount();
+
     await loadApprovedAdmins();
   }
 
@@ -205,6 +563,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (tbody) {
         tbody.innerHTML = `<tr><td colspan="5">Error: ${escapeHTML(error.message)}</td></tr>`;
       }
+
       return;
     }
 
@@ -302,6 +661,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         showMessage("Admin successfully approved!\nUsername: " + username);
+
         await loadAdminRequests();
         await loadAdminCount();
 
@@ -348,6 +708,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         showMessage("Admin request rejected.");
+
         await loadAdminRequests();
 
       } finally {
@@ -396,7 +757,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("Complaints load error:", error.message);
       complaints = [];
     } else {
-      // Personal Super Admin complaints are displayed separately.
       complaints = (data || []).filter(complaint =>
         !(
           complaint.recipient_type === "super_admin" &&
@@ -457,6 +817,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($("pending-count")) {
       $("pending-count").textContent = complaints.filter(complaint => {
         const status = String(complaint.status || "").toLowerCase();
+
         return status === "pending" ||
           status === "submitted" ||
           status === "under review";
@@ -522,8 +883,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     showMessage("Complaint successfully updated.");
+
     $("super-complaint-details")?.classList.add("hidden");
+
     selectedComplaint = null;
+
     await loadComplaints();
   });
 
@@ -558,6 +922,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     myPersonalComplaints = data || [];
+
     renderMyPersonalComplaints();
   }
 
@@ -664,8 +1029,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       showMessage("Your personal complaint has been updated.");
+
       $("my-personal-complaint-details")?.classList.add("hidden");
+
       selectedPersonalComplaint = null;
+
       await loadMyPersonalComplaints();
 
     } finally {
@@ -725,6 +1093,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         button.className = "nav-btn";
         button.dataset.page = "super-admin-email-section";
         button.textContent = "Student Emails";
+
         nav.insertBefore(button, $("logout-btn"));
       }
     }
@@ -732,6 +1101,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!emailCentreEventsBound) {
       $("sa-mail-status")?.addEventListener("change", renderEmailList);
       $("sa-mail-send")?.addEventListener("click", sendSelectedEmails);
+
       emailCentreEventsBound = true;
     }
   }
@@ -830,6 +1200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (resultElement) {
         resultElement.textContent = "Error: " + error.message;
       }
+
     } finally {
       if (button) {
         button.disabled = false;
@@ -893,6 +1264,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (targetId === "my-personal-complaints") {
       loadMyPersonalComplaints();
     }
+
+    if (targetId === "super-admin-requests") {
+      loadSuperAdminRegistrationRequests();
+    }
   });
 
   // ================= LOGOUT =================
@@ -942,6 +1317,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       answer = "Students section mein student records check karein.";
     } else if (lower.includes("personal")) {
       answer = "My Personal Complaints section mein apni confidential complaints check karein.";
+    } else if (lower.includes("super admin")) {
+      answer = "Super Admin Requests section mein new Super Admin applications review karein.";
     }
 
     const userMessage = document.createElement("p");
