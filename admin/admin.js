@@ -3,8 +3,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const db = window.supabaseClient;
   const $ = id => document.getElementById(id);
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhM-icfed2rd2xA_aFwIFTpXGQourymAtY4xPnVV5eWFpk6yc5mDYv6_Dg3pXtLG_XTw/exec";
   const RECOVERY_FUNCTION = "admin-account-recovery";
+  const EMAIL_FUNCTION = "ltsu-campus-email";
 
   let currentUser = null;
   let currentProfile = null;
@@ -37,14 +37,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  async function callRecoveryFunction(payload) {
-    const { data, error } = await db.functions.invoke(
-      RECOVERY_FUNCTION,
-      { body: payload }
-    );
+  async function callFunction(name, payload) {
+    const { data, error } = await db.functions.invoke(name, {
+      body: payload
+    });
 
     if (error) {
-      let message = error.message || "Recovery request failed.";
+      let message = error.message || "Request failed.";
       try {
         const details = await error.context?.json?.();
         if (details?.error || details?.message) {
@@ -61,165 +60,51 @@ document.addEventListener("DOMContentLoaded", async () => {
     return data;
   }
 
-  // AUTH TABS
+  // AUTH PANELS
   const loginForm = $("admin-login-form");
   const registerForm = $("admin-register-form");
-  const authSection = document.querySelector(".auth-section");
 
   function showAuthTab(tab) {
+    const loginPanel = $("admin-login-panel");
+    const registerPanel = $("admin-register-panel");
+    const recoveryPanel = $("admin-recovery-panel");
     const showLogin = tab === "login";
 
-    if (loginForm) {
-      loginForm.hidden = !showLogin;
-      loginForm.classList.toggle("hidden", !showLogin);
-    }
+    loginPanel?.classList.toggle("hidden", !showLogin);
+    registerPanel?.classList.toggle("hidden", showLogin);
+    recoveryPanel?.classList.add("hidden");
 
-    if (registerForm) {
-      registerForm.hidden = showLogin;
-      registerForm.classList.toggle("hidden", showLogin);
-    }
+    $("admin-login-tab")?.classList.toggle("active", showLogin);
+    $("admin-register-tab")?.classList.toggle("active", !showLogin);
+  }
 
-    const recoveryPanel = $("admin-recovery-panel");
-    if (recoveryPanel) recoveryPanel.classList.add("hidden");
-
-    document.querySelectorAll(".auth-tabs button, .auth-tabs [role='tab']").forEach(button => {
-      const label = (button.textContent || "").toLowerCase();
-      const isLogin = label.includes("login") || label.includes("sign in");
-      const isRegister = label.includes("request") || label.includes("register") || label.includes("access");
-
-      if (isLogin || isRegister) {
-        button.classList.toggle("active", showLogin ? isLogin : isRegister);
-        button.setAttribute("aria-selected", String(showLogin ? isLogin : isRegister));
-      }
-    });
+  function showRecoveryPanel() {
+    $("admin-login-panel")?.classList.add("hidden");
+    $("admin-register-panel")?.classList.add("hidden");
+    $("admin-recovery-panel")?.classList.remove("hidden");
+    $("admin-login-tab")?.classList.remove("active");
+    $("admin-register-tab")?.classList.remove("active");
   }
 
   showAuthTab("login");
 
-  document.addEventListener("click", event => {
-    const button = event.target.closest(".auth-tabs button, .auth-tabs [role='tab'], [data-auth-tab]");
-    if (!button) return;
+  $("admin-login-tab")?.addEventListener("click", () => showAuthTab("login"));
+  $("admin-register-tab")?.addEventListener("click", () => showAuthTab("register"));
 
-    const label = (
-      (button.dataset.authTab || "") + " " +
-      (button.dataset.tab || "") + " " +
-      (button.textContent || "")
-    ).toLowerCase();
-
-    if (label.includes("request") || label.includes("register") || label.includes("access") || label.includes("sign up")) {
-      event.preventDefault();
-      showAuthTab("register");
-    } else if (label.includes("login") || label.includes("sign in")) {
-      event.preventDefault();
-      showAuthTab("login");
-    }
+  $("open-admin-register")?.addEventListener("click", event => {
+    event.preventDefault();
+    showAuthTab("register");
   });
 
-  // ADD USERNAME FIELD TO REGISTRATION
-  if (registerForm && !$("admin-username")) {
-    const usernameWrap = document.createElement("div");
-    usernameWrap.innerHTML = `
-      <label for="admin-username">Username</label>
-      <input
-        type="text"
-        id="admin-username"
-        name="username"
-        minlength="3"
-        maxlength="30"
-        autocomplete="username"
-        placeholder="Choose a unique username"
-        required
-        style="width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box"
-      >
-      <small>Username mein letters, numbers aur underscore use kar sakte hain.</small>
-    `;
-
-    const emailField = $("admin-email");
-    if (emailField?.parentElement) {
-      emailField.parentElement.after(usernameWrap);
-    } else {
-      registerForm.prepend(usernameWrap);
-    }
-  }
-
-  // FORGOT PASSWORD PANEL
-  if (authSection && !$("admin-recovery-panel")) {
-    const panel = document.createElement("section");
-    panel.id = "admin-recovery-panel";
-    panel.className = "hidden";
-    panel.style.cssText = "max-width:480px;margin:20px auto;padding:22px;border:1px solid #ddd;border-radius:12px;background:white;color:#222";
-
-    panel.innerHTML = `
-      <h2>Admin Password Recovery</h2>
-      <p>Apna registered username, email aur 6-digit Recovery PIN enter karein.</p>
-
-      <form id="admin-recovery-form">
-        <label for="recovery-username">Registered Username</label>
-        <input id="recovery-username" type="text" autocomplete="username" required
-          style="width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box">
-
-        <label for="recovery-email">Registered Email</label>
-        <input id="recovery-email" type="email" autocomplete="email" required
-          style="width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box">
-
-        <label for="recovery-pin">6-digit Recovery PIN</label>
-        <input id="recovery-pin" type="password" inputmode="numeric" maxlength="6"
-          pattern="[0-9]{6}" autocomplete="off" required
-          style="width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box">
-
-        <label for="recovery-new-password">New Password</label>
-        <input id="recovery-new-password" type="password" minlength="8"
-          autocomplete="new-password" required
-          style="width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box">
-
-        <label for="recovery-confirm-password">Confirm New Password</label>
-        <input id="recovery-confirm-password" type="password" minlength="8"
-          autocomplete="new-password" required
-          style="width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box">
-
-        <button type="submit" id="recovery-submit"
-          style="width:100%;padding:12px;cursor:pointer">Reset Password</button>
-
-        <button type="button" id="recovery-back"
-          style="width:100%;padding:11px;margin-top:10px;cursor:pointer">Back to Login</button>
-
-        <p id="recovery-result" role="status"></p>
-      </form>
-    `;
-
-    authSection.appendChild(panel);
-  }
-
-  const loginPanel = $("admin-login-panel") || loginForm?.parentElement;
-
-  if (loginPanel && !$("admin-forgot-password")) {
-    const forgotButton = document.createElement("button");
-    forgotButton.type = "button";
-    forgotButton.id = "admin-forgot-password";
-    forgotButton.textContent = "Forgot Password?";
-    forgotButton.style.cssText = "display:block;margin:12px auto;padding:9px 14px;cursor:pointer";
-    loginPanel.appendChild(forgotButton);
-  }
-
-  $("admin-forgot-password")?.addEventListener("click", () => {
-    if (loginForm) {
-      loginForm.hidden = true;
-      loginForm.classList.add("hidden");
-    }
-
-    if (registerForm) {
-      registerForm.hidden = true;
-      registerForm.classList.add("hidden");
-    }
-
-    $("admin-recovery-panel")?.classList.remove("hidden");
-  });
-
-  $("recovery-back")?.addEventListener("click", () => {
+  $("open-admin-login")?.addEventListener("click", event => {
+    event.preventDefault();
     showAuthTab("login");
   });
 
-  // RECOVER PASSWORD
+  $("admin-forgot-password")?.addEventListener("click", showRecoveryPanel);
+  $("recovery-back")?.addEventListener("click", () => showAuthTab("login"));
+
+  // RECOVERY
   $("admin-recovery-form")?.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -231,26 +116,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const button = $("recovery-submit");
     const result = $("recovery-result");
 
-    if (!username || !email || !pin || !newPassword || !confirmPassword) {
-      showMessage("Saari details bharo.");
-      return;
-    }
-
     if (!/^[a-z0-9_]{3,30}$/.test(username)) {
       showMessage("Username format sahi nahi hai.");
       return;
     }
-
     if (!/^[0-9]{6}$/.test(pin)) {
       showMessage("Recovery PIN exactly 6 digits ka hona chahiye.");
       return;
     }
-
     if (newPassword.length < 8) {
       showMessage("New password kam se kam 8 characters ka hona chahiye.");
       return;
     }
-
     if (newPassword !== confirmPassword) {
       showMessage("Dono passwords match nahi kar rahe.");
       return;
@@ -260,7 +137,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (result) result.textContent = "";
 
     try {
-      await callRecoveryFunction({
+      await callFunction(RECOVERY_FUNCTION, {
         action: "reset_password",
         username,
         email,
@@ -287,10 +164,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // FIRST LOGIN: RECOVERY PIN SETUP
+  // FIRST LOGIN RECOVERY PIN SETUP
   async function showRecoveryPinSetup() {
-    const existing = $("admin-pin-setup-panel");
-    if (existing) existing.remove();
+    $("admin-pin-setup-panel")?.remove();
 
     const panel = document.createElement("div");
     panel.id = "admin-pin-setup-panel";
@@ -303,22 +179,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     panel.innerHTML = `
       <div style="background:white;color:#222;padding:25px;border-radius:14px;width:100%;max-width:430px">
         <h2>Set Your Recovery PIN</h2>
-        <p>Account recovery ke liye apna 6-digit PIN set karein. Is PIN ko safe jagah yaad rakhein.</p>
-
+        <p>Account recovery ke liye apna 6-digit PIN set karein. Is PIN ko safe rakhein.</p>
         <form id="admin-pin-setup-form">
-          <label for="admin-new-pin">Create 6-digit PIN</label>
+          <label>Create 6-digit PIN</label>
           <input id="admin-new-pin" type="password" inputmode="numeric"
-            maxlength="6" pattern="[0-9]{6}" autocomplete="off" required
-            style="width:100%;padding:12px;margin:8px 0 15px;box-sizing:border-box">
-
-          <label for="admin-confirm-pin">Confirm 6-digit PIN</label>
+            maxlength="6" pattern="[0-9]{6}" required>
+          <label>Confirm 6-digit PIN</label>
           <input id="admin-confirm-pin" type="password" inputmode="numeric"
-            maxlength="6" pattern="[0-9]{6}" autocomplete="off" required
-            style="width:100%;padding:12px;margin:8px 0 15px;box-sizing:border-box">
-
-          <button id="admin-save-pin" type="submit"
-            style="width:100%;padding:12px;cursor:pointer">Save Recovery PIN</button>
-
+            maxlength="6" pattern="[0-9]{6}" required>
+          <button id="admin-save-pin" type="submit">Save Recovery PIN</button>
           <p id="admin-pin-message" role="status"></p>
         </form>
       </div>
@@ -338,7 +207,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         message.textContent = "PIN exactly 6 digits ka hona chahiye.";
         return;
       }
-
       if (pin !== confirmPin) {
         message.textContent = "Dono PIN match nahi kar rahe.";
         return;
@@ -347,14 +215,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       setButtonBusy(button, true, "Saving PIN...");
 
       try {
-        await callRecoveryFunction({
+        await callFunction(RECOVERY_FUNCTION, {
           action: "setup_pin",
           pin
         });
 
         message.textContent = "Recovery PIN successfully save ho gaya.";
         setTimeout(() => panel.remove(), 900);
-
       } catch (error) {
         message.textContent = error.message;
       } finally {
@@ -363,7 +230,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // VERIFY ADMIN ACCOUNT
+  // VERIFY ADMIN
   async function verifyAdmin(user) {
     const { data: profile, error } = await db
       .from("profiles")
@@ -386,14 +253,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentUser = user;
     currentProfile = profile;
 
-    document.querySelector(".auth-section")?.classList.add("hidden");
+    $("admin-auth-section")?.classList.add("hidden");
     $("admin-dashboard")?.classList.remove("hidden");
 
     loadProfile();
     await loadComplaints();
 
     try {
-      const pinStatus = await callRecoveryFunction({
+      const pinStatus = await callFunction(RECOVERY_FUNCTION, {
         action: "check_pin_status"
       });
 
@@ -401,16 +268,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         await showRecoveryPinSetup();
       }
     } catch (error) {
-      showMessage(
-        "Recovery PIN status check nahi ho saka: " + error.message +
-        "\nDashboard open hai, lekin recovery setup verify nahi hua."
-      );
+      showMessage("Recovery PIN status check nahi ho saka: " + error.message);
     }
 
     return true;
   }
 
-  // ADMIN LOGIN
+  // LOGIN
   loginForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -426,13 +290,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     setButtonBusy(button, true, "Logging in...");
 
     try {
-      const { data, error } = await db.auth.signInWithPassword({
-        email,
-        password
-      });
-
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
       if (error) throw error;
-
       await verifyAdmin(data.user);
     } catch (error) {
       showMessage("Login nahi hua: " + error.message);
@@ -454,21 +313,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const password = $("admin-create-password")?.value;
     const confirmPassword = $("admin-confirm-password")?.value;
 
-    if (!name || !email || !username || !mobile || !department || !password || !confirmPassword) {
+    if (!name || !email || !username || !mobile || !department || !reason || !password || !confirmPassword) {
       showMessage("Saari required details bharo.");
       return;
     }
-
     if (!/^[a-z0-9_]{3,30}$/.test(username)) {
       showMessage("Username 3-30 characters ka hona chahiye. Sirf small letters, numbers aur underscore use karo.");
       return;
     }
-
     if (password.length < 8) {
       showMessage("Password kam se kam 8 characters ka hona chahiye.");
       return;
     }
-
     if (password !== confirmPassword) {
       showMessage("Dono passwords match nahi kar rahe.");
       return;
@@ -482,24 +338,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         email,
         password,
         options: {
-          data: {
-            full_name: name,
-            username
-          }
+          data: { full_name: name, username }
         }
       });
 
       if (error) {
-        if (error.message.toLowerCase().includes("already") ||
-            error.message.toLowerCase().includes("registered")) {
+        if (/already|registered/i.test(error.message)) {
           throw new Error("Is email ka account pehle se bana hua hai. Admin Login use karein.");
         }
         throw error;
       }
 
-      if (!data.user) {
-        throw new Error("Account create nahi hua. Dobara try karo.");
-      }
+      if (!data.user) throw new Error("Account create nahi hua. Dobara try karo.");
 
       const { error: requestError } = await db
         .from("admin_requests")
@@ -515,10 +365,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
       if (requestError) {
-        throw new Error(
-          "Account create ho gaya, lekin Admin request submit nahi hui: " +
-          requestError.message
-        );
+        throw new Error("Account create ho gaya, lekin Admin request submit nahi hui: " + requestError.message);
       }
 
       showMessage("Admin access request submit ho gayi. Super Admin approval ka wait karein.");
@@ -532,7 +379,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // COMPLAINTS
+  // LOAD COMPLAINTS
   async function loadComplaints() {
     const tbody = $("complaints-table-body");
     if (tbody) tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
@@ -557,9 +404,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function updateStats() {
     const status = c => String(c.status || "").toLowerCase();
 
-    if ($("total-complaints")) {
-      $("total-complaints").textContent = complaints.length;
-    }
+    if ($("total-complaints")) $("total-complaints").textContent = complaints.length;
 
     if ($("pending-complaints")) {
       $("pending-complaints").textContent =
@@ -583,17 +428,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const category = $("complaint-category-filter")?.value || "";
 
     return complaints.filter(c => {
-      const text = [
-        c.complaint_id, c.title, c.location, c.description, c.category
-      ].join(" ").toLowerCase();
+      const text = [c.complaint_id, c.title, c.location, c.description, c.category]
+        .join(" ").toLowerCase();
 
-      const statusMatches =
-        !selectedStatus ||
+      const statusMatches = !selectedStatus ||
         selectedStatus.toLowerCase() === "all" ||
         String(c.status || "").toLowerCase() === selectedStatus.toLowerCase();
 
-      return text.includes(search) &&
-        statusMatches &&
+      return text.includes(search) && statusMatches &&
         (!category || category.toLowerCase() === "all" || c.category === category);
     });
   }
@@ -611,7 +453,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     tbody.innerHTML = rows.map(c => {
       const solved = String(c.status || "").toLowerCase() === "solved";
-
       return `
         <tr>
           <td>${escapeHTML(c.complaint_id)}</td>
@@ -638,27 +479,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     $("complaint-details")?.classList.remove("hidden");
 
-    if ($("complaint-detail-content")) {
-      $("complaint-detail-content").innerHTML = `
-        <p><b>Complaint ID:</b> ${escapeHTML(selectedComplaint.complaint_id)}</p>
-        <p><b>Title:</b> ${escapeHTML(selectedComplaint.title)}</p>
-        <p><b>Description:</b> ${escapeHTML(selectedComplaint.description)}</p>
-        <p><b>Category:</b> ${escapeHTML(selectedComplaint.category)}</p>
-        <p><b>Location:</b> ${escapeHTML(selectedComplaint.location)}</p>
-        <p><b>Status:</b> ${escapeHTML(selectedComplaint.status)}</p>
-      `;
-    }
+    $("complaint-detail-content").innerHTML = `
+      <p><b>Complaint ID:</b> ${escapeHTML(selectedComplaint.complaint_id)}</p>
+      <p><b>Title:</b> ${escapeHTML(selectedComplaint.title)}</p>
+      <p><b>Description:</b> ${escapeHTML(selectedComplaint.description)}</p>
+      <p><b>Category:</b> ${escapeHTML(selectedComplaint.category)}</p>
+      <p><b>Location:</b> ${escapeHTML(selectedComplaint.location)}</p>
+      <p><b>Status:</b> ${escapeHTML(selectedComplaint.status)}</p>
+    `;
 
-    if ($("update-status")) {
-      $("update-status").value = selectedComplaint.status || "Submitted";
-    }
-
-    if ($("resolution-details")) {
-      $("resolution-details").value = selectedComplaint.notes || "";
-    }
+    $("update-status").value = selectedComplaint.status || "Submitted";
+    $("resolution-details").value = selectedComplaint.notes || "";
   });
 
-  // UPDATE COMPLAINT
+  // UPDATE COMPLAINT STATUS
   $("complaint-update-form")?.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -674,41 +508,45 @@ document.addEventListener("DOMContentLoaded", async () => {
       showMessage("Selected complaint status valid nahi hai.");
       return;
     }
-
-    const { error } = await db
-      .from("complaints")
-      .update({
-        status,
-        notes,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", selectedComplaint.id);
-
-    if (error) {
-      showMessage("Complaint update error: " + error.message);
+    if (!notes) {
+      showMessage("Progress ya resolution details likhna zaroori hai.");
       return;
     }
 
-    showMessage("Complaint update ho gayi.");
-    await loadComplaints();
+    const button = event.submitter;
+    setButtonBusy(button, true, "Saving...");
+
+    try {
+      const { error } = await db
+        .from("complaints")
+        .update({
+          status,
+          notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", selectedComplaint.id);
+
+      if (error) throw error;
+
+      showMessage("Complaint update ho gayi. Student ko email bhejne ke liye Email Centre open karein.");
+      await loadComplaints();
+
+      selectedComplaint = complaints.find(c => c.id === selectedComplaint?.id) || null;
+    } catch (error) {
+      showMessage("Complaint update error: " + error.message);
+    } finally {
+      setButtonBusy(button, false);
+    }
   });
 
   // EMAIL CENTRE
   function renderEmailCentre() {
-    const section = $("email-section");
-    if (!section) return;
-
-    let area = $("admin-email-list-area");
-
-    if (!area) {
-      area = document.createElement("div");
-      area.id = "admin-email-list-area";
-      section.appendChild(area);
-    }
+    const area = $("admin-email-list-area");
+    if (!area) return;
 
     area.innerHTML = `
-      <h2>Student Complaint Email Centre</h2>
-      <p>Select complaints to send individual emails to students.</p>
+      <h3>Student Complaint Email Centre</h3>
+      <p>Select complaints and send their students an update. Student email addresses are fetched automatically.</p>
 
       <label for="mail-status-filter">Filter by status</label>
       <select id="mail-status-filter">
@@ -719,21 +557,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         <option value="Solved">Solved</option>
       </select>
 
-      <label for="mail-subject">Email subject</label>
-      <input id="mail-subject" value="Update on your LTSUCare complaint">
+      <div class="email-selection-actions">
+        <button type="button" id="mail-select-all">Select All Visible</button>
+        <button type="button" id="mail-clear-all">Clear Selection</button>
+      </div>
 
       <div id="mail-complaint-list"></div>
 
-      <label for="mail-common-remarks">Remarks</label>
+      <label for="mail-common-remarks">Progress / Resolution Details</label>
       <textarea id="mail-common-remarks" rows="4"
-        placeholder="Write update for selected students"></textarea>
+        placeholder="Write the progress made or action taken for the selected complaints..."></textarea>
 
-      <button type="button" id="mail-send-button">Send Email to Selected Students</button>
-      <p id="mail-result"></p>
+      <button type="button" id="mail-send-button" class="primary-btn">
+        Send Email to Selected Students
+      </button>
+      <p id="mail-result" role="status" aria-live="polite"></p>
     `;
 
     renderEmailList();
+
     $("mail-status-filter")?.addEventListener("change", renderEmailList);
+
+    $("mail-select-all")?.addEventListener("click", () => {
+      document.querySelectorAll(".mail-complaint-check").forEach(item => {
+        item.checked = true;
+      });
+    });
+
+    $("mail-clear-all")?.addEventListener("click", () => {
+      document.querySelectorAll(".mail-complaint-check").forEach(item => {
+        item.checked = false;
+      });
+    });
+
     $("mail-send-button")?.addEventListener("click", sendSelectedEmails);
   }
 
@@ -745,62 +601,87 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rows = complaints.filter(c => !status || c.status === status);
 
     list.innerHTML = rows.length ? rows.map(c => `
-      <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
+      <label class="mail-complaint-option">
         <input type="checkbox" class="mail-complaint-check"
-          value="${escapeHTML(c.complaint_id)}">
-        ${escapeHTML(c.complaint_id)} — ${escapeHTML(c.title || c.category)}
-        (${escapeHTML(c.status)})
+          value="${escapeHTML(c.id)}">
+        <span>
+          <strong>${escapeHTML(c.complaint_id)}</strong> —
+          ${escapeHTML(c.title || c.category || "Complaint")}
+          <small>Status: ${escapeHTML(c.status)}</small>
+        </span>
       </label>
     `).join("") : "<p>No complaints found.</p>";
   }
 
+  // SEND EMAILS THROUGH SUPABASE EDGE FUNCTION
   async function sendSelectedEmails() {
-    const selected = [...document.querySelectorAll(".mail-complaint-check:checked")]
+    const selectedIds = [...document.querySelectorAll(".mail-complaint-check:checked")]
       .map(item => item.value);
 
-    if (!selected.length) {
+    const resultElement = $("mail-result");
+    const button = $("mail-send-button");
+    const remarks = $("mail-common-remarks")?.value.trim() || "";
+
+    if (!selectedIds.length) {
       showMessage("Kam se kam ek complaint select karo.");
       return;
     }
 
-    const { data } = await db.auth.getSession();
-    const accessToken = data.session?.access_token;
-
-    if (!accessToken) {
-      showMessage("Login session expire ho gaya. Dobara login karo.");
+    if (!remarks) {
+      showMessage("Email bhejne se pehle progress ya resolution details likho.");
       return;
     }
 
-    const remarksText = $("mail-common-remarks")?.value.trim() || "";
-    const remarks = {};
-    selected.forEach(id => remarks[id] = remarksText);
+    const selectedComplaints = selectedIds
+      .map(id => complaints.find(c => c.id === id))
+      .filter(Boolean);
 
-    const button = $("mail-send-button");
-    button.disabled = true;
-    button.textContent = "Sending...";
+    if (!selectedComplaints.length) {
+      showMessage("Selected complaint records nahi mile. Page refresh karke dobara try karo.");
+      return;
+    }
+
+    if (!confirm(`${selectedComplaints.length} student(s) ko complaint update email bhejni hai?`)) {
+      return;
+    }
+
+    setButtonBusy(button, true, "Sending emails...");
+    if (resultElement) resultElement.textContent = "Email sending started...";
+
+    let sent = 0;
+    const failed = [];
 
     try {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          type: "resolution_email",
-          accessToken,
-          complaintIds: selected,
-          remarks,
-          subject: $("mail-subject")?.value.trim()
-        })
-      });
+      for (const complaint of selectedComplaints) {
+        try {
+          const response = await callFunction(EMAIL_FUNCTION, {
+            action: "complaint_progress",
+            complaint_uuid: complaint.id,
+            progress_level: complaint.status || "Submitted",
+            resolution_details: remarks
+          });
 
-      const result = await response.json();
-      if (!result.success) throw new Error(result.message || "Email sending failed");
+          if (!response.success) {
+            throw new Error(response.message || "Email sending failed.");
+          }
 
-      $("mail-result").textContent = "Email request successful.";
-    } catch (error) {
-      $("mail-result").textContent = "Error: " + error.message;
+          sent++;
+        } catch (error) {
+          failed.push(`${complaint.complaint_id}: ${error.message}`);
+        }
+      }
+
+      let message = `${sent} email(s) successfully sent.`;
+
+      if (failed.length) {
+        message += ` ${failed.length} email(s) failed:\n${failed.join("\n")}`;
+      }
+
+      if (resultElement) resultElement.textContent = message;
+      else showMessage(message);
+
     } finally {
-      button.disabled = false;
-      button.textContent = "Send Email to Selected Students";
+      setButtonBusy(button, false);
     }
   }
 
@@ -815,16 +696,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($("profile-admin-status")) $("profile-admin-status").textContent = "Active";
   }
 
-  // SIDEBAR NAVIGATION
+  // DASHBOARD NAVIGATION
   document.querySelectorAll(".nav-btn[data-section]").forEach(button => {
     button.addEventListener("click", () => {
       const targetId = button.dataset.section;
 
-      document.querySelectorAll(".dashboard-panel, .page-section, .admin-section").forEach(section => {
+      document.querySelectorAll(".dashboard-panel").forEach(section => {
         section.classList.add("hidden");
       });
 
       $(targetId)?.classList.remove("hidden");
+
+      document.querySelectorAll(".nav-btn").forEach(nav => {
+        nav.classList.toggle("active", nav === button);
+      });
     });
   });
 
