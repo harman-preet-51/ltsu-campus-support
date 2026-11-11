@@ -24,7 +24,6 @@
         <p>Review student complaints, monitor progress and help create a better campus experience.</p>
     </section>
 
-    <!-- LOGIN AND REGISTRATION -->
     <section id="admin-auth-section" class="auth-section">
 
         <div class="auth-tabs">
@@ -32,9 +31,7 @@
             <button type="button" id="admin-register-tab" class="auth-tab">Request Admin Access</button>
         </div>
 
-        <!-- LOGIN -->
         <div id="admin-login-panel" class="auth-card">
-
             <h2>Welcome Back, Admin</h2>
             <p>Login to access your administration dashboard.</p>
 
@@ -52,9 +49,7 @@
                 <button type="submit" class="primary-btn">Login to Dashboard</button>
             </form>
 
-            <button type="button" id="admin-forgot-password"
-                class="switch-text"
-                style="border:0;background:none;color:#1769aa;cursor:pointer;margin-top:12px">
+            <button type="button" id="admin-forgot-password" class="switch-text">
                 Forgot Password?
             </button>
 
@@ -64,14 +59,11 @@
             </p>
         </div>
 
-        <!-- REQUEST ADMIN ACCESS -->
         <div id="admin-register-panel" class="auth-card hidden">
-
             <h2>Request Admin Access</h2>
             <p>Your request will be sent for Super Admin approval.</p>
 
             <form id="admin-register-form">
-
                 <label for="admin-name">Full Name</label>
                 <input type="text" id="admin-name" name="adminName"
                     placeholder="Enter your full name" required>
@@ -84,8 +76,7 @@
                 <input type="text" id="admin-username" name="username"
                     placeholder="Choose a unique username"
                     minlength="3" maxlength="30"
-                    pattern="[a-z0-9_]{3,30}"
-                    autocomplete="username" required>
+                    pattern="[a-z0-9_]{3,30}" autocomplete="username" required>
                 <small>Use small letters, numbers and underscore only.</small>
 
                 <label for="admin-mobile">Mobile Number</label>
@@ -112,13 +103,13 @@
 
                 <label for="admin-create-password">Create Password</label>
                 <input type="password" id="admin-create-password" name="adminPassword"
-                    placeholder="Minimum 8 characters"
-                    minlength="8" autocomplete="new-password" required>
+                    placeholder="Minimum 8 characters" minlength="8"
+                    autocomplete="new-password" required>
 
                 <label for="admin-confirm-password">Confirm Password</label>
                 <input type="password" id="admin-confirm-password" name="confirmPassword"
-                    placeholder="Enter password again"
-                    minlength="8" autocomplete="new-password" required>
+                    placeholder="Enter password again" minlength="8"
+                    autocomplete="new-password" required>
 
                 <div class="password-warning">
                     <strong>Admin Approval Required</strong>
@@ -134,26 +125,20 @@
             </p>
         </div>
 
-        <!-- PASSWORD RECOVERY -->
         <div id="admin-recovery-panel" class="auth-card hidden">
-
             <h2>Admin Password Recovery</h2>
             <p>Recover your password using your registered details and Recovery PIN.</p>
 
             <form id="admin-recovery-form">
-
                 <label for="recovery-username">Registered Username</label>
-                <input type="text" id="recovery-username"
-                    autocomplete="username" required>
+                <input type="text" id="recovery-username" autocomplete="username" required>
 
                 <label for="recovery-email">Registered Email</label>
-                <input type="email" id="recovery-email"
-                    autocomplete="email" required>
+                <input type="email" id="recovery-email" autocomplete="email" required>
 
                 <label for="recovery-pin">6-digit Recovery PIN</label>
-                <input type="password" id="recovery-pin"
-                    inputmode="numeric" maxlength="6"
-                    pattern="[0-9]{6}" autocomplete="off" required>
+                <input type="password" id="recovery-pin" inputmode="numeric"
+                    maxlength="6" pattern="[0-9]{6}" autocomplete="off" required>
 
                 <label for="recovery-new-password">New Password</label>
                 <input type="password" id="recovery-new-password"
@@ -169,17 +154,14 @@
 
                 <p id="recovery-result" role="status"></p>
 
-                <button type="button" id="recovery-back" class="switch-text"
-                    style="border:0;background:none;color:#1769aa;cursor:pointer">
+                <button type="button" id="recovery-back" class="switch-text">
                     Back to Login
                 </button>
             </form>
         </div>
     </section>
 
-    <!-- DASHBOARD -->
     <section id="admin-dashboard" class="dashboard hidden">
-
         <div class="dashboard-heading">
             <div>
                 <h2>Admin Dashboard</h2>
@@ -223,7 +205,6 @@
             </button>
         </div>
 
-        <!-- COMPLAINTS -->
         <section id="complaints-section" class="dashboard-panel">
             <div class="panel-heading">
                 <div>
@@ -233,8 +214,7 @@
             </div>
 
             <div class="filter-area">
-                <input type="search" id="complaint-search"
-                    placeholder="Search Complaint ID...">
+                <input type="search" id="complaint-search" placeholder="Search Complaint ID...">
 
                 <select id="complaint-status-filter">
                     <option value="all">All Statuses</option>
@@ -276,9 +256,7 @@
                         </tr>
                     </thead>
                     <tbody id="complaints-table-body">
-                        <tr>
-                            <td colspan="6">Complaint records will appear here.</td>
-                        </tr>
+                        <tr><td colspan="6">Complaint records will appear here.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -306,38 +284,12 @@
             </div>
         </section>
 
-        <!-- EMAIL CENTRE -->
         <section id="email-section" class="dashboard-panel hidden">
             <h2>Email Centre</h2>
-            <p>Send complaint updates to students.</p>
-
-            <form id="admin-email-form">
-                <label for="email-complaint-id">Complaint ID</label>
-                <input type="text" id="email-complaint-id"
-                    placeholder="Enter Complaint ID" required>
-
-                <label for="email-subject">Email Subject</label>
-                <input type="text" id="email-subject"
-                    placeholder="Enter email subject" required>
-
-                <label for="email-message">Message</label>
-                <textarea id="email-message"
-                    placeholder="Write your message..." required></textarea>
-
-                <button type="submit" class="primary-btn">Preview Email</button>
-            </form>
-
-            <div id="email-preview" class="details-card hidden">
-                <h3>Email Preview</h3>
-                <div id="email-preview-content"></div>
-                <p>Email sending requires authorised backend connection and confirmation.</p>
-                <button type="button" id="confirm-email-send" class="primary-btn">
-                    Confirm and Send
-                </button>
-            </div>
+            <p>Send complaint progress and resolution updates directly to students.</p>
+            <div id="admin-email-list-area"></div>
         </section>
 
-        <!-- PROFILE -->
         <section id="admin-profile-section" class="dashboard-panel hidden">
             <h2>My Admin Profile</h2>
             <div class="profile-details">
@@ -348,7 +300,6 @@
                 <p><strong>Account Status:</strong> <span id="profile-admin-status">--</span></p>
             </div>
         </section>
-
     </section>
 </main>
 
