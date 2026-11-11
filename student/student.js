@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
@@ -6,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const $ = id => document.getElementById(id);
 
     const STORAGE_BUCKET = "complaint-media";
-    const AI_FUNCTION = "ltsucare-ai";
     const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
     const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 
@@ -15,8 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentUser = null;
     let currentProfile = null;
-    let aiHistory = [];
-    let aiSending = false;
 
     const showMessage = (id, message, success = false) => {
         const el = $(id);
@@ -209,7 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
         hidePanels();
         updateRecipientFields();
         await loadAdminDirectory();
-        createAIAssistant();
     }
 
     // ---------------- STUDENT REGISTRATION ----------------
@@ -675,14 +670,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ---------------- FEEDBACK ----------------
+    // ---------------- FEEDBACK: GOOGLE APPS SCRIPT ----------------
+
+    const APPS_SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbwhM-icfed2rd2xA_aFwIFTpXGQourymAtY4xPnVV5eWFpk6yc5mDYv6_Dg3pXtLG_XTw/exec";
 
     $("feedback-form").addEventListener(
         "submit",
         async event => {
             event.preventDefault();
 
-            if (!currentUser) {
+            if (!currentUser || !currentProfile) {
                 showMessage(
                     "feedback-message-status",
                     "Please login first."
@@ -691,12 +689,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (!navigator.onLine) {
-                showMessage(
-                    "feedback-message-status",
-                    NO_NETWORK
-                );
+                showMessage("feedback-message-status", NO_NETWORK);
                 return;
             }
+
+            const form = $("feedback-form");
+            const submitButton =
+                form.querySelector('button[type="submit"]');
 
             const complaintId =
                 $("feedback-complaint-id").value.trim();
@@ -705,10 +704,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const feedbackText =
                 $("feedback-message").value.trim();
 
-            if (!rating || rating < 1 || rating > 5) {
+            if (!complaintId) {
                 showMessage(
                     "feedback-message-status",
-                    "Please select a rating."
+                    "Please enter your Complaint ID."
+                );
+                return;
+            }
+
+            if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+                showMessage(
+                    "feedback-message-status",
+                    "Please select a rating from 1 to 5."
                 );
                 return;
             }
@@ -721,476 +728,69 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            if (submitButton) submitButton.disabled = true;
+
             showMessage(
                 "feedback-message-status",
                 "Submitting feedback..."
             );
 
             try {
-                const { error } = await db
-                    .from("feedback")
-                    .insert({
-                        complaint_id: complaintId,
-                        user_id: currentUser.id,
-                        rating,
-                        feedback: feedbackText
-                    });
+                const payload = {
+                    type: "feedback",
+                    complaintId: complaintId,
+                    studentId: currentProfile.student_id || "",
+                    rating: rating,
+                    feedback: feedbackText
+                };
 
-                if (error) throw error;
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload),
+                    redirect: "follow"
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Feedback service returned HTTP " + response.status
+                    );
+                }
+
+                const result = await response.json();
+
+                if (!result || result.success !== true) {
+                    throw new Error(
+                        (result && result.message) ||
+                        "Google Apps Script could not save your feedback."
+                    );
+                }
 
                 showMessage(
                     "feedback-message-status",
-                    "Thank you! Your feedback has been submitted.",
+                    "Thank you! Your feedback has been submitted successfully.",
                     true
                 );
 
-                $("feedback-form").reset();
+                form.reset();
 
             } catch (error) {
+                console.error("Feedback submission error:", error);
+
                 showMessage(
                     "feedback-message-status",
                     !navigator.onLine
                         ? NO_NETWORK
-                        : error.message || "Feedback could not be submitted."
+                        : "Feedback could not be confirmed. Please try again. " +
+                          (error.message || "")
                 );
+            } finally {
+                if (submitButton) submitButton.disabled = false;
             }
         }
     );
-
-    // ---------------- AI ASSISTANT STYLES ----------------
-
-    function addAssistantStyles() {
-        if ($("ltsu-ai-styles")) return;
-
-        const style = document.createElement("style");
-        style.id = "ltsu-ai-styles";
-
-        style.textContent = `
-            #ltsu-ai-launcher {
-                position: fixed;
-                right: 22px;
-                bottom: 22px;
-                z-index: 9998;
-                border: 0;
-                border-radius: 999px;
-                padding: 14px 19px;
-                background: linear-gradient(135deg,#315efb,#10b981);
-                color: white;
-                font-weight: 800;
-                box-shadow: 0 8px 28px #0003;
-                cursor: pointer;
-            }
-
-            #ltsu-ai-panel {
-                position: fixed;
-                right: 22px;
-                bottom: 82px;
-                width: min(390px,calc(100vw - 28px));
-                height: min(590px,calc(100vh - 115px));
-                z-index: 9999;
-                background: white;
-                color: #17233f;
-                border: 1px solid #e1e7f2;
-                border-radius: 18px;
-                box-shadow: 0 12px 40px #0003;
-                display: none;
-                overflow: hidden;
-                font-family: Arial,sans-serif;
-            }
-
-            #ltsu-ai-panel.open {
-                display: flex;
-                flex-direction: column;
-            }
-
-            #ltsu-ai-head {
-                background: linear-gradient(120deg,#101a35,#29477d);
-                color: white;
-                padding: 14px 16px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            #ltsu-ai-head strong {
-                font-size: 16px;
-            }
-
-            #ltsu-ai-close {
-                border: 0;
-                background: transparent;
-                color: white;
-                font-size: 24px;
-                cursor: pointer;
-            }
-
-            #ltsu-ai-notice {
-                font-size: 11px;
-                color: #64718a;
-                padding: 7px 12px;
-                background: #f0f4ff;
-            }
-
-            #ltsu-ai-messages {
-                flex: 1;
-                overflow: auto;
-                padding: 12px;
-                background: #f7f9ff;
-            }
-
-            .ltsu-ai-msg {
-                max-width: 88%;
-                padding: 10px 12px;
-                border-radius: 13px;
-                margin: 8px 0;
-                white-space: pre-wrap;
-                overflow-wrap: anywhere;
-                font-size: 14px;
-                line-height: 1.5;
-            }
-
-            .ltsu-ai-user {
-                margin-left: auto;
-                color: white;
-                background: #315efb;
-            }
-
-            .ltsu-ai-bot {
-                margin-right: auto;
-                color: #17233f;
-                background: white;
-                border: 1px solid #e1e7f2;
-            }
-
-            #ltsu-ai-tools {
-                padding: 10px;
-                border-top: 1px solid #e1e7f2;
-                background: white;
-            }
-
-            #ltsu-ai-text {
-                width: 100%;
-                min-height: 65px;
-                resize: vertical;
-                box-sizing: border-box;
-                border: 1px solid #dce4f2;
-                border-radius: 10px;
-                padding: 9px;
-                color: #17233f;
-                background: #f7f9ff;
-                font: 14px Arial;
-            }
-
-            .ltsu-ai-actions {
-                display: flex;
-                gap: 7px;
-                align-items: center;
-                margin-top: 8px;
-            }
-
-            .ltsu-ai-send {
-                border: 0;
-                border-radius: 8px;
-                padding: 10px 16px;
-                cursor: pointer;
-                background: linear-gradient(135deg,#315efb,#10b981);
-                color: white;
-                font-weight: 700;
-                margin-left: auto;
-            }
-
-            .ltsu-ai-send:disabled {
-                opacity: .5;
-                cursor: not-allowed;
-            }
-
-            #ltsu-ai-status {
-                font-size: 12px;
-                color: #64718a;
-                min-height: 16px;
-                margin-top: 6px;
-            }
-
-            @media(max-width:480px) {
-                #ltsu-ai-launcher {
-                    right: 14px;
-                    bottom: 14px;
-                }
-
-                #ltsu-ai-panel {
-                    right: 8px;
-                    bottom: 72px;
-                    width: calc(100vw - 16px);
-                    height: 70vh;
-                }
-            }
-        `;
-
-        document.head.appendChild(style);
-    }
-
-    // ---------------- AI ASSISTANT ----------------
-
-    function createAIAssistant() {
-        if ($("ltsu-ai-panel")) return;
-
-        addAssistantStyles();
-
-        const launcher = document.createElement("button");
-        launcher.id = "ltsu-ai-launcher";
-        launcher.type = "button";
-        launcher.textContent = "✦ LTSUCare AI";
-
-        const panel = document.createElement("section");
-        panel.id = "ltsu-ai-panel";
-        panel.setAttribute(
-            "aria-label",
-            "LTSUCare AI Assistant"
-        );
-
-        panel.innerHTML = `
-            <div id="ltsu-ai-head">
-                <strong>✦ LTSUCare AI Assistant</strong>
-                <button id="ltsu-ai-close"
-                    type="button"
-                    aria-label="Close">×</button>
-            </div>
-
-            <div id="ltsu-ai-notice">
-                Ask about campus support, complaints or anything you need help with.
-                Do not share passwords or PINs.
-            </div>
-
-            <div id="ltsu-ai-messages" aria-live="polite">
-                <div class="ltsu-ai-msg ltsu-ai-bot">
-                    Hello! Welcome to LTSUCare. How can I help you today?
-                </div>
-            </div>
-
-            <div id="ltsu-ai-tools">
-                <textarea id="ltsu-ai-text"
-                    maxlength="6000"
-                    placeholder="Type your question here..."></textarea>
-
-                <div class="ltsu-ai-actions">
-                    <button id="ltsu-ai-send"
-                        class="ltsu-ai-send"
-                        type="button">Send</button>
-                </div>
-
-                <div id="ltsu-ai-status"
-                    role="status"
-                    aria-live="polite"></div>
-            </div>
-        `;
-
-        document.body.append(launcher, panel);
-
-        launcher.addEventListener("click", () => {
-            panel.classList.toggle("open");
-            $("ltsu-ai-text").focus();
-        });
-
-        $("ltsu-ai-close").addEventListener("click", () => {
-            panel.classList.remove("open");
-        });
-
-        $("ltsu-ai-send").addEventListener(
-            "click",
-            sendAIMessage
-        );
-
-        $("ltsu-ai-text").addEventListener(
-            "keydown",
-            event => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    sendAIMessage();
-                }
-            }
-        );
-
-        updateAIConnectionStatus();
-    }
-
-    function updateAIConnectionStatus() {
-        const status = $("ltsu-ai-status");
-        if (!status) return;
-
-        status.textContent = navigator.onLine
-            ? "You are online. Ask your question."
-            : NO_NETWORK;
-    }
-
-    window.addEventListener("offline", () => {
-        const status = $("ltsu-ai-status");
-        if (status) status.textContent = NO_NETWORK;
-    });
-
-    window.addEventListener("online", () => {
-        const status = $("ltsu-ai-status");
-        if (status) {
-            status.textContent = "Internet connection restored.";
-        }
-    });
-
-    function addAIMessage(message, type) {
-        const list = $("ltsu-ai-messages");
-        const bubble = document.createElement("div");
-
-        bubble.className =
-            "ltsu-ai-msg " +
-            (type === "user"
-                ? "ltsu-ai-user"
-                : "ltsu-ai-bot");
-
-        bubble.textContent = message;
-        list.appendChild(bubble);
-        list.scrollTop = list.scrollHeight;
-
-        return bubble;
-    }
-
-    async function sendAIMessage() {
-        if (aiSending) return;
-
-        if (!currentUser) {
-            $("ltsu-ai-status").textContent = "Please log in first.";
-            return;
-        }
-
-        const textInput = $("ltsu-ai-text");
-        const sendButton = $("ltsu-ai-send");
-        const text = textInput.value.trim();
-
-        if (!text) {
-            $("ltsu-ai-status").textContent =
-                "Please type a message first.";
-            textInput.focus();
-            return;
-        }
-
-        if (!navigator.onLine) {
-            $("ltsu-ai-status").textContent = NO_NETWORK;
-            return;
-        }
-
-        aiSending = true;
-        sendButton.disabled = true;
-        textInput.disabled = true;
-
-        $("ltsu-ai-status").textContent =
-            "Connecting to LTSUCare AI...";
-
-        addAIMessage(text, "user");
-        textInput.value = "";
-
-        const requestHistory = aiHistory.slice(-8);
-        let requestTimeout = null;
-
-        try {
-            const invokePromise = db.functions.invoke(
-                AI_FUNCTION,
-                {
-                    body: {
-                        text,
-                        history: requestHistory
-                    }
-                }
-            );
-
-            const timeoutPromise = new Promise((_, reject) => {
-                requestTimeout = window.setTimeout(
-                    () => reject(new Error("AI_TIMEOUT")),
-                    24000
-                );
-            });
-
-            const { data, error } = await Promise.race([
-                invokePromise,
-                timeoutPromise
-            ]);
-
-            if (error) {
-                let detail = error.message || "AI request failed.";
-
-                try {
-                    if (
-                        error.context &&
-                        typeof error.context.clone === "function"
-                    ) {
-                        const errorBody =
-                            await error.context.clone().json();
-
-                        if (errorBody && errorBody.error) {
-                            detail = errorBody.error;
-                        }
-                    }
-                } catch (_) {
-                    // Keep original error message.
-                }
-
-                const lowerDetail = String(detail).toLowerCase();
-
-                if (
-                    !navigator.onLine ||
-                    lowerDetail.includes("failed to fetch") ||
-                    lowerDetail.includes("networkerror") ||
-                    lowerDetail.includes("network request failed")
-                ) {
-                    throw new Error("NO_NETWORK");
-                }
-
-                throw new Error(detail);
-            }
-
-            if (!data || !data.success || !data.answer) {
-                throw new Error(
-                    (data && data.error) ||
-                    "AI did not return a reply. Please try again."
-                );
-            }
-
-            aiHistory.push(
-                { role: "user", text },
-                { role: "model", text: data.answer }
-            );
-
-            aiHistory = aiHistory.slice(-8);
-
-            addAIMessage(data.answer, "assistant");
-            $("ltsu-ai-status").textContent = "Reply received.";
-
-        } catch (error) {
-            let message = error instanceof Error
-                ? error.message
-                : "Something went wrong. Please try again.";
-
-            if (message === "NO_NETWORK" || !navigator.onLine) {
-                message = NO_NETWORK;
-            } else if (message === "AI_TIMEOUT") {
-                message =
-                    "AI is taking too long to respond. Please try again.";
-            }
-
-            addAIMessage(message, "assistant");
-            $("ltsu-ai-status").textContent = "Message not sent.";
-
-            if (!textInput.value.trim()) {
-                textInput.value = text;
-            }
-
-        } finally {
-            if (requestTimeout !== null) {
-                clearTimeout(requestTimeout);
-            }
-
-            aiSending = false;
-            sendButton.disabled = false;
-            textInput.disabled = false;
-            textInput.focus();
-        }
-    }
 
     // ---------------- LOGOUT ----------------
 
@@ -1204,22 +804,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         currentUser = null;
         currentProfile = null;
-        aiHistory = [];
-        aiSending = false;
 
         $("student-dashboard").classList.add("hidden");
         $("auth-section").classList.remove("hidden");
 
         $("student-login-form").reset();
         $("student-register-form").reset();
-
-        const assistantPanel = $("ltsu-ai-panel");
-        const assistantLauncher = $("ltsu-ai-launcher");
-        const assistantStyles = $("ltsu-ai-styles");
-
-        if (assistantPanel) assistantPanel.remove();
-        if (assistantLauncher) assistantLauncher.remove();
-        if (assistantStyles) assistantStyles.remove();
 
         showLogin();
     });
