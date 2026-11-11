@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#07152e">
+    <meta name="theme-color" content="#24160f">
     <meta name="description" content="LTSUCare Student Portal - Report campus problems, track complaints and connect with campus support.">
 
     <title>Student Portal | LTSUCare - LTSU</title>
 
     <link rel="stylesheet" href="student.css">
 
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js" defer></script>
     <script src="student.js" defer></script>
@@ -32,6 +33,7 @@
 
 <main id="main-content">
 
+    <!-- WELCOME -->
     <section class="welcome-section">
         <span class="welcome-tag">STUDENT PORTAL</span>
 
@@ -45,7 +47,6 @@
     </section>
 
     <!-- LOGIN AND REGISTRATION -->
-
     <section class="auth-section" id="auth-section"
              aria-label="Student account access">
 
@@ -72,7 +73,6 @@
         </div>
 
         <!-- LOGIN PANEL -->
-
         <div class="auth-card" id="login-panel">
 
             <h2>Welcome Back!</h2>
@@ -124,7 +124,6 @@
         </div>
 
         <!-- REGISTRATION PANEL -->
-
         <div class="auth-card hidden" id="register-panel">
 
             <h2>Create Student Account</h2>
@@ -231,7 +230,6 @@
     </section>
 
     <!-- STUDENT DASHBOARD -->
-
     <section class="dashboard hidden"
              id="student-dashboard"
              aria-label="Student dashboard">
@@ -253,7 +251,6 @@
         </div>
 
         <!-- DASHBOARD CARDS -->
-
         <div class="dashboard-cards">
 
             <article class="dashboard-card">
@@ -286,7 +283,6 @@
         </div>
 
         <!-- NEW COMPLAINT FORM -->
-
         <section class="dashboard-panel hidden"
                  id="complaint-panel"
                  aria-label="Submit a complaint">
@@ -300,8 +296,6 @@
 
             <form id="complaint-form">
 
-                <!-- COMPLAINT RECIPIENT -->
-
                 <label for="recipient-type">
                     Who do you want to send this complaint to?
                 </label>
@@ -310,34 +304,20 @@
                         name="recipient_type"
                         required>
 
-                    <option value="all_admins">
-                        All Admins
-                    </option>
-
-                    <option value="specific_admin">
-                        Specific Admin (Confidential)
-                    </option>
-
-                    <option value="super_admin">
-                        Super Admin Direct (Private)
-                    </option>
+                    <option value="all_admins">All Admins</option>
+                    <option value="specific_admin">Specific Admin (Confidential)</option>
+                    <option value="super_admin">Super Admin Direct (Private)</option>
 
                 </select>
 
-                <!-- SPECIFIC ADMIN SELECTION -->
-
                 <div id="recipient-admin-wrap" class="hidden">
 
-                    <label for="recipient-admin-id">
-                        Select Admin
-                    </label>
+                    <label for="recipient-admin-id">Select Admin</label>
 
                     <select id="recipient-admin-id"
                             name="recipient_admin_id">
 
-                        <option value="">
-                            Select an Admin
-                        </option>
+                        <option value="">Select an Admin</option>
 
                     </select>
 
@@ -354,8 +334,6 @@
                     approved Admins.
                 </p>
 
-                <!-- COURSE -->
-
                 <label for="complaint-course">Course</label>
                 <input
                     type="text"
@@ -365,8 +343,6 @@
                     required
                 >
 
-                <!-- SEMESTER -->
-
                 <label for="complaint-semester">Semester</label>
                 <input
                     type="text"
@@ -375,8 +351,6 @@
                     placeholder="Your semester"
                     required
                 >
-
-                <!-- LOCATION -->
 
                 <label for="complaint-location">
                     Location / Block Name
@@ -390,11 +364,7 @@
                     required
                 >
 
-                <!-- CATEGORY -->
-
-                <label for="problem-category">
-                    Problem Category
-                </label>
+                <label for="problem-category">Problem Category</label>
 
                 <select id="problem-category"
                         name="category"
@@ -421,8 +391,6 @@
 
                 </select>
 
-                <!-- DESCRIPTION -->
-
                 <label for="problem-description">
                     Describe Your Problem
                 </label>
@@ -434,8 +402,6 @@
                     maxlength="5000"
                     placeholder="Explain the problem clearly..."
                     required></textarea>
-
-                <!-- MEDIA UPLOAD -->
 
                 <label for="complaint-media">
                     Upload Photo / Video (Optional)
@@ -466,7 +432,6 @@
         </section>
 
         <!-- COMPLAINT HISTORY -->
-
         <section class="dashboard-panel hidden"
                  id="history-panel"
                  aria-label="Complaint history">
@@ -485,7 +450,6 @@
         </section>
 
         <!-- FEEDBACK -->
-
         <section class="dashboard-panel hidden"
                  id="feedback-panel"
                  aria-label="Student feedback">
@@ -553,7 +517,6 @@
 </main>
 
 <!-- FOOTER -->
-
 <footer>
     <p>
         © <span id="current-year"></span>
@@ -564,6 +527,21 @@
         A Better Campus Begins With a Voice That Is Heard.
     </p>
 </footer>
+
+<!-- CHATLING AI ASSISTANT: ZERA -->
+<script>
+    window.chtlConfig = {
+        chatbotId: "2589677954"
+    };
+</script>
+
+<script
+    async
+    data-id="2589677954"
+    id="chtl-script"
+    type="text/javascript"
+    src="https://chatling.ai/js/embed.js">
+</script>
 
 </body>
 </html>
