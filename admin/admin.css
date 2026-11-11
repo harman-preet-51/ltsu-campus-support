@@ -28,10 +28,7 @@ body {
     display: none !important;
 }
 
-button,
-input,
-select,
-textarea {
+button, input, select, textarea {
     font: inherit;
 }
 
@@ -43,8 +40,6 @@ button:disabled {
     opacity: .6;
     cursor: not-allowed;
 }
-
-/* HEADER */
 
 .admin-header {
     background: linear-gradient(120deg, #102a43, #164e63);
@@ -84,8 +79,6 @@ button:disabled {
     background: rgba(255,255,255,.12);
 }
 
-/* MAIN */
-
 main {
     width: 92%;
     max-width: 1200px;
@@ -114,8 +107,6 @@ main {
     color: var(--muted);
 }
 
-/* AUTHENTICATION */
-
 .auth-section {
     max-width: 600px;
     margin: auto;
@@ -133,7 +124,6 @@ main {
     border: 1px solid var(--border);
     background: white;
     border-radius: 8px;
-    cursor: pointer;
     font-weight: bold;
     color: var(--text);
     transition: .2s;
@@ -165,8 +155,6 @@ main {
 .auth-card > p {
     color: var(--muted);
 }
-
-/* FORMS */
 
 label {
     display: block;
@@ -213,8 +201,6 @@ small {
     font-size: 12px;
 }
 
-/* BUTTONS */
-
 .primary-btn,
 .logout-btn {
     padding: 13px 20px;
@@ -238,8 +224,13 @@ small {
 }
 
 .switch-text {
+    display: block;
     text-align: center;
-    margin-top: 20px;
+    margin: 18px auto 0;
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+    cursor: pointer;
 }
 
 .switch-text a {
@@ -267,8 +258,6 @@ small {
 .password-warning p {
     margin-bottom: 0;
 }
-
-/* DASHBOARD */
 
 .dashboard {
     margin-top: 35px;
@@ -325,8 +314,6 @@ small {
     margin: 5px 0;
 }
 
-/* NAVIGATION */
-
 .dashboard-navigation {
     justify-content: flex-start;
     background: white;
@@ -352,8 +339,6 @@ small {
     color: white;
     border-color: var(--primary);
 }
-
-/* COMPLAINTS */
 
 .panel-heading {
     display: flex;
@@ -414,8 +399,6 @@ small {
     background: var(--primary-dark);
 }
 
-/* DETAILS AND PROFILE */
-
 .details-card {
     margin-top: 22px;
 }
@@ -432,8 +415,6 @@ small {
     overflow-wrap: anywhere;
 }
 
-/* EMAIL CENTRE */
-
 #admin-email-list-area {
     margin-top: 22px;
 }
@@ -442,28 +423,68 @@ small {
     border: 1px solid var(--border);
     border-radius: 8px;
     margin: 15px 0;
-    max-height: 350px;
+    max-height: 380px;
     overflow-y: auto;
 }
 
-#mail-complaint-list label {
+#mail-complaint-list .mail-complaint-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
     margin: 0;
-    color: var(--text);
+    border-bottom: 1px solid var(--border);
     font-weight: normal;
+    cursor: pointer;
+}
+
+#mail-complaint-list .mail-complaint-option:last-child {
+    border-bottom: 0;
+}
+
+#mail-complaint-list .mail-complaint-option:hover {
+    background: #f7fbfc;
 }
 
 #mail-complaint-list input[type="checkbox"] {
     width: auto;
-    margin-right: 8px;
+    margin: 5px 0 0;
+}
+
+.mail-complaint-option span {
+    overflow-wrap: anywhere;
+}
+
+.mail-complaint-option small {
+    margin-top: 3px;
+}
+
+.email-selection-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.email-selection-actions button {
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #f8fafc;
+    color: var(--text);
+}
+
+.email-selection-actions button:hover {
+    background: #eaf3f5;
 }
 
 #mail-result,
 #recovery-result,
 #admin-pin-message {
+    white-space: pre-line;
     overflow-wrap: anywhere;
+    margin-top: 12px;
 }
-
-/* FOOTER */
 
 footer {
     text-align: center;
@@ -477,8 +498,6 @@ footer p {
     margin: 5px;
     font-size: 13px;
 }
-
-/* MOBILE RESPONSIVE */
 
 @media (max-width: 800px) {
     .dashboard-stats {
