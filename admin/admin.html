@@ -195,7 +195,10 @@
 
         <div class="dashboard-navigation">
             <button type="button" class="nav-btn active" data-section="complaints-section">
-                Complaint Management
+                All Complaints
+            </button>
+            <button type="button" class="nav-btn" data-section="confidential-section">
+                Confidential Mails
             </button>
             <button type="button" class="nav-btn" data-section="email-section">
                 Email Centre
@@ -205,11 +208,12 @@
             </button>
         </div>
 
+        <!-- GENERAL COMPLAINTS -->
         <section id="complaints-section" class="dashboard-panel">
             <div class="panel-heading">
                 <div>
-                    <h2>Complaint Management</h2>
-                    <p>Review and manage complaints assigned to your department.</p>
+                    <h2>All Admin Complaints</h2>
+                    <p>General complaints are visible to all active Admins. Any active Admin can handle them.</p>
                 </div>
             </div>
 
@@ -256,7 +260,7 @@
                         </tr>
                     </thead>
                     <tbody id="complaints-table-body">
-                        <tr><td colspan="6">Complaint records will appear here.</td></tr>
+                        <tr><td colspan="6">General complaint records will appear here.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -284,12 +288,69 @@
             </div>
         </section>
 
+        <!-- CONFIDENTIAL / PERSONAL COMPLAINTS -->
+        <section id="confidential-section" class="dashboard-panel hidden">
+            <div class="panel-heading">
+                <div>
+                    <h2>Confidential Mails</h2>
+                    <p>Personal complaints sent specifically to your Admin account. Only the selected Admin can access these complaints.</p>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="complaint-table">
+                    <thead>
+                        <tr>
+                            <th>Complaint ID</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="confidential-complaints-table-body">
+                        <tr>
+                            <td colspan="6">Your confidential complaints will appear here.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="confidential-complaint-details" class="details-card hidden">
+                <h3>Confidential Complaint Details</h3>
+                <div id="confidential-complaint-detail-content">Select a complaint.</div>
+
+                <form id="confidential-complaint-update-form">
+                    <label for="confidential-update-status">Update Complaint Status</label>
+                    <select id="confidential-update-status" required>
+                        <option value="">Select New Status</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Work in Progress">Work in Progress</option>
+                        <option value="Solved">Solved</option>
+                    </select>
+
+                    <label for="confidential-resolution-details">Progress / Resolution Details</label>
+                    <textarea id="confidential-resolution-details"
+                        placeholder="Enter confidential complaint progress or resolution details..."
+                        required></textarea>
+
+                    <button type="submit" class="primary-btn">Save Confidential Complaint Update</button>
+                </form>
+            </div>
+
+            <div id="admin-confidential-email-list-area"></div>
+        </section>
+
+        <!-- GENERAL EMAIL CENTRE -->
         <section id="email-section" class="dashboard-panel hidden">
             <h2>Email Centre</h2>
-            <p>Send complaint progress and resolution updates directly to students.</p>
+            <p>Send progress and resolution updates for general complaints to students.</p>
             <div id="admin-email-list-area"></div>
         </section>
 
+        <!-- ADMIN PROFILE -->
         <section id="admin-profile-section" class="dashboard-panel hidden">
             <h2>My Admin Profile</h2>
             <div class="profile-details">
