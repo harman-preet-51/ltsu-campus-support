@@ -8,11 +8,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let currentUser = null;
   let currentProfile = null;
-
   let complaints = [];
   let generalComplaints = [];
   let confidentialComplaints = [];
-
   let selectedComplaint = null;
   let selectedConfidentialComplaint = null;
 
@@ -21,13 +19,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[c]);
+  const escapeHTML = value =>
+    String(value ?? "").replace(/[&<>"']/g, c => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[c]);
 
   function showMessage(message) {
     alert(message);
@@ -42,7 +41,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.textContent = busyText || "Please wait...";
     } else {
       button.disabled = false;
-      button.textContent = button.dataset.originalText || button.textContent;
+      button.textContent =
+        button.dataset.originalText || button.textContent;
     }
   }
 
@@ -65,7 +65,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!data?.success) {
-      throw new Error(data?.message || data?.error || "Request complete nahi hui.");
+      throw new Error(
+        data?.message || data?.error || "Request complete nahi hui."
+      );
     }
 
     return data;
@@ -76,14 +78,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const registerForm = $("admin-register-form");
 
   function showAuthTab(tab) {
-    const loginPanel = $("admin-login-panel");
-    const registerPanel = $("admin-register-panel");
-    const recoveryPanel = $("admin-recovery-panel");
     const showLogin = tab === "login";
 
-    loginPanel?.classList.toggle("hidden", !showLogin);
-    registerPanel?.classList.toggle("hidden", showLogin);
-    recoveryPanel?.classList.add("hidden");
+    $("admin-login-panel")?.classList.toggle("hidden", !showLogin);
+    $("admin-register-panel")?.classList.toggle("hidden", showLogin);
+    $("admin-recovery-panel")?.classList.add("hidden");
 
     $("admin-login-tab")?.classList.toggle("active", showLogin);
     $("admin-register-tab")?.classList.toggle("active", !showLogin);
@@ -100,8 +99,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   showAuthTab("login");
 
-  $("admin-login-tab")?.addEventListener("click", () => showAuthTab("login"));
-  $("admin-register-tab")?.addEventListener("click", () => showAuthTab("register"));
+  $("admin-login-tab")?.addEventListener("click", () =>
+    showAuthTab("login")
+  );
+
+  $("admin-register-tab")?.addEventListener("click", () =>
+    showAuthTab("register")
+  );
 
   $("open-admin-register")?.addEventListener("click", event => {
     event.preventDefault();
@@ -113,8 +117,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     showAuthTab("login");
   });
 
-  $("admin-forgot-password")?.addEventListener("click", showRecoveryPanel);
-  $("recovery-back")?.addEventListener("click", () => showAuthTab("login"));
+  $("admin-forgot-password")?.addEventListener(
+    "click",
+    showRecoveryPanel
+  );
+
+  $("recovery-back")?.addEventListener("click", () =>
+    showAuthTab("login")
+  );
 
   // PASSWORD RECOVERY
   $("admin-recovery-form")?.addEventListener("submit", async event => {
@@ -162,7 +172,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (result) {
-        result.textContent = "Password successfully reset ho gaya. Ab naye password se login karein.";
+        result.textContent =
+          "Password successfully reset ho gaya. Ab naye password se login karein.";
       }
 
       $("admin-recovery-form").reset();
@@ -193,7 +204,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       position:fixed;
       inset:0;
       z-index:99999;
-      background:rgba(0,0,0,.78);
+      background:rgba(0,0,0,.82);
+      backdrop-filter:blur(8px);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -201,20 +213,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     panel.innerHTML = `
-      <div style="background:white;color:#222;padding:25px;border-radius:14px;width:100%;max-width:430px">
+      <div style="
+        background:#fff;
+        color:#17251d;
+        padding:28px;
+        border-radius:18px;
+        width:100%;
+        max-width:430px;
+        box-shadow:0 20px 70px rgba(0,0,0,.3)
+      ">
         <h2>Set Your Recovery PIN</h2>
         <p>Account recovery ke liye apna 6-digit PIN set karein. Is PIN ko safe rakhein.</p>
 
         <form id="admin-pin-setup-form">
           <label>Create 6-digit PIN</label>
-          <input id="admin-new-pin" type="password" inputmode="numeric"
-            maxlength="6" pattern="[0-9]{6}" required>
+          <input id="admin-new-pin" type="password"
+            inputmode="numeric" maxlength="6"
+            pattern="[0-9]{6}" required>
 
           <label>Confirm 6-digit PIN</label>
-          <input id="admin-confirm-pin" type="password" inputmode="numeric"
-            maxlength="6" pattern="[0-9]{6}" required>
+          <input id="admin-confirm-pin" type="password"
+            inputmode="numeric" maxlength="6"
+            pattern="[0-9]{6}" required>
 
-          <button id="admin-save-pin" type="submit">Save Recovery PIN</button>
+          <button id="admin-save-pin" type="submit">
+            Save Recovery PIN
+          </button>
           <p id="admin-pin-message" role="status"></p>
         </form>
       </div>
@@ -248,7 +272,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           pin
         });
 
-        message.textContent = "Recovery PIN successfully save ho gaya.";
+        message.textContent =
+          "Recovery PIN successfully save ho gaya.";
+
         setTimeout(() => panel.remove(), 900);
 
       } catch (error) {
@@ -259,7 +285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // VERIFY ADMIN
+  // VERIFY ADMIN ACCOUNT
   async function verifyAdmin(user) {
     const { data: profile, error } = await db
       .from("profiles")
@@ -273,9 +299,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       return false;
     }
 
-    if (!profile || profile.role !== "admin" || profile.is_active !== true) {
+    if (
+      !profile ||
+      profile.role !== "admin" ||
+      profile.is_active !== true
+    ) {
       await db.auth.signOut();
-      showMessage("Yeh account active approved Admin account nahi hai. Super Admin se approval check karvao.");
+      showMessage(
+        "Yeh account active approved Admin account nahi hai. Super Admin se approval check karvao."
+      );
       return false;
     }
 
@@ -297,13 +329,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         await showRecoveryPinSetup();
       }
     } catch (error) {
-      showMessage("Recovery PIN status check nahi ho saka: " + error.message);
+      showMessage(
+        "Recovery PIN status check nahi ho saka: " + error.message
+      );
     }
 
     return true;
   }
 
-  // LOGIN
+  // ADMIN LOGIN
   loginForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
@@ -348,14 +382,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const password = $("admin-create-password")?.value;
     const confirmPassword = $("admin-confirm-password")?.value;
 
-    if (!name || !email || !username || !mobile || !department ||
-        !reason || !password || !confirmPassword) {
+    if (
+      !name || !email || !username || !mobile ||
+      !department || !reason || !password || !confirmPassword
+    ) {
       showMessage("Saari required details bharo.");
       return;
     }
 
     if (!/^[a-z0-9_]{3,30}$/.test(username)) {
-      showMessage("Username 3-30 characters ka hona chahiye. Sirf small letters, numbers aur underscore use karo.");
+      showMessage(
+        "Username 3-30 characters ka hona chahiye. Sirf small letters, numbers aur underscore use karo."
+      );
       return;
     }
 
@@ -386,7 +424,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (error) {
         if (/already|registered/i.test(error.message)) {
-          throw new Error("Is email ka account pehle se bana hua hai. Admin Login use karein.");
+          throw new Error(
+            "Is email ka account pehle se bana hua hai. Admin Login use karein."
+          );
         }
         throw error;
       }
@@ -409,10 +449,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
       if (requestError) {
-        throw new Error("Account create ho gaya, lekin Admin request submit nahi hui: " + requestError.message);
+        throw new Error(
+          "Account create ho gaya, lekin Admin request submit nahi hui: " +
+          requestError.message
+        );
       }
 
-      showMessage("Admin access request submit ho gayi. Super Admin approval ka wait karein.");
+      showMessage(
+        "Admin access request submit ho gayi. Super Admin approval ka wait karein."
+      );
 
       registerForm.reset();
       showAuthTab("login");
@@ -430,11 +475,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const confidentialBody = $("confidential-complaints-table-body");
 
     if (generalBody) {
-      generalBody.innerHTML = "<tr><td colspan='6'>Loading complaints...</td></tr>";
+      generalBody.innerHTML =
+        "<tr><td colspan='6'>Loading complaints...</td></tr>";
     }
 
     if (confidentialBody) {
-      confidentialBody.innerHTML = "<tr><td colspan='6'>Loading confidential complaints...</td></tr>";
+      confidentialBody.innerHTML =
+        "<tr><td colspan='6'>Loading confidential complaints...</td></tr>";
     }
 
     const { data, error } = await db
@@ -462,11 +509,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (error) {
       if (generalBody) {
-        generalBody.innerHTML = "<tr><td colspan='6'>Complaints load nahi hui.</td></tr>";
+        generalBody.innerHTML =
+          "<tr><td colspan='6'>Complaints load nahi hui.</td></tr>";
       }
 
       if (confidentialBody) {
-        confidentialBody.innerHTML = "<tr><td colspan='6'>Confidential complaints load nahi hui.</td></tr>";
+        confidentialBody.innerHTML =
+          "<tr><td colspan='6'>Confidential complaints load nahi hui.</td></tr>";
       }
 
       showMessage("Complaints error: " + error.message);
@@ -475,14 +524,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     complaints = data || [];
 
-    // General complaints: visible to every active Admin
     generalComplaints = complaints.filter(c =>
       c.recipient_type === "all_admins" &&
       c.is_confidential === false &&
       !c.recipient_admin_id
     );
 
-    // Confidential complaints: only the selected Admin
     confidentialComplaints = complaints.filter(c =>
       c.recipient_type === "specific_admin" &&
       c.is_confidential === true &&
@@ -511,29 +558,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if ($("pending-complaints")) {
-      $("pending-complaints").textContent = visibleComplaints.filter(c =>
-        ["submitted", "under review"].includes(status(c))
-      ).length;
+      $("pending-complaints").textContent =
+        visibleComplaints.filter(c =>
+          ["submitted", "under review"].includes(status(c))
+        ).length;
     }
 
     if ($("progress-complaints")) {
-      $("progress-complaints").textContent = visibleComplaints.filter(c =>
-        status(c) === "work in progress"
-      ).length;
+      $("progress-complaints").textContent =
+        visibleComplaints.filter(c =>
+          status(c) === "work in progress"
+        ).length;
     }
 
     if ($("resolved-complaints")) {
-      $("resolved-complaints").textContent = visibleComplaints.filter(c =>
-        status(c) === "solved"
-      ).length;
+      $("resolved-complaints").textContent =
+        visibleComplaints.filter(c =>
+          status(c) === "solved"
+        ).length;
     }
   }
 
   // GENERAL COMPLAINT FILTERS
   function getFilteredComplaints() {
     const search = $("complaint-search")?.value.toLowerCase() || "";
-    const selectedStatus = $("complaint-status-filter")?.value || "all";
-    const category = $("complaint-category-filter")?.value || "all";
+    const selectedStatus =
+      $("complaint-status-filter")?.value || "all";
+    const category =
+      $("complaint-category-filter")?.value || "all";
 
     return generalComplaints.filter(c => {
       const text = [
@@ -546,28 +598,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const statusMatches =
         selectedStatus === "all" ||
-        String(c.status || "").toLowerCase() === selectedStatus.toLowerCase();
+        String(c.status || "").toLowerCase() ===
+          selectedStatus.toLowerCase();
 
       const categoryMatches =
         category === "all" || c.category === category;
 
-      return text.includes(search) && statusMatches && categoryMatches;
+      return text.includes(search) &&
+        statusMatches &&
+        categoryMatches;
     });
   }
 
-  // TABLE ROW
+  // COMPLAINT TABLE ROW
   function complaintRow(c) {
-    const solved = String(c.status || "").toLowerCase() === "solved";
+    const solved =
+      String(c.status || "").toLowerCase() === "solved";
 
     return `
       <tr>
         <td>${escapeHTML(c.complaint_id)}</td>
         <td>${escapeHTML(c.category)}</td>
         <td>${escapeHTML(c.location)}</td>
-        <td>${escapeHTML(c.created_at ? new Date(c.created_at).toLocaleDateString() : "")}</td>
+        <td>${escapeHTML(
+          c.created_at
+            ? new Date(c.created_at).toLocaleDateString()
+            : ""
+        )}</td>
         <td>${solved ? "✓ " : ""}${escapeHTML(c.status)}</td>
         <td>
-          <button type="button" data-view="${escapeHTML(c.id)}">View</button>
+          <button type="button" data-view="${escapeHTML(c.id)}">
+            View
+          </button>
         </td>
       </tr>
     `;
@@ -604,7 +666,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const button = event.target.closest("[data-view]");
     if (!button) return;
 
-    selectedComplaint = generalComplaints.find(c => c.id === button.dataset.view);
+    selectedComplaint = generalComplaints.find(
+      c => c.id === button.dataset.view
+    );
+
     if (!selectedComplaint) return;
 
     $("complaint-details")?.classList.remove("hidden");
@@ -621,50 +686,66 @@ document.addEventListener("DOMContentLoaded", async () => {
       <p><strong>Type:</strong> General complaint — All Admins</p>
     `;
 
-    $("update-status").value = selectedComplaint.status || "Submitted";
-    $("resolution-details").value = selectedComplaint.notes || "";
+    $("update-status").value =
+      selectedComplaint.status || "Submitted";
+
+    $("resolution-details").value =
+      selectedComplaint.notes || "";
   });
 
   // CONFIDENTIAL COMPLAINT DETAILS
-  $("confidential-complaints-table-body")?.addEventListener("click", event => {
-    const button = event.target.closest("[data-view]");
-    if (!button) return;
+  $("confidential-complaints-table-body")?.addEventListener(
+    "click",
+    event => {
+      const button = event.target.closest("[data-view]");
+      if (!button) return;
 
-    selectedConfidentialComplaint = confidentialComplaints.find(
-      c => c.id === button.dataset.view
-    );
+      selectedConfidentialComplaint =
+        confidentialComplaints.find(
+          c => c.id === button.dataset.view
+        );
 
-    if (!selectedConfidentialComplaint) return;
+      if (!selectedConfidentialComplaint) return;
 
-    $("confidential-complaint-details")?.classList.remove("hidden");
+      $("confidential-complaint-details")?.classList.remove("hidden");
 
-    $("confidential-complaint-detail-content").innerHTML = `
-      <p><strong>Complaint ID:</strong> ${escapeHTML(selectedConfidentialComplaint.complaint_id)}</p>
-      <p><strong>Title:</strong> ${escapeHTML(selectedConfidentialComplaint.title)}</p>
-      <p><strong>Description:</strong> ${escapeHTML(selectedConfidentialComplaint.description)}</p>
-      <p><strong>Category:</strong> ${escapeHTML(selectedConfidentialComplaint.category)}</p>
-      <p><strong>Location:</strong> ${escapeHTML(selectedConfidentialComplaint.location)}</p>
-      <p><strong>Course:</strong> ${escapeHTML(selectedConfidentialComplaint.course)}</p>
-      <p><strong>Semester:</strong> ${escapeHTML(selectedConfidentialComplaint.semester)}</p>
-      <p><strong>Status:</strong> ${escapeHTML(selectedConfidentialComplaint.status)}</p>
-      <p><strong>Type:</strong> Personal / Confidential complaint</p>
-    `;
+      $("confidential-complaint-detail-content").innerHTML = `
+        <p><strong>Complaint ID:</strong> ${escapeHTML(selectedConfidentialComplaint.complaint_id)}</p>
+        <p><strong>Title:</strong> ${escapeHTML(selectedConfidentialComplaint.title)}</p>
+        <p><strong>Description:</strong> ${escapeHTML(selectedConfidentialComplaint.description)}</p>
+        <p><strong>Category:</strong> ${escapeHTML(selectedConfidentialComplaint.category)}</p>
+        <p><strong>Location:</strong> ${escapeHTML(selectedConfidentialComplaint.location)}</p>
+        <p><strong>Course:</strong> ${escapeHTML(selectedConfidentialComplaint.course)}</p>
+        <p><strong>Semester:</strong> ${escapeHTML(selectedConfidentialComplaint.semester)}</p>
+        <p><strong>Status:</strong> ${escapeHTML(selectedConfidentialComplaint.status)}</p>
+        <p><strong>Type:</strong> Personal / Confidential complaint</p>
+      `;
 
-    $("confidential-update-status").value =
-      selectedConfidentialComplaint.status || "Submitted";
+      $("confidential-update-status").value =
+        selectedConfidentialComplaint.status || "Submitted";
 
-    $("confidential-resolution-details").value =
-      selectedConfidentialComplaint.notes || "";
-  });
+      $("confidential-resolution-details").value =
+        selectedConfidentialComplaint.notes || "";
+    }
+  );
 
   // SAVE COMPLAINT UPDATE
-  async function saveComplaintUpdate(complaint, status, notes, button, isConfidential) {
+  async function saveComplaintUpdate(
+    complaint,
+    status,
+    notes,
+    button,
+    isConfidential
+  ) {
     if (!complaint) {
       showMessage("Pehle complaint ke saamne View dabao.");
       return false;
     }
 
-    if (!["Submitted", "Under Review", "Work in Progress", "Solved"].includes(status)) {
+    if (
+      !["Submitted", "Under Review", "Work in Progress", "Solved"]
+        .includes(status)
+    ) {
       showMessage("Selected complaint status valid nahi hai.");
       return false;
     }
@@ -674,12 +755,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       return false;
     }
 
-    // Extra client-side ownership check. RLS remains the real security layer.
     if (
       isConfidential &&
       complaint.recipient_admin_id !== currentUser?.id
     ) {
-      showMessage("Yeh confidential complaint tumhare Admin account ko assign nahi hai.");
+      showMessage(
+        "Yeh confidential complaint tumhare Admin account ko assign nahi hai."
+      );
       return false;
     }
 
@@ -719,30 +801,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // GENERAL UPDATE FORM
-  $("complaint-update-form")?.addEventListener("submit", async event => {
-    event.preventDefault();
+  $("complaint-update-form")?.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
 
-    await saveComplaintUpdate(
-      selectedComplaint,
-      $("update-status")?.value,
-      $("resolution-details")?.value.trim(),
-      event.submitter,
-      false
-    );
-  });
+      await saveComplaintUpdate(
+        selectedComplaint,
+        $("update-status")?.value,
+        $("resolution-details")?.value.trim(),
+        event.submitter,
+        false
+      );
+    }
+  );
 
   // CONFIDENTIAL UPDATE FORM
-  $("confidential-complaint-update-form")?.addEventListener("submit", async event => {
-    event.preventDefault();
+  $("confidential-complaint-update-form")?.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
 
-    await saveComplaintUpdate(
-      selectedConfidentialComplaint,
-      $("confidential-update-status")?.value,
-      $("confidential-resolution-details")?.value.trim(),
-      event.submitter,
-      true
-    );
-  });
+      await saveComplaintUpdate(
+        selectedConfidentialComplaint,
+        $("confidential-update-status")?.value,
+        $("confidential-resolution-details")?.value.trim(),
+        event.submitter,
+        true
+      );
+    }
+  );
 
   // EMAIL CENTRE
   function renderEmailCentre(type) {
@@ -757,6 +845,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!area) return;
 
     const prefix = isConfidential ? "conf-mail" : "mail";
+
     const heading = isConfidential
       ? "Confidential Complaint Email Centre"
       : "General Complaint Email Centre";
@@ -780,13 +869,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         </select>
 
         <div class="email-selection-actions">
-          <button type="button" id="${prefix}-select-all">Select All Visible</button>
-          <button type="button" id="${prefix}-clear-all">Clear Selection</button>
+          <button type="button" id="${prefix}-select-all">
+            Select All Visible
+          </button>
+          <button type="button" id="${prefix}-clear-all">
+            Clear Selection
+          </button>
         </div>
 
         <div id="${prefix}-complaint-list"></div>
 
-        <label for="${prefix}-common-remarks">Progress / Resolution Details</label>
+        <label for="${prefix}-common-remarks">
+          Progress / Resolution Details
+        </label>
         <textarea id="${prefix}-common-remarks" rows="4"
           placeholder="Write the progress made or action taken..."></textarea>
 
@@ -861,7 +956,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       : "<p>No complaints found.</p>";
   }
 
-  // SEND EMAILS
+  // SEND EMAILS — EXISTING EMAIL FUNCTION AND PAYLOAD PRESERVED
   async function sendSelectedEmails(type) {
     const isConfidential = type === "confidential";
     const prefix = isConfidential ? "conf-mail" : "mail";
@@ -874,7 +969,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const resultElement = $(`${prefix}-result`);
     const button = $(`${prefix}-send-button`);
-    const remarks = $(`${prefix}-common-remarks`)?.value.trim() || "";
+    const remarks =
+      $(`${prefix}-common-remarks`)?.value.trim() || "";
 
     const selectedIds = [
       ...(area?.querySelectorAll(".mail-complaint-check:checked") || [])
@@ -886,7 +982,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!remarks) {
-      showMessage("Email bhejne se pehle progress ya resolution details likho.");
+      showMessage(
+        "Email bhejne se pehle progress ya resolution details likho."
+      );
       return;
     }
 
@@ -899,16 +997,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       .filter(Boolean);
 
     if (!selectedComplaints.length) {
-      showMessage("Selected complaint records nahi mile. Page refresh karke dobara try karo.");
+      showMessage(
+        "Selected complaint records nahi mile. Page refresh karke dobara try karo."
+      );
       return;
     }
 
-    // Prevent sending a confidential complaint through the general section.
     if (
       isConfidential &&
-      selectedComplaints.some(c => c.recipient_admin_id !== currentUser?.id)
+      selectedComplaints.some(
+        c => c.recipient_admin_id !== currentUser?.id
+      )
     ) {
-      showMessage("Confidential complaint ownership verification failed.");
+      showMessage(
+        "Confidential complaint ownership verification failed."
+      );
       return;
     }
 
@@ -925,7 +1028,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!confirm(
-      `${selectedComplaints.length} student(s) ko ${isConfidential ? "confidential" : "general"} complaint update email bhejni hai?`
+      `${selectedComplaints.length} student(s) ko ${
+        isConfidential ? "confidential" : "general"
+      } complaint update email bhejni hai?`
     )) {
       return;
     }
@@ -952,14 +1057,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           sent++;
 
         } catch (error) {
-          failed.push(`${complaint.complaint_id}: ${error.message}`);
+          failed.push(
+            `${complaint.complaint_id}: ${error.message}`
+          );
         }
       }
 
       let message = `${sent} email(s) successfully sent.`;
 
       if (failed.length) {
-        message += ` ${failed.length} email(s) failed:\n${failed.join("\n")}`;
+        message +=
+          ` ${failed.length} email(s) failed:\n${failed.join("\n")}`;
       }
 
       if (resultElement) {
@@ -982,15 +1090,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if ($("profile-admin-name")) {
-      $("profile-admin-name").textContent = currentProfile.full_name || "";
+      $("profile-admin-name").textContent =
+        currentProfile.full_name || "";
     }
 
     if ($("profile-admin-email")) {
-      $("profile-admin-email").textContent = currentProfile.email || "";
+      $("profile-admin-email").textContent =
+        currentProfile.email || "";
     }
 
     if ($("profile-admin-department")) {
-      $("profile-admin-department").textContent = currentProfile.department || "";
+      $("profile-admin-department").textContent =
+        currentProfile.department || "";
     }
 
     if ($("profile-admin-status")) {
@@ -1017,7 +1128,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // LOGOUT
   $("admin-logout")?.addEventListener("click", async () => {
-    await db.auth.signOut();
+    const confirmed = confirm("Kya aap Admin Portal se logout karna chahte hain?");
+    if (!confirmed) return;
+
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+      showMessage("Logout error: " + error.message);
+      return;
+    }
+
     window.location.reload();
   });
 
