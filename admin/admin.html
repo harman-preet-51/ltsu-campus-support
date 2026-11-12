@@ -4,378 +4,771 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#315c40">
+    <meta name="description" content="LTSU Campus Support Admin Portal - Manage campus complaints, student concerns and resolutions.">
+
     <title>Admin Portal | LTSU Campus Support</title>
+
     <link rel="stylesheet" href="admin.css">
 </head>
+
 <body>
 
-<header class="admin-header">
-    <div class="brand">
-        LTSU Campus Support
-        <span>Admin Portal</span>
-    </div>
-    <a href="../index.html" class="home-link">Back to Home</a>
-</header>
+    <!-- Decorative background elements -->
+    <div class="ambient-decoration ambient-one" aria-hidden="true"></div>
+    <div class="ambient-decoration ambient-two" aria-hidden="true"></div>
+    <div class="ambient-decoration ambient-three" aria-hidden="true"></div>
 
-<main>
-    <section class="welcome-section">
-        <span class="welcome-tag">ADMINISTRATION PORTAL</span>
-        <h1>Manage Campus Complaints</h1>
-        <p>Review student complaints, monitor progress and help create a better campus experience.</p>
-    </section>
+    <!-- HEADER -->
+    <header class="admin-header">
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">L</div>
 
-    <section id="admin-auth-section" class="auth-section">
-
-        <div class="auth-tabs">
-            <button type="button" id="admin-login-tab" class="auth-tab active">Admin Login</button>
-            <button type="button" id="admin-register-tab" class="auth-tab">Request Admin Access</button>
+            <div class="brand-copy">
+                <strong>LTSU Campus Support</strong>
+                <span>ADMINISTRATION PORTAL</span>
+            </div>
         </div>
 
-        <div id="admin-login-panel" class="auth-card">
-            <h2>Welcome Back, Admin</h2>
-            <p>Login to access your administration dashboard.</p>
+        <div class="header-right">
+            <span class="header-status">
+                <span class="status-dot"></span>
+                Campus Support System
+            </span>
 
-            <form id="admin-login-form">
-                <label for="admin-email-login">Official Email Address</label>
-                <input type="email" id="admin-email-login" name="adminEmail"
-                    placeholder="Enter your official email"
-                    autocomplete="username" required>
+            <a href="../index.html" class="home-link">
+                <span aria-hidden="true">⌂</span>
+                Back to Home
+            </a>
+        </div>
+    </header>
 
-                <label for="admin-password-login">Password</label>
-                <input type="password" id="admin-password-login" name="adminPassword"
-                    placeholder="Enter your password"
-                    autocomplete="current-password" required>
+    <!-- MAIN CONTENT -->
+    <main>
 
-                <button type="submit" class="primary-btn">Login to Dashboard</button>
-            </form>
+        <!-- WELCOME SECTION -->
+        <section class="welcome-section">
+            <span class="welcome-tag">ADMINISTRATION PORTAL</span>
 
-            <button type="button" id="admin-forgot-password" class="switch-text">
-                Forgot Password?
-            </button>
+            <h1>Manage Campus Complaints</h1>
 
-            <p class="switch-text">
-                Don't have Admin Access?
-                <a href="#" id="open-admin-register">Request Access</a>
+            <p>
+                Review student complaints, monitor progress and help create
+                a better, safer and more responsive campus experience.
             </p>
-        </div>
 
-        <div id="admin-register-panel" class="auth-card hidden">
-            <h2>Request Admin Access</h2>
-            <p>Your request will be sent for Super Admin approval.</p>
-
-            <form id="admin-register-form">
-                <label for="admin-name">Full Name</label>
-                <input type="text" id="admin-name" name="adminName"
-                    placeholder="Enter your full name" required>
-
-                <label for="admin-email">Official Email Address</label>
-                <input type="email" id="admin-email" name="adminEmail"
-                    placeholder="Enter your official email address" required>
-
-                <label for="admin-username">Choose Username</label>
-                <input type="text" id="admin-username" name="username"
-                    placeholder="Choose a unique username"
-                    minlength="3" maxlength="30"
-                    pattern="[a-z0-9_]{3,30}" autocomplete="username" required>
-                <small>Use small letters, numbers and underscore only.</small>
-
-                <label for="admin-mobile">Mobile Number</label>
-                <input type="tel" id="admin-mobile" name="adminMobile"
-                    placeholder="Enter your mobile number" required>
-
-                <label for="admin-department">Department</label>
-                <select id="admin-department" name="adminDepartment" required>
-                    <option value="">Select Department</option>
-                    <option value="Administration">Administration</option>
-                    <option value="Academics">Academics</option>
-                    <option value="Hostel">Hostel</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Water and Sanitation">Water and Sanitation</option>
-                    <option value="IT Support">IT Support</option>
-                    <option value="Security">Security</option>
-                    <option value="Other">Other</option>
-                </select>
-
-                <label for="admin-reason">Reason for Request</label>
-                <textarea id="admin-reason" name="adminReason"
-                    placeholder="Why do you need admin access?" required></textarea>
-
-                <label for="admin-create-password">Create Password</label>
-                <input type="password" id="admin-create-password" name="adminPassword"
-                    placeholder="Minimum 8 characters" minlength="8"
-                    autocomplete="new-password" required>
-
-                <label for="admin-confirm-password">Confirm Password</label>
-                <input type="password" id="admin-confirm-password" name="confirmPassword"
-                    placeholder="Enter password again" minlength="8"
-                    autocomplete="new-password" required>
-
-                <div class="password-warning">
-                    <strong>Admin Approval Required</strong>
-                    <p>Submitting this form does not give immediate dashboard access. The Super Admin must approve your request.</p>
-                </div>
-
-                <button type="submit" class="primary-btn">Submit Access Request</button>
-            </form>
-
-            <p class="switch-text">
-                Already have an account?
-                <a href="#" id="open-admin-login">Login Here</a>
-            </p>
-        </div>
-
-        <div id="admin-recovery-panel" class="auth-card hidden">
-            <h2>Admin Password Recovery</h2>
-            <p>Recover your password using your registered details and Recovery PIN.</p>
-
-            <form id="admin-recovery-form">
-                <label for="recovery-username">Registered Username</label>
-                <input type="text" id="recovery-username" autocomplete="username" required>
-
-                <label for="recovery-email">Registered Email</label>
-                <input type="email" id="recovery-email" autocomplete="email" required>
-
-                <label for="recovery-pin">6-digit Recovery PIN</label>
-                <input type="password" id="recovery-pin" inputmode="numeric"
-                    maxlength="6" pattern="[0-9]{6}" autocomplete="off" required>
-
-                <label for="recovery-new-password">New Password</label>
-                <input type="password" id="recovery-new-password"
-                    minlength="8" autocomplete="new-password" required>
-
-                <label for="recovery-confirm-password">Confirm New Password</label>
-                <input type="password" id="recovery-confirm-password"
-                    minlength="8" autocomplete="new-password" required>
-
-                <button type="submit" id="recovery-submit" class="primary-btn">
-                    Reset Password
-                </button>
-
-                <p id="recovery-result" role="status"></p>
-
-                <button type="button" id="recovery-back" class="switch-text">
-                    Back to Login
-                </button>
-            </form>
-        </div>
-    </section>
-
-    <section id="admin-dashboard" class="dashboard hidden">
-        <div class="dashboard-heading">
-            <div>
-                <h2>Admin Dashboard</h2>
-                <p>Welcome to your complaint management workspace.</p>
-            </div>
-            <button type="button" id="admin-logout" class="logout-btn">Logout</button>
-        </div>
-
-        <div class="dashboard-stats">
-            <div class="stat-card">
-                <span class="stat-icon">📋</span>
-                <h3>Total Complaints</h3>
-                <p id="total-complaints">--</p>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">🕒</span>
-                <h3>Pending Review</h3>
-                <p id="pending-complaints">--</p>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">⚙️</span>
-                <h3>In Progress</h3>
-                <p id="progress-complaints">--</p>
-            </div>
-            <div class="stat-card">
-                <span class="stat-icon">✅</span>
-                <h3>Resolved</h3>
-                <p id="resolved-complaints">--</p>
-            </div>
-        </div>
-
-        <div class="dashboard-navigation">
-            <button type="button" class="nav-btn active" data-section="complaints-section">
-                All Complaints
-            </button>
-            <button type="button" class="nav-btn" data-section="confidential-section">
-                Confidential Mails
-            </button>
-            <button type="button" class="nav-btn" data-section="email-section">
-                Email Centre
-            </button>
-            <button type="button" class="nav-btn" data-section="admin-profile-section">
-                My Profile
-            </button>
-        </div>
-
-        <!-- GENERAL COMPLAINTS -->
-        <section id="complaints-section" class="dashboard-panel">
-            <div class="panel-heading">
-                <div>
-                    <h2>All Admin Complaints</h2>
-                    <p>General complaints are visible to all active Admins. Any active Admin can handle them.</p>
-                </div>
-            </div>
-
-            <div class="filter-area">
-                <input type="search" id="complaint-search" placeholder="Search Complaint ID...">
-
-                <select id="complaint-status-filter">
-                    <option value="all">All Statuses</option>
-                    <option value="Submitted">Submitted</option>
-                    <option value="Under Review">Under Review</option>
-                    <option value="Work in Progress">Work in Progress</option>
-                    <option value="Solved">Solved</option>
-                </select>
-
-                <select id="complaint-category-filter">
-                    <option value="all">All Categories</option>
-                    <option value="Water">Water</option>
-                    <option value="Cleanliness">Cleanliness</option>
-                    <option value="Electricity">Electricity</option>
-                    <option value="Roads">Roads</option>
-                    <option value="Wi-Fi">Wi-Fi</option>
-                    <option value="Security">Security</option>
-                    <option value="Buildings">Buildings</option>
-                    <option value="Hostel">Hostel</option>
-                    <option value="Classrooms">Classrooms</option>
-                    <option value="Washrooms">Washrooms</option>
-                    <option value="Furniture">Furniture</option>
-                    <option value="Lab">Lab</option>
-                    <option value="Parking">Parking</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-
-            <div class="table-container">
-                <table class="complaint-table">
-                    <thead>
-                        <tr>
-                            <th>Complaint ID</th>
-                            <th>Category</th>
-                            <th>Location</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="complaints-table-body">
-                        <tr><td colspan="6">General complaint records will appear here.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="complaint-details" class="details-card hidden">
-                <h3>Complaint Details</h3>
-                <div id="complaint-detail-content">Select a complaint.</div>
-
-                <form id="complaint-update-form">
-                    <label for="update-status">Update Complaint Status</label>
-                    <select id="update-status" required>
-                        <option value="">Select New Status</option>
-                        <option value="Submitted">Submitted</option>
-                        <option value="Under Review">Under Review</option>
-                        <option value="Work in Progress">Work in Progress</option>
-                        <option value="Solved">Solved</option>
-                    </select>
-
-                    <label for="resolution-details">Resolution Details / Remarks</label>
-                    <textarea id="resolution-details"
-                        placeholder="Enter progress or resolution details..." required></textarea>
-
-                    <button type="submit" class="primary-btn">Save Status Update</button>
-                </form>
+            <div class="welcome-highlights">
+                <span>● Complaint Management</span>
+                <span>● Student Support</span>
+                <span>● Resolution Tracking</span>
             </div>
         </section>
 
-        <!-- CONFIDENTIAL / PERSONAL COMPLAINTS -->
-        <section id="confidential-section" class="dashboard-panel hidden">
-            <div class="panel-heading">
-                <div>
-                    <h2>Confidential Mails</h2>
-                    <p>Personal complaints sent specifically to your Admin account. Only the selected Admin can access these complaints.</p>
+        <!-- AUTHENTICATION -->
+        <section id="admin-auth-section" class="auth-section">
+
+            <div class="auth-intro">
+                <span class="section-eyebrow">SECURE ACCESS</span>
+                <h2>Admin Workspace</h2>
+                <p>Sign in with your authorised administrator account.</p>
+            </div>
+
+            <!-- AUTH TABS -->
+            <div class="auth-tabs">
+                <button
+                    type="button"
+                    id="admin-login-tab"
+                    class="auth-tab active">
+                    Admin Login
+                </button>
+
+                <button
+                    type="button"
+                    id="admin-register-tab"
+                    class="auth-tab">
+                    Request Admin Access
+                </button>
+            </div>
+
+            <!-- LOGIN PANEL -->
+            <div id="admin-login-panel" class="auth-card">
+
+                <div class="auth-card-heading">
+                    <span class="auth-icon" aria-hidden="true">↗</span>
+
+                    <div>
+                        <h2>Welcome Back, Admin</h2>
+                        <p>Login to access your administration dashboard.</p>
+                    </div>
+                </div>
+
+                <form id="admin-login-form">
+
+                    <label for="admin-email-login">
+                        Official Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="admin-email-login"
+                        name="adminEmail"
+                        placeholder="Enter your official email"
+                        autocomplete="username"
+                        required>
+
+                    <label for="admin-password-login">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="admin-password-login"
+                        name="adminPassword"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required>
+
+                    <button type="submit" class="primary-btn">
+                        Login to Dashboard
+                        <span aria-hidden="true">→</span>
+                    </button>
+                </form>
+
+                <button
+                    type="button"
+                    id="admin-forgot-password"
+                    class="switch-text">
+                    Forgot Password?
+                </button>
+
+                <p class="switch-text">
+                    Don't have Admin Access?
+                    <a href="#" id="open-admin-register">Request Access</a>
+                </p>
+
+                <div class="security-note">
+                    <span aria-hidden="true">🔒</span>
+                    Secure administrator access
                 </div>
             </div>
 
-            <div class="table-container">
-                <table class="complaint-table">
-                    <thead>
-                        <tr>
-                            <th>Complaint ID</th>
-                            <th>Category</th>
-                            <th>Location</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="confidential-complaints-table-body">
-                        <tr>
-                            <td colspan="6">Your confidential complaints will appear here.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <!-- REGISTER PANEL -->
+            <div id="admin-register-panel" class="auth-card hidden">
 
-            <div id="confidential-complaint-details" class="details-card hidden">
-                <h3>Confidential Complaint Details</h3>
-                <div id="confidential-complaint-detail-content">Select a complaint.</div>
+                <div class="auth-card-heading">
+                    <span class="auth-icon" aria-hidden="true">＋</span>
 
-                <form id="confidential-complaint-update-form">
-                    <label for="confidential-update-status">Update Complaint Status</label>
-                    <select id="confidential-update-status" required>
-                        <option value="">Select New Status</option>
-                        <option value="Submitted">Submitted</option>
-                        <option value="Under Review">Under Review</option>
-                        <option value="Work in Progress">Work in Progress</option>
-                        <option value="Solved">Solved</option>
+                    <div>
+                        <h2>Request Admin Access</h2>
+                        <p>Your request will be sent for Super Admin approval.</p>
+                    </div>
+                </div>
+
+                <form id="admin-register-form">
+
+                    <label for="admin-name">Full Name</label>
+
+                    <input
+                        type="text"
+                        id="admin-name"
+                        name="adminName"
+                        placeholder="Enter your full name"
+                        required>
+
+                    <label for="admin-email">Official Email Address</label>
+
+                    <input
+                        type="email"
+                        id="admin-email"
+                        name="adminEmail"
+                        placeholder="Enter your official email address"
+                        required>
+
+                    <label for="admin-username">Choose Username</label>
+
+                    <input
+                        type="text"
+                        id="admin-username"
+                        name="username"
+                        placeholder="Choose a unique username"
+                        minlength="3"
+                        maxlength="30"
+                        pattern="[a-z0-9_]{3,30}"
+                        autocomplete="username"
+                        required>
+
+                    <small>Use small letters, numbers and underscore only.</small>
+
+                    <label for="admin-mobile">Mobile Number</label>
+
+                    <input
+                        type="tel"
+                        id="admin-mobile"
+                        name="adminMobile"
+                        placeholder="Enter your mobile number"
+                        required>
+
+                    <label for="admin-department">Department</label>
+
+                    <select id="admin-department" name="adminDepartment" required>
+                        <option value="">Select Department</option>
+                        <option value="Administration">Administration</option>
+                        <option value="Academics">Academics</option>
+                        <option value="Hostel">Hostel</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Water and Sanitation">Water and Sanitation</option>
+                        <option value="IT Support">IT Support</option>
+                        <option value="Security">Security</option>
+                        <option value="Other">Other</option>
                     </select>
 
-                    <label for="confidential-resolution-details">Progress / Resolution Details</label>
-                    <textarea id="confidential-resolution-details"
-                        placeholder="Enter confidential complaint progress or resolution details..."
+                    <label for="admin-reason">Reason for Request</label>
+
+                    <textarea
+                        id="admin-reason"
+                        name="adminReason"
+                        placeholder="Why do you need admin access?"
                         required></textarea>
 
-                    <button type="submit" class="primary-btn">Save Confidential Complaint Update</button>
+                    <label for="admin-create-password">Create Password</label>
+
+                    <input
+                        type="password"
+                        id="admin-create-password"
+                        name="adminPassword"
+                        placeholder="Minimum 8 characters"
+                        minlength="8"
+                        autocomplete="new-password"
+                        required>
+
+                    <label for="admin-confirm-password">Confirm Password</label>
+
+                    <input
+                        type="password"
+                        id="admin-confirm-password"
+                        name="confirmPassword"
+                        placeholder="Enter password again"
+                        minlength="8"
+                        autocomplete="new-password"
+                        required>
+
+                    <div class="password-warning">
+                        <strong>Admin Approval Required</strong>
+                        <p>
+                            Submitting this form does not give immediate
+                            dashboard access. The Super Admin must approve
+                            your request.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="primary-btn">
+                        Submit Access Request
+                        <span aria-hidden="true">→</span>
+                    </button>
+
+                </form>
+
+                <p class="switch-text">
+                    Already have an account?
+                    <a href="#" id="open-admin-login">Login Here</a>
+                </p>
+            </div>
+
+            <!-- PASSWORD RECOVERY PANEL -->
+            <div id="admin-recovery-panel" class="auth-card hidden">
+
+                <div class="auth-card-heading">
+                    <span class="auth-icon" aria-hidden="true">↻</span>
+
+                    <div>
+                        <h2>Admin Password Recovery</h2>
+                        <p>
+                            Recover your password using your registered
+                            details and Recovery PIN.
+                        </p>
+                    </div>
+                </div>
+
+                <form id="admin-recovery-form">
+
+                    <label for="recovery-username">
+                        Registered Username
+                    </label>
+
+                    <input
+                        type="text"
+                        id="recovery-username"
+                        autocomplete="username"
+                        required>
+
+                    <label for="recovery-email">Registered Email</label>
+
+                    <input
+                        type="email"
+                        id="recovery-email"
+                        autocomplete="email"
+                        required>
+
+                    <label for="recovery-pin">6-digit Recovery PIN</label>
+
+                    <input
+                        type="password"
+                        id="recovery-pin"
+                        inputmode="numeric"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        autocomplete="off"
+                        required>
+
+                    <label for="recovery-new-password">New Password</label>
+
+                    <input
+                        type="password"
+                        id="recovery-new-password"
+                        minlength="8"
+                        autocomplete="new-password"
+                        required>
+
+                    <label for="recovery-confirm-password">
+                        Confirm New Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="recovery-confirm-password"
+                        minlength="8"
+                        autocomplete="new-password"
+                        required>
+
+                    <button
+                        type="submit"
+                        id="recovery-submit"
+                        class="primary-btn">
+                        Reset Password
+                    </button>
+
+                    <p id="recovery-result" role="status" aria-live="polite"></p>
+
+                    <button
+                        type="button"
+                        id="recovery-back"
+                        class="switch-text">
+                        ← Back to Login
+                    </button>
+
                 </form>
             </div>
 
-            <div id="admin-confidential-email-list-area"></div>
         </section>
 
-        <!-- GENERAL EMAIL CENTRE -->
-        <section id="email-section" class="dashboard-panel hidden">
-            <h2>Email Centre</h2>
-            <p>Send progress and resolution updates for general complaints to students.</p>
-            <div id="admin-email-list-area"></div>
-        </section>
+        <!-- ADMIN DASHBOARD -->
+        <section id="admin-dashboard" class="dashboard hidden">
 
-        <!-- ADMIN PROFILE -->
-        <section id="admin-profile-section" class="dashboard-panel hidden">
-            <h2>My Admin Profile</h2>
-            <div class="profile-details">
-                <p><strong>Admin ID:</strong> <span id="profile-admin-id">--</span></p>
-                <p><strong>Name:</strong> <span id="profile-admin-name">--</span></p>
-                <p><strong>Email:</strong> <span id="profile-admin-email">--</span></p>
-                <p><strong>Department:</strong> <span id="profile-admin-department">--</span></p>
-                <p><strong>Account Status:</strong> <span id="profile-admin-status">--</span></p>
+            <!-- DASHBOARD HEADING -->
+            <div class="dashboard-heading">
+                <div>
+                    <span class="section-eyebrow">ADMIN CONTROL CENTRE</span>
+                    <h2>Admin Dashboard</h2>
+                    <p>Welcome to your complaint management workspace.</p>
+                </div>
+
+                <button
+                    type="button"
+                    id="admin-logout"
+                    class="logout-btn">
+                    <span aria-hidden="true">↪</span>
+                    Logout
+                </button>
             </div>
+
+            <!-- STATISTICS -->
+            <div class="dashboard-stats">
+
+                <div class="stat-card stat-total">
+                    <span class="stat-icon" aria-hidden="true">▤</span>
+                    <h3>Total Complaints</h3>
+                    <p id="total-complaints">--</p>
+                    <span class="stat-caption">Visible complaint records</span>
+                </div>
+
+                <div class="stat-card stat-pending">
+                    <span class="stat-icon" aria-hidden="true">◷</span>
+                    <h3>Pending Review</h3>
+                    <p id="pending-complaints">--</p>
+                    <span class="stat-caption">Awaiting review</span>
+                </div>
+
+                <div class="stat-card stat-progress">
+                    <span class="stat-icon" aria-hidden="true">⚙</span>
+                    <h3>In Progress</h3>
+                    <p id="progress-complaints">--</p>
+                    <span class="stat-caption">Currently being handled</span>
+                </div>
+
+                <div class="stat-card stat-resolved">
+                    <span class="stat-icon" aria-hidden="true">✓</span>
+                    <h3>Resolved</h3>
+                    <p id="resolved-complaints">--</p>
+                    <span class="stat-caption">Successfully solved</span>
+                </div>
+
+            </div>
+
+            <!-- DASHBOARD NAVIGATION -->
+            <nav class="dashboard-navigation" aria-label="Admin dashboard sections">
+
+                <button
+                    type="button"
+                    class="nav-btn active"
+                    data-section="complaints-section">
+                    <span aria-hidden="true">▤</span>
+                    All Complaints
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-btn"
+                    data-section="confidential-section">
+                    <span aria-hidden="true">▣</span>
+                    Confidential Mails
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-btn"
+                    data-section="email-section">
+                    <span aria-hidden="true">✉</span>
+                    Email Centre
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-btn"
+                    data-section="admin-profile-section">
+                    <span aria-hidden="true">◎</span>
+                    My Profile
+                </button>
+
+            </nav>
+
+            <!-- GENERAL COMPLAINTS -->
+            <section id="complaints-section" class="dashboard-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-eyebrow">COMPLAINT OVERVIEW</span>
+                        <h2>All Admin Complaints</h2>
+                        <p>
+                            General complaints are visible to all active Admins.
+                            Any active Admin can handle them.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FILTERS -->
+                <div class="filter-area">
+
+                    <input
+                        type="search"
+                        id="complaint-search"
+                        placeholder="Search Complaint ID, title or location..."
+                        aria-label="Search complaints">
+
+                    <select
+                        id="complaint-status-filter"
+                        aria-label="Filter complaints by status">
+                        <option value="all">All Statuses</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Work in Progress">Work in Progress</option>
+                        <option value="Solved">Solved</option>
+                    </select>
+
+                    <select
+                        id="complaint-category-filter"
+                        aria-label="Filter complaints by category">
+                        <option value="all">All Categories</option>
+                        <option value="Water">Water</option>
+                        <option value="Cleanliness">Cleanliness</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Roads">Roads</option>
+                        <option value="Wi-Fi">Wi-Fi</option>
+                        <option value="Security">Security</option>
+                        <option value="Buildings">Buildings</option>
+                        <option value="Hostel">Hostel</option>
+                        <option value="Classrooms">Classrooms</option>
+                        <option value="Washrooms">Washrooms</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Lab">Lab</option>
+                        <option value="Parking">Parking</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                </div>
+
+                <!-- COMPLAINT TABLE -->
+                <div class="table-container">
+                    <table class="complaint-table">
+
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="complaints-table-body">
+                            <tr>
+                                <td colspan="6">
+                                    General complaint records will appear here.
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+
+                <!-- GENERAL COMPLAINT DETAILS -->
+                <div id="complaint-details" class="details-card hidden">
+
+                    <span class="section-eyebrow">REVIEW AND UPDATE</span>
+                    <h3>Complaint Details</h3>
+
+                    <div id="complaint-detail-content">
+                        Select a complaint.
+                    </div>
+
+                    <form id="complaint-update-form">
+
+                        <label for="update-status">
+                            Update Complaint Status
+                        </label>
+
+                        <select id="update-status" required>
+                            <option value="">Select New Status</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Under Review">Under Review</option>
+                            <option value="Work in Progress">Work in Progress</option>
+                            <option value="Solved">Solved</option>
+                        </select>
+
+                        <label for="resolution-details">
+                            Resolution Details / Remarks
+                        </label>
+
+                        <textarea
+                            id="resolution-details"
+                            placeholder="Enter progress or resolution details..."
+                            required></textarea>
+
+                        <button type="submit" class="primary-btn">
+                            Save Status Update
+                        </button>
+
+                    </form>
+                </div>
+
+            </section>
+
+            <!-- CONFIDENTIAL COMPLAINTS -->
+            <section
+                id="confidential-section"
+                class="dashboard-panel hidden">
+
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-eyebrow">PRIVATE STUDENT SUPPORT</span>
+                        <h2>Confidential Mails</h2>
+                        <p>
+                            Personal complaints sent specifically to your Admin
+                            account. Only the selected Admin can access these
+                            complaints.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="complaint-table">
+
+                        <thead>
+                            <tr>
+                                <th>Complaint ID</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="confidential-complaints-table-body">
+                            <tr>
+                                <td colspan="6">
+                                    Your confidential complaints will appear here.
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+
+                <!-- CONFIDENTIAL COMPLAINT DETAILS -->
+                <div
+                    id="confidential-complaint-details"
+                    class="details-card hidden">
+
+                    <span class="section-eyebrow">PRIVATE CASE MANAGEMENT</span>
+                    <h3>Confidential Complaint Details</h3>
+
+                    <div id="confidential-complaint-detail-content">
+                        Select a complaint.
+                    </div>
+
+                    <form id="confidential-complaint-update-form">
+
+                        <label for="confidential-update-status">
+                            Update Complaint Status
+                        </label>
+
+                        <select id="confidential-update-status" required>
+                            <option value="">Select New Status</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Under Review">Under Review</option>
+                            <option value="Work in Progress">Work in Progress</option>
+                            <option value="Solved">Solved</option>
+                        </select>
+
+                        <label for="confidential-resolution-details">
+                            Progress / Resolution Details
+                        </label>
+
+                        <textarea
+                            id="confidential-resolution-details"
+                            placeholder="Enter confidential complaint progress or resolution details..."
+                            required></textarea>
+
+                        <button type="submit" class="primary-btn">
+                            Save Confidential Complaint Update
+                        </button>
+
+                    </form>
+                </div>
+
+                <!-- CONFIDENTIAL EMAIL CENTRE -->
+                <div id="admin-confidential-email-list-area"></div>
+
+            </section>
+
+            <!-- GENERAL EMAIL CENTRE -->
+            <section id="email-section" class="dashboard-panel hidden">
+
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-eyebrow">STUDENT COMMUNICATION</span>
+                        <h2>Email Centre</h2>
+                        <p>
+                            Send progress and resolution updates for general
+                            complaints to students.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="admin-email-list-area"></div>
+
+            </section>
+
+            <!-- ADMIN PROFILE -->
+            <section id="admin-profile-section" class="dashboard-panel hidden">
+
+                <div class="panel-heading">
+                    <div>
+                        <span class="section-eyebrow">ACCOUNT INFORMATION</span>
+                        <h2>My Admin Profile</h2>
+                        <p>View your registered administrator account details.</p>
+                    </div>
+                </div>
+
+                <div class="profile-details">
+
+                    <div class="profile-item">
+                        <span>Admin ID</span>
+                        <strong id="profile-admin-id">--</strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Name</span>
+                        <strong id="profile-admin-name">--</strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Email</span>
+                        <strong id="profile-admin-email">--</strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Department</span>
+                        <strong id="profile-admin-department">--</strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Account Status</span>
+                        <strong id="profile-admin-status">--</strong>
+                    </div>
+
+                </div>
+
+            </section>
+
         </section>
-    </section>
-</main>
 
-<footer>
-    <p>© <span id="current-year"></span> LTSU Campus Support. All Rights Reserved.</p>
-    <p>Building a Better Campus Together.</p>
-</footer>
+    </main>
 
-<script>
-document.getElementById("current-year").textContent = new Date().getFullYear();
-</script>
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-brand">LTSU Campus Support</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../student/supabase-config.js"></script>
-<script src="admin.js"></script>
+        <p>
+            © <span id="current-year"></span>
+            LTSU Campus Support. All Rights Reserved.
+        </p>
+
+        <p>Building a Better Campus Together.</p>
+
+        <span class="footer-caption">
+            ADMINISTRATION PORTAL · SECURE CAMPUS SUPPORT
+        </span>
+    </footer>
+
+    <!-- CURRENT YEAR -->
+    <script>
+        document.getElementById("current-year").textContent =
+            new Date().getFullYear();
+    </script>
+
+    <!-- SUPABASE: KEEP CONFIGURATION ORDER -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../student/supabase-config.js"></script>
+
+    <!-- EXISTING ADMIN FUNCTIONALITY -->
+    <script src="admin.js"></script>
+
+    <!-- ZYRA AI ASSISTANT -->
+    <script
+        async
+        type="module"
+        src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces.esm.js">
+    </script>
+
+    <zapier-interfaces-chatbot-embed
+        is-popup="true"
+        chatbot-id="cmwdq9q1i001vsdxj8fcst8v4">
+    </zapier-interfaces-chatbot-embed>
 
 </body>
 </html>
