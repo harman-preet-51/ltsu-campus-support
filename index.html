@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>LTSUCare | Campus Support Portal</title>
-    <meta name="description" content="LTSUCare - Campus Support Portal of Lamrin Tech Skills University Punjab.">
+
+    <meta name="description"
+          content="LTSUCare - Campus Support Portal of Lamrin Tech Skills University Punjab.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,159 +20,229 @@
 
 <body>
 
-    <div class="student-credit">
-        <span class="credit-track">
+    <!-- Moving student credit strip -->
+    <div class="credit-strip">
+        <div class="credit-track">
             <span>✦ BUILT BY LTSU STUDENTS</span>
             <span>✦ DESIGNED FOR A BETTER CAMPUS</span>
             <span>✦ BUILT BY LTSU STUDENTS</span>
             <span>✦ DESIGNED FOR A BETTER CAMPUS</span>
-        </span>
+        </div>
     </div>
 
-    <header class="site-header">
-        <a href="index.html" class="brand">
-            <img src="assets/ltsu2.jpeg" alt="Lamrin Tech Skills University Logo">
-            <span>LTSU<span class="brand-accent">Care</span></span>
-        </a>
-
-        <span class="header-label">CAMPUS SUPPORT PORTAL</span>
+    <!-- Simple header without duplicate logo -->
+    <header class="navbar">
+        <div class="navbar-label">LTSU CAMPUS CONNECT</div>
+        <div class="navbar-right">
+            <span class="online-dot"></span>
+            CAMPUS SUPPORT PORTAL
+        </div>
     </header>
 
     <main>
 
+        <!-- Hero section -->
         <section class="hero">
 
-            <div class="hero-decoration decoration-one"></div>
-            <div class="hero-decoration decoration-two"></div>
+            <div class="decor decor-one"></div>
+            <div class="decor decor-two"></div>
+            <div class="decor decor-three"></div>
 
-            <div class="hero-center">
+            <div class="hero-content">
 
-                <div class="logo-wrap">
-                    <div class="logo-glow"></div>
-                    <img class="hero-logo"
-                         src="assets/ltsu2.jpeg"
-                         alt="LTSU University Logo">
-                    <span class="orbit orbit-one"></span>
-                    <span class="orbit orbit-two"></span>
+                <!-- University logo: only one image -->
+                <div class="logo-area">
+                    <div class="logo-ring">
+                        <img
+                            src="assets/ltsu2.jpeg"
+                            alt="Lamrin Tech Skills University Logo"
+                            class="university-logo">
+                    </div>
                 </div>
 
-                <div class="hero-label">
-                    <span></span>
+                <div class="university-name">
                     LAMRIN TECH SKILLS UNIVERSITY PUNJAB
-                    <span></span>
+                </div>
+
+                <div class="welcome-label">
+                    WELCOME TO
                 </div>
 
                 <h1>
-                    Your Campus.
-                    <span>Your Voice.</span>
+                    LTSU<span>Care</span>
                 </h1>
 
+                <h2>Your Campus. Your Voice.</h2>
+
                 <p class="hero-description">
-                    A smarter way to report concerns, share feedback
-                    and make our campus better together.
+                    Report concerns, share feedback and help make
+                    your campus a better place.
                 </p>
 
                 <a href="#portals" class="hero-button">
-                    Explore Your Portal <span>↓</span>
+                    Explore Your Portal
+                    <span>↓</span>
                 </a>
 
-                <div class="floating-note note-left">
-                    <span>🎓</span> Student First
+                <!-- Small floating decorative elements -->
+                <div class="floating-element float-one">
+                    <span>✦</span>
                 </div>
 
-                <div class="floating-note note-right">
-                    <span>💬</span> Every Voice Matters
+                <div class="floating-element float-two">
+                    <span>＋</span>
                 </div>
 
-                <div class="floating-note note-bottom">
-                    <span>✦</span> Positive Change
+                <div class="floating-element float-three">
+                    <span>✧</span>
+                </div>
+
+                <div class="floating-element float-four">
+                    <span>●</span>
                 </div>
 
             </div>
+
+            <div class="hero-bottom-line">
+                <span></span>
+                EVERY VOICE MATTERS
+                <span></span>
+            </div>
+
         </section>
 
 
+        <!-- Portal section -->
         <section class="portals-section" id="portals">
 
             <div class="section-heading">
-                <span class="section-eyebrow">YOUR DIGITAL GATEWAY</span>
+                <span class="section-label">YOUR DIGITAL GATEWAY</span>
+
                 <h2>Choose Your <span>Portal</span></h2>
-                <p>Select your access area to continue.</p>
+
+                <p>
+                    Select your portal to continue.
+                </p>
             </div>
 
             <div class="portal-grid">
 
-                <a href="student/student.html" class="portal-card student-card">
-                    <div class="card-icon">🎓</div>
-                    <span class="card-number">01 / STUDENT</span>
+                <!-- Student -->
+                <a href="student/student.html"
+                   class="portal-card student-card">
+
+                    <div class="card-top">
+                        <div class="card-icon">🎓</div>
+                        <span class="card-number">01</span>
+                    </div>
+
+                    <span class="card-category">STUDENT SERVICES</span>
+
                     <h3>Student Portal</h3>
+
                     <p>
-                        Submit campus complaints, track updates
-                        and share your valuable feedback.
+                        Submit complaints, track progress
+                        and share your feedback.
                     </p>
+
                     <div class="card-link">
-                        Enter Portal <span>→</span>
+                        Enter Portal
+                        <span>→</span>
                     </div>
+
                 </a>
 
-                <a href="admin/admin.html" class="portal-card admin-card">
-                    <div class="card-icon">🛡️</div>
-                    <span class="card-number">02 / ADMIN</span>
+
+                <!-- Admin -->
+                <a href="admin/admin.html"
+                   class="portal-card admin-card">
+
+                    <div class="card-top">
+                        <div class="card-icon">🛡️</div>
+                        <span class="card-number">02</span>
+                    </div>
+
+                    <span class="card-category">ADMINISTRATION</span>
+
                     <h3>Admin Portal</h3>
+
                     <p>
-                        Review assigned complaints, manage requests
-                        and keep students informed.
+                        Review complaints, manage requests
+                        and update their progress.
                     </p>
+
                     <div class="card-link">
-                        Enter Portal <span>→</span>
+                        Enter Portal
+                        <span>→</span>
                     </div>
+
                 </a>
 
-                <a href="super-admin/super-admin.html" class="portal-card super-card">
-                    <div class="card-icon">⚙️</div>
-                    <span class="card-number">03 / MANAGEMENT</span>
+
+                <!-- Super Admin -->
+                <a href="super-admin/super-admin.html"
+                   class="portal-card super-card">
+
+                    <div class="card-top">
+                        <div class="card-icon">⚙️</div>
+                        <span class="card-number">03</span>
+                    </div>
+
+                    <span class="card-category">CENTRAL MANAGEMENT</span>
+
                     <h3>Super Admin Portal</h3>
+
                     <p>
                         Manage administrators, permissions
-                        and overall platform activities.
+                        and platform activities.
                     </p>
+
                     <div class="card-link">
-                        Enter Portal <span>→</span>
+                        Enter Portal
+                        <span>→</span>
                     </div>
+
                 </a>
 
             </div>
+
         </section>
 
 
+        <!-- Closing message -->
         <section class="closing-section">
-            <div class="closing-star">✦</div>
-            <div>
+
+            <div class="closing-icon">✦</div>
+
+            <div class="closing-content">
                 <span>OUR SHARED COMMITMENT</span>
+
                 <h2>Better Campus. Better Together.</h2>
+
                 <p>
                     Your concerns matter. Your ideas inspire change.
-                    Let's build a more supportive campus together.
+                    Let's make every voice count.
                 </p>
             </div>
+
         </section>
 
     </main>
 
 
-    <footer class="site-footer">
-        <div class="footer-brand">
-            <img src="assets/ltsu2.jpeg" alt="LTSU Logo">
-            <div>
-                <strong>LTSU<span>Care</span></strong>
-                <small>Lamrin Tech Skills University Punjab</small>
-            </div>
+    <!-- Footer without another logo -->
+    <footer class="footer">
+
+        <div class="footer-left">
+            <strong>LTSU<span>Care</span></strong>
+            <p>Lamrin Tech Skills University Punjab</p>
         </div>
 
-        <p>
-            © <span id="current-year">2026</span> LTSUCare.
-            Built for a better campus.
-        </p>
+        <div class="footer-right">
+            © <span id="current-year">2026</span> LTSUCare
+            <p>Built by LTSU Students</p>
+        </div>
+
     </footer>
 
 </body>
