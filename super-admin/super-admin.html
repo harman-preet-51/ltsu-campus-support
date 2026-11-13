@@ -6,16 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#eaf8f0">
     <meta name="description" content="LTSUCare Super Admin Control Centre">
-
     <title>Super Admin Portal | LTSUCare</title>
-
     <link rel="stylesheet" href="super-admin.css">
 
-    <!-- CLICK AND LAYER PROTECTION -->
     <style>
-        html, body {
-            min-height: 100%;
-        }
+        html, body { min-height: 100%; }
 
         body {
             position: relative;
@@ -36,45 +31,34 @@
             overflow: hidden;
         }
 
-        #login-page,
-        #dashboard {
+        #login-page, #dashboard {
             position: relative;
             z-index: 1;
         }
 
-        .sidebar,
-        .main-content,
-        .topbar,
-        .login-box,
-        .page-section {
+        .sidebar, .main-content, .topbar, .login-box, .page-section {
             position: relative;
             z-index: 2;
         }
 
-        button,
-        a,
-        input,
-        select,
-        textarea,
-        label,
-        .nav-btn,
-        .logout-btn {
+        button, a, input, select, textarea, label,
+        .nav-btn, .logout-btn {
             pointer-events: auto !important;
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
-        button:disabled {
-            cursor: not-allowed;
+        button:disabled { cursor: not-allowed; }
+
+        .email-student-list {
+            width: 100%;
+            min-height: 120px;
         }
     </style>
 </head>
 
 <body>
 
-    <!-- BACKGROUND ANIMATION -->
     <div class="ambient-background" aria-hidden="true">
         <div class="ambient-circle circle-one"></div>
         <div class="ambient-circle circle-two"></div>
@@ -83,45 +67,27 @@
         <div class="ambient-grid"></div>
     </div>
 
-
     <!-- LOGIN PAGE -->
     <section id="login-page" class="login-page">
-
         <div class="login-box">
-
-            <div class="login-brand-icon">
-                <span>✦</span>
-            </div>
-
+            <div class="login-brand-icon"><span>✦</span></div>
             <h1>LTSUCare</h1>
             <p>Super Admin Control Centre</p>
 
             <form id="login-form">
-
                 <label for="admin-id">Super Admin Email</label>
-
-                <input
-                    type="email"
-                    id="admin-id"
+                <input type="email" id="admin-id"
                     placeholder="Enter Super Admin Email"
-                    autocomplete="username"
-                    required
-                >
+                    autocomplete="username" required>
 
                 <label for="admin-pin">Password</label>
-
-                <input
-                    type="password"
-                    id="admin-pin"
+                <input type="password" id="admin-pin"
                     placeholder="Enter Password"
-                    autocomplete="current-password"
-                    required
-                >
+                    autocomplete="current-password" required>
 
                 <button type="submit" id="login-button">
                     Login to Dashboard
                 </button>
-
             </form>
 
             <button type="button" id="forgot-password-btn">
@@ -133,21 +99,15 @@
             <span class="login-note">
                 Authorized Super Admin Access Only
             </span>
-
         </div>
-
     </section>
-
 
     <!-- MAIN DASHBOARD -->
     <section id="dashboard" class="dashboard hidden">
 
-        <!-- SIDEBAR -->
         <aside class="sidebar">
-
             <div class="brand-area">
                 <div class="brand-icon">✦</div>
-
                 <div class="brand-text">
                     <h2>LTSUCare</h2>
                     <span>SUPER ADMIN</span>
@@ -176,7 +136,6 @@
                 <span>♧</span> Admin Management
             </button>
 
-
             <div class="sidebar-label">COMMUNICATION</div>
 
             <button type="button" class="nav-btn" data-page="student-email">
@@ -191,7 +150,6 @@
                 <span>▥</span> Email Analytics
             </button>
 
-
             <div class="sidebar-label">SYSTEM</div>
 
             <button type="button" class="nav-btn" data-page="activity">
@@ -202,9 +160,7 @@
                 <span>⚙</span> Settings
             </button>
 
-
             <div class="sidebar-bottom">
-
                 <div class="sidebar-status">
                     <span class="status-dot"></span>
                     System Control Centre
@@ -213,59 +169,42 @@
                 <button type="button" id="logout-btn" class="logout-btn">
                     ↪ Logout
                 </button>
-
             </div>
-
         </aside>
 
-
-        <!-- MAIN CONTENT -->
         <main class="main-content">
 
-            <!-- TOPBAR -->
             <header class="topbar">
-
                 <div class="topbar-heading">
                     <span class="topbar-subtitle">
                         LTSUCARE / MANAGEMENT SYSTEM
                     </span>
-
                     <h2>Super Admin Dashboard</h2>
                 </div>
 
                 <div class="topbar-right">
-
                     <div class="system-indicator">
                         <span class="status-dot"></span>
                         System Active
                     </div>
-
                     <span class="admin-label">✦ Super Admin</span>
-
                 </div>
-
             </header>
-
 
             <!-- OVERVIEW -->
             <section id="overview" class="page-section active">
 
                 <div class="welcome-banner">
-
                     <div class="welcome-content">
-
                         <span class="section-eyebrow">
                             CENTRAL MANAGEMENT SYSTEM
                         </span>
-
                         <h2>Welcome to LTSUCare</h2>
-
                         <p>
                             Monitor campus operations, manage students,
                             control administrators and oversee communication
                             from one central dashboard.
                         </p>
-
                     </div>
 
                     <div class="welcome-decoration">
@@ -274,13 +213,9 @@
                         <div class="welcome-orbit orbit-three"></div>
                         <div class="welcome-core">✦</div>
                     </div>
-
                 </div>
 
-
-                <!-- STATISTICS -->
                 <div class="stats-container">
-
                     <div class="stat-card">
                         <div class="stat-icon">▤</div>
                         <h3>Total Complaints</h3>
@@ -322,68 +257,10 @@
                         <p id="email-sent-count">0</p>
                         <span>Email activity</span>
                     </div>
-
                 </div>
-
-
-                <!-- ANALYTICS -->
-                <div class="analytics-grid">
-
-                    <div class="content-box analytics-card">
-
-                        <div class="box-heading">
-                            <div>
-                                <span class="section-eyebrow">CAMPUS PERFORMANCE</span>
-                                <h3>Complaint Analytics</h3>
-                            </div>
-                            <span class="analytics-icon">▥</span>
-                        </div>
-
-                        <div
-                            id="complaint-analytics-chart"
-                            class="chart-container"
-                            role="img"
-                            aria-label="Complaint analytics chart"
-                        >
-                            <div class="chart-placeholder">
-                                Complaint analytics will appear here
-                                after database integration.
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="content-box analytics-card">
-
-                        <div class="box-heading">
-                            <div>
-                                <span class="section-eyebrow">STUDENT INSIGHTS</span>
-                                <h3>Student Analytics</h3>
-                            </div>
-                            <span class="analytics-icon">♙</span>
-                        </div>
-
-                        <div
-                            id="student-analytics-chart"
-                            class="chart-container"
-                            role="img"
-                            aria-label="Student analytics chart"
-                        >
-                            <div class="chart-placeholder">
-                                Department-wise and course-wise student
-                                analytics will appear here.
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
 
                 <!-- RECENT COMPLAINTS -->
                 <div class="content-box">
-
                     <div class="box-heading">
                         <div>
                             <span class="section-eyebrow">LATEST CAMPUS ACTIVITY</span>
@@ -392,7 +269,6 @@
                     </div>
 
                     <div class="table-container">
-
                         <table>
                             <thead>
                                 <tr>
@@ -402,35 +278,24 @@
                                     <th>Date</th>
                                 </tr>
                             </thead>
-
                             <tbody id="recent-complaints">
                                 <tr>
                                     <td colspan="4">Loading complaints...</td>
                                 </tr>
                             </tbody>
                         </table>
-
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- NORMAL COMPLAINTS -->
             <section id="complaints" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">CAMPUS OPERATIONS</span>
                     <h3>Complaint Management</h3>
-
-                    <p>
-                        View and manage complaints available to Super Admin.
-                    </p>
+                    <p>View and manage complaints available to Super Admin.</p>
 
                     <div class="table-container">
-
                         <table>
                             <thead>
                                 <tr>
@@ -442,26 +307,18 @@
                                     <th>Action</th>
                                 </tr>
                             </thead>
-
                             <tbody id="complaint-list">
-                                <tr>
-                                    <td colspan="6">Loading complaints...</td>
-                                </tr>
+                                <tr><td colspan="6">Loading complaints...</td></tr>
                             </tbody>
                         </table>
-
                     </div>
 
-
                     <div id="super-complaint-details" class="hidden">
-
                         <h3>Complaint Details</h3>
                         <div id="super-complaint-detail-content"></div>
 
                         <form id="super-complaint-update-form">
-
                             <label for="super-update-status">Update Status</label>
-
                             <select id="super-update-status" required>
                                 <option value="Submitted">Submitted</option>
                                 <option value="Under Review">Under Review</option>
@@ -470,38 +327,23 @@
                             </select>
 
                             <label for="super-resolution-notes">Resolution Details</label>
-
-                            <textarea
-                                id="super-resolution-notes"
-                                rows="4"
-                                placeholder="Enter resolution details"
-                            ></textarea>
+                            <textarea id="super-resolution-notes" rows="4"
+                                placeholder="Enter resolution details"></textarea>
 
                             <button type="submit">Save Complaint Update</button>
-
                         </form>
-
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- PERSONAL COMPLAINTS -->
             <section id="my-personal-complaints" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">PRIVATE RECORDS</span>
                     <h3>My Personal Complaints</h3>
-
-                    <p>
-                        Only your own confidential complaints will appear here.
-                    </p>
+                    <p>Only your own confidential complaints will appear here.</p>
 
                     <div class="table-container">
-
                         <table>
                             <thead>
                                 <tr>
@@ -513,26 +355,18 @@
                                     <th>Action</th>
                                 </tr>
                             </thead>
-
                             <tbody id="my-personal-complaint-list">
-                                <tr>
-                                    <td colspan="6">Loading personal complaints...</td>
-                                </tr>
+                                <tr><td colspan="6">Loading personal complaints...</td></tr>
                             </tbody>
                         </table>
-
                     </div>
 
-
                     <div id="my-personal-complaint-details" class="hidden">
-
                         <h3>Personal Complaint Details</h3>
                         <div id="my-personal-detail-content"></div>
 
                         <form id="my-personal-update-form">
-
                             <label for="my-personal-status">Update Status</label>
-
                             <select id="my-personal-status" required>
                                 <option value="Submitted">Submitted</option>
                                 <option value="Under Review">Under Review</option>
@@ -541,65 +375,23 @@
                             </select>
 
                             <label for="my-personal-notes">Resolution Details</label>
-
-                            <textarea
-                                id="my-personal-notes"
-                                rows="4"
-                                placeholder="Enter resolution details"
-                            ></textarea>
+                            <textarea id="my-personal-notes" rows="4"
+                                placeholder="Enter resolution details"></textarea>
 
                             <button type="submit">Save Update</button>
-
                         </form>
-
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- STUDENTS -->
             <section id="students" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">STUDENT DATABASE</span>
                     <h3>Student Management</h3>
-
-                    <p>
-                        View registered students and their academic information.
-                    </p>
-
-
-                    <div class="student-insights-grid">
-
-                        <div class="content-box insight-card">
-                            <h4>Department Distribution</h4>
-
-                            <div id="department-student-chart" class="chart-container">
-                                <div class="chart-placeholder">
-                                    Department chart will appear here.
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div class="content-box insight-card">
-                            <h4>Course Distribution</h4>
-
-                            <div id="course-student-chart" class="chart-container">
-                                <div class="chart-placeholder">
-                                    Course chart will appear here.
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
+                    <p>View registered students and their academic information.</p>
 
                     <div class="table-container">
-
                         <table>
                             <thead>
                                 <tr>
@@ -610,241 +402,159 @@
                                     <th>Course</th>
                                 </tr>
                             </thead>
-
                             <tbody id="student-list">
-                                <tr>
-                                    <td colspan="5">Loading students...</td>
-                                </tr>
+                                <tr><td colspan="5">Loading students...</td></tr>
                             </tbody>
                         </table>
-
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- ADMIN MANAGEMENT -->
             <section id="admins" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">ACCESS CONTROL</span>
                     <h3>Admin Management</h3>
-
                     <p>
                         Review administrator access requests and manage
                         approved administrators.
                     </p>
 
-
                     <h3>Pending Admin Requests</h3>
-
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Contact</th>
-                                    <th>Department</th>
-                                    <th>Reason</th>
-                                    <th>Date</th>
-                                    <th>Action</th>
+                                    <th>Name</th><th>Username</th><th>Email</th>
+                                    <th>Contact</th><th>Department</th>
+                                    <th>Reason</th><th>Date</th><th>Action</th>
                                 </tr>
                             </thead>
-
                             <tbody id="pending-admin-list">
-                                <tr>
-                                    <td colspan="8">Loading admin requests...</td>
-                                </tr>
+                                <tr><td colspan="8">Loading admin requests...</td></tr>
                             </tbody>
                         </table>
                     </div>
-
 
                     <h3>Approved Administrators</h3>
-
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Department</th>
-                                    <th>Status</th>
+                                    <th>Name</th><th>Username</th><th>Email</th>
+                                    <th>Department</th><th>Status</th>
                                 </tr>
                             </thead>
-
                             <tbody id="approved-admin-list">
-                                <tr>
-                                    <td colspan="5">Loading approved admins...</td>
-                                </tr>
+                                <tr><td colspan="5">Loading approved admins...</td></tr>
                             </tbody>
                         </table>
                     </div>
-
 
                     <h3>Rejected Requests</h3>
-
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Department</th>
-                                    <th>Date</th>
+                                    <th>Name</th><th>Username</th><th>Email</th>
+                                    <th>Department</th><th>Date</th>
                                 </tr>
                             </thead>
-
                             <tbody id="rejected-admin-list">
-                                <tr>
-                                    <td colspan="5">Loading rejected requests...</td>
-                                </tr>
+                                <tr><td colspan="5">Loading rejected requests...</td></tr>
                             </tbody>
                         </table>
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- STUDENT EMAIL CENTRE -->
             <section id="student-email" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">CAMPUS COMMUNICATION SYSTEM</span>
                     <h3>Student Email Centre</h3>
-
                     <p>
                         Send official announcements and important
                         communication to registered students.
                     </p>
 
-
                     <div class="email-overview-grid">
-
                         <div class="stat-card">
                             <div class="stat-icon">✉</div>
                             <h3>Emails Sent</h3>
                             <p id="super-email-sent">0</p>
                         </div>
-
                         <div class="stat-card">
                             <div class="stat-icon">✓</div>
                             <h3>Delivered</h3>
                             <p id="super-email-delivered">0</p>
                         </div>
-
                         <div class="stat-card">
                             <div class="stat-icon">!</div>
                             <h3>Failed</h3>
                             <p id="super-email-failed">0</p>
                         </div>
-
                     </div>
 
-
                     <div class="email-compose-card">
-
                         <h3>Compose Student Email</h3>
 
                         <form id="student-email-form">
-
                             <label for="student-email-recipient">Recipients</label>
-
                             <select id="student-email-recipient" required>
                                 <option value="all">All Registered Students</option>
                                 <option value="department">Students by Department</option>
                                 <option value="individual">Individual Student</option>
                             </select>
 
-
-                            <div id="student-email-department-group" class="email-conditional-field hidden">
-
+                            <div id="student-email-department-group"
+                                class="email-conditional-field hidden">
                                 <label for="student-email-department">Select Department</label>
-
                                 <select id="student-email-department">
                                     <option value="">Select Department</option>
                                 </select>
-
                             </div>
 
-
-                            <div id="student-email-individual-group" class="email-conditional-field hidden">
-
-                                <label for="student-email-address">Student Email Address</label>
-
-                                <input
-                                    type="email"
-                                    id="student-email-address"
-                                    placeholder="Enter student email"
-                                >
-
+                            <div id="student-email-individual-group"
+                                class="email-conditional-field hidden">
+                                <label for="student-email-address">Select Student</label>
+                                <select id="student-email-address">
+                                    <option value="">Loading registered students...</option>
+                                </select>
                             </div>
-
 
                             <label for="student-email-subject">Email Subject</label>
-
-                            <input
-                                type="text"
-                                id="student-email-subject"
-                                placeholder="Enter email subject"
-                                required
-                            >
-
+                            <input type="text" id="student-email-subject"
+                                placeholder="Enter email subject" required>
 
                             <label for="student-email-message">Email Message</label>
-
-                            <textarea
-                                id="student-email-message"
-                                rows="7"
-                                placeholder="Write your official message here..."
-                                required
-                            ></textarea>
-
+                            <textarea id="student-email-message" rows="7"
+                                placeholder="Your professional email message will be prepared here..."
+                                required></textarea>
 
                             <div class="email-form-actions">
-
                                 <button type="submit" id="student-email-send-btn">
                                     Send Student Email
                                 </button>
-
                                 <span class="email-security-note">
                                     Official communication only
                                 </span>
-
                             </div>
-
                         </form>
 
                         <div id="student-email-message-status" role="status"></div>
-
                     </div>
 
-
                     <div class="content-box email-history-card">
-
                         <h3>Student Email History</h3>
-
                         <div class="table-container">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Recipient</th>
-                                        <th>Subject</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
+                                        <th>Recipient</th><th>Subject</th>
+                                        <th>Status</th><th>Date</th>
                                     </tr>
                                 </thead>
-
                                 <tbody id="student-email-history">
                                     <tr>
                                         <td colspan="4">
@@ -854,80 +564,56 @@
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- CONFIDENTIAL INBOX -->
             <section id="confidential-email" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">RESTRICTED COMMUNICATION</span>
                     <h3>Confidential Student Inbox</h3>
-
                     <p>
                         Review private messages and confidential information
                         submitted by students through authorized channels.
                     </p>
 
-
                     <div class="confidential-notice">
-
                         <div class="confidential-notice-icon">◈</div>
-
                         <div>
                             <strong>Restricted Access Area</strong>
-
                             <p>
                                 Confidential student information must only
                                 be accessed and handled by authorized personnel.
                             </p>
                         </div>
-
                     </div>
 
-
                     <div class="confidential-stats">
-
                         <div class="stat-card">
                             <h3>Total Messages</h3>
                             <p id="confidential-total-count">0</p>
                         </div>
-
                         <div class="stat-card">
                             <h3>Unread Messages</h3>
                             <p id="confidential-unread-count">0</p>
                         </div>
-
                         <div class="stat-card">
                             <h3>Resolved Messages</h3>
                             <p id="confidential-resolved-count">0</p>
                         </div>
-
                     </div>
 
-
                     <h3>Private Student Messages</h3>
-
                     <div class="table-container">
-
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Reference ID</th>
-                                    <th>Student</th>
-                                    <th>Subject</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
+                                    <th>Reference ID</th><th>Student</th>
+                                    <th>Subject</th><th>Date</th>
+                                    <th>Status</th><th>Action</th>
                                 </tr>
                             </thead>
-
                             <tbody id="confidential-message-list">
                                 <tr>
                                     <td colspan="6">
@@ -937,137 +623,90 @@
                                 </tr>
                             </tbody>
                         </table>
-
                     </div>
 
-
                     <div id="confidential-message-details" class="hidden">
-
                         <h3>Confidential Message Details</h3>
-
                         <div id="confidential-message-content"></div>
 
                         <form id="confidential-message-reply-form">
-
                             <label for="confidential-reply-subject">Reply Subject</label>
-
-                            <input
-                                type="text"
-                                id="confidential-reply-subject"
-                                placeholder="Enter reply subject"
-                            >
+                            <input type="text" id="confidential-reply-subject"
+                                placeholder="Enter reply subject">
 
                             <label for="confidential-reply-message">Private Reply</label>
-
-                            <textarea
-                                id="confidential-reply-message"
-                                rows="6"
-                                placeholder="Write a confidential response..."
-                                required
-                            ></textarea>
+                            <textarea id="confidential-reply-message" rows="6"
+                                placeholder="Write a confidential response..." required></textarea>
 
                             <button type="submit">Send Confidential Reply</button>
-
                         </form>
 
                         <div id="confidential-reply-status" role="status"></div>
-
                     </div>
-
                 </div>
-
             </section>
 
-
-            <!-- EMAIL ANALYTICS -->
+            <!-- EMAIL ANALYTICS: PRESERVED -->
             <section id="email-analytics" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">COMMUNICATION PERFORMANCE</span>
                     <h3>Email Analytics & Monitoring</h3>
-
                     <p>
                         Monitor email activity, delivery performance
                         and available sending quota.
                     </p>
 
-
                     <div class="email-overview-grid">
-
                         <div class="stat-card">
                             <h3>Total Sent</h3>
                             <p id="analytics-total-sent">0</p>
                         </div>
-
                         <div class="stat-card">
                             <h3>Successful</h3>
                             <p id="analytics-successful">0</p>
                         </div>
-
                         <div class="stat-card">
                             <h3>Failed</h3>
                             <p id="analytics-failed">0</p>
                         </div>
-
                         <div class="stat-card">
                             <h3>Remaining Quota</h3>
                             <p id="analytics-remaining-quota">—</p>
                         </div>
-
                     </div>
 
-
                     <div class="content-box">
-
                         <h3>Email Performance</h3>
-
                         <div id="email-performance-chart" class="chart-container">
                             <div class="chart-placeholder">
                                 Email performance chart will appear
                                 after backend integration.
                             </div>
                         </div>
-
                     </div>
 
-
                     <div class="content-box">
-
                         <h3>Email Activity Records</h3>
-
                         <div class="table-container">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Recipient</th>
-                                        <th>Subject</th>
-                                        <th>Provider</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
+                                        <th>Recipient</th><th>Subject</th>
+                                        <th>Provider</th><th>Status</th><th>Date</th>
                                     </tr>
                                 </thead>
-
                                 <tbody id="email-analytics-list">
-                                    <tr>
-                                        <td colspan="5">Loading email activity...</td>
-                                    </tr>
+                                    <tr><td colspan="5">Loading email activity...</td></tr>
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- ACTIVITY LOGS -->
             <section id="activity" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">SYSTEM AUDIT</span>
                     <h3>Activity Logs</h3>
 
@@ -1075,46 +714,30 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Action</th>
-                                    <th>Actor</th>
-                                    <th>Target</th>
-                                    <th>Date</th>
+                                    <th>Action</th><th>Actor</th>
+                                    <th>Target</th><th>Date</th>
                                 </tr>
                             </thead>
-
                             <tbody id="activity-list">
-                                <tr>
-                                    <td colspan="4">Loading activity logs...</td>
-                                </tr>
+                                <tr><td colspan="4">Loading activity logs...</td></tr>
                             </tbody>
                         </table>
                     </div>
-
                 </div>
-
             </section>
-
 
             <!-- SETTINGS -->
             <section id="settings" class="page-section">
-
                 <div class="content-box">
-
                     <span class="section-eyebrow">CONTROL PREFERENCES</span>
                     <h3>Super Admin Settings</h3>
-
                     <p>Account and portal settings.</p>
-
                     <div id="super-admin-profile"></div>
-
                 </div>
-
             </section>
 
         </main>
-
     </section>
-
 
     <!-- ZAYRA AI ASSISTANT -->
     <script
@@ -1122,13 +745,9 @@
         src="https://chat.ragmyai.com/chat-widget.min.js">
     </script>
 
-
     <!-- SUPABASE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script src="../student/supabase-config.js"></script>
-
-    <!-- SUPER ADMIN JAVASCRIPT -->
     <script src="super-admin.js"></script>
 
 </body>
