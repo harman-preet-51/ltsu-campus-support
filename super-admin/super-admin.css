@@ -121,8 +121,6 @@ body {
     }
 }
 
-/* Keep dashboard content above background */
-
 .dashboard,
 .login-page {
     position: relative;
@@ -740,10 +738,13 @@ textarea {
 }
 
 /* ==========================================
-   OLD EMAIL CENTRE COMPATIBILITY
+   EMAIL CENTRE
 ========================================== */
 
-#super-admin-email-section .content-box {
+#super-admin-email-section .content-box,
+#student-email .content-box,
+#confidential-email .content-box,
+#email-analytics .content-box {
     max-width: 100%;
 }
 
@@ -772,16 +773,6 @@ textarea {
     flex-shrink: 0;
 }
 
-/* ==========================================
-   NEW STUDENT EMAIL CENTRE
-========================================== */
-
-#student-email .content-box,
-#confidential-email .content-box,
-#email-analytics .content-box {
-    max-width: 100%;
-}
-
 #student-email-form,
 #confidential-message-reply-form {
     max-width: 100%;
@@ -790,6 +781,7 @@ textarea {
 #student-email-message,
 #confidential-reply-message {
     min-height: 150px;
+    line-height: 1.7;
 }
 
 #student-email-send-btn {
@@ -813,6 +805,62 @@ textarea {
 #email-analytics-list,
 #confidential-message-list {
     overflow-wrap: anywhere;
+}
+
+/* Student recipient dropdown */
+
+#student-email-address,
+#student-email-department,
+#student-email-form select {
+    width: 100%;
+    min-height: 45px;
+    padding: 12px 14px;
+    border: 1px solid #dcebe2;
+    border-radius: 10px;
+    background: #fbfefc;
+    color: var(--text);
+    font-size: 13.5px;
+    outline: none;
+    cursor: pointer;
+    transition: .25s ease;
+}
+
+#student-email-address:hover,
+#student-email-department:hover {
+    border-color: var(--secondary);
+}
+
+#student-email-address:focus,
+#student-email-department:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(21, 155, 112, .10);
+}
+
+#student-email-form input,
+#student-email-form textarea {
+    line-height: 1.6;
+}
+
+#student-email-form textarea {
+    min-height: 170px;
+    padding: 15px;
+    background: #fbfefc;
+}
+
+#student-email-form label {
+    margin-top: 17px;
+}
+
+#student-email-form button {
+    min-height: 42px;
+}
+
+#student-email-form button:active {
+    transform: scale(.98);
+}
+
+#student-email-history {
+    max-width: 100%;
 }
 
 /* ==========================================
@@ -840,11 +888,7 @@ textarea {
    EMAIL ANALYTICS
 ========================================== */
 
-#email-performance-chart,
-#complaint-analytics-chart,
-#student-analytics-chart,
-#department-student-chart,
-#course-student-chart {
+#email-performance-chart {
     width: 100%;
     min-height: 250px;
     margin: 15px 0;
@@ -1039,16 +1083,25 @@ canvas {
         padding: 30px 21px;
     }
 
-    #email-performance-chart,
-    #complaint-analytics-chart,
-    #student-analytics-chart,
-    #department-student-chart,
-    #course-student-chart {
+    #email-performance-chart {
         min-height: 200px;
     }
 
     .ambient-grid {
         background-size: 32px 32px;
+    }
+
+    #student-email-form button {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    #student-email-form textarea {
+        min-height: 145px;
+    }
+
+    #confidential-message-details {
+        padding: 14px;
     }
 }
 
