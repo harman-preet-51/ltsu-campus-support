@@ -12,13 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   let myPersonalComplaints = [];
   let confidentialComplaints = [];
   let students = [];
+  let confidentialSenders = {};
   let selectedComplaint = null;
   let selectedPersonalComplaint = null;
   let selectedConfidentialComplaint = null;
 
   let emailStats = { accepted: 0, failed: 0 };
-
-  // Track whether the email draft is still an automatically generated template.
   let emailTemplateIsDefault = true;
 
   if (!db) {
@@ -87,6 +86,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     return data;
+  }
+
+  // =====================================================
+  // SIDEBAR NAVIGATION BUTTON HELPER
+  // =====================================================
+
+  function insertSidebarNavButton(button) {
+    const sidebar = document.querySelector(".sidebar");
+    if (!sidebar || !button) return;
+
+    const footer = sidebar.querySelector(".sidebar-bottom");
+
+    if (footer && footer.parentElement === sidebar) {
+      sidebar.insertBefore(button, footer);
+    } else {
+      sidebar.appendChild(button);
+    }
   }
 
   // =====================================================
@@ -230,9 +246,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function createSuperAdminRequestsSection() {
     const dashboard = $("dashboard");
-    const sidebar = document.querySelector(".sidebar");
 
-    if (!dashboard || !sidebar) return;
+    if (!dashboard) return;
 
     if (!document.querySelector('[data-page="super-admin-requests"]')) {
       const button = document.createElement("button");
@@ -242,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       button.dataset.page = "super-admin-requests";
       button.textContent = "Super Admin Requests";
 
-      sidebar.insertBefore(button, $("logout-btn") || null);
+      insertSidebarNavButton(button);
     }
 
     if (!$("super-admin-requests")) {
@@ -522,6 +537,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // =====================================================
   // ADMIN MANAGEMENT
+  // Department field is intentionally preserved here.
   // =====================================================
 
   async function loadAdminRequests() {
@@ -752,20 +768,36 @@ document.addEventListener("DOMContentLoaded", async () => {
       .eq("role", "admin")
       .eq("is_active", true);
 
-    if (!error) setText("admin-count", count ?? 0);
+    if (error) {
+      console.error("Admin count error:", error.message);
+      setText("admin-count", "Error");
+      return;
+    }
+
+    setText("admin-count", count ?? 0);
   }
 
   async function loadStudentCount() {
+    setText("student-count", "Loading...");
+
     const { count, error } = await db
       .from("profiles")
       .select("*", { count: "exact", head: true })
       .eq("role", "student");
 
-    if (!error) setText("student-count", count ?? 0);
+    if (error) {
+      console.error("Student count error:", error.message);
+      setText("student-count", "Error");
+      return;
+    }
+
+    setText("student-count", count ?? 0);
   }
 
   // =====================================================
   // STUDENTS AND EMAIL RECIPIENT DROPDOWN
+  // Student list only uses existing fields:
+  // Student ID, Name and Email.
   // =====================================================
 
   function populateStudentEmailOptions() {
@@ -808,36 +840,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function populateDepartmentOptions() {
-    const select = $("student-email-department");
-    if (!select) return;
-
-    const previous = select.value;
-
-    const departments = [...new Set(
-      students
-        .map(x => String(x.department || "").trim())
-        .filter(Boolean)
-    )].sort();
-
-    select.innerHTML =
-      `<option value="">Select department</option>` +
-      departments.map(department => `
-        <option value="${escapeHTML(department)}">
-          ${escapeHTML(department)}
-        </option>
-      `).join("");
-
-    if (departments.includes(previous)) {
-      select.value = previous;
-    }
-  }
-
   async function loadStudents() {
     const tbody = $("student-list");
 
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6">Loading students...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="3">Loading students...</td></tr>`;
     }
 
     const emailSelect = $("student-email-address");
@@ -849,7 +856,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const { data, error } = await db
       .from("profiles")
-      .select("id,full_name,email,student_id,department,role")
+      .select("id,full_name,email,student_id,role")
       .eq("role", "student")
       .order("full_name", { ascending: true })
       .limit(1000);
@@ -859,7 +866,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (tbody) {
         tbody.innerHTML =
-          `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
+          `<tr><td colspan="3">${escapeHTML(error.message)}</td></tr>`;
       }
 
       if (emailSelect) {
@@ -880,13 +887,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             <td>${escapeHTML(student.student_id || "—")}</td>
             <td>${escapeHTML(student.full_name || "—")}</td>
             <td>${escapeHTML(student.email || "—")}</td>
-            <td>${escapeHTML(student.department || "—")}</td>
           </tr>
         `).join("")
-        : `<tr><td colspan="6">No students found.</td></tr>`;
+        : `<tr><td colspan="3">No students found.</td></tr>`;
     }
 
-    populateDepartmentOptions();
     populateStudentEmailOptions();
     updateStudentEmailTemplate();
   }
@@ -913,9 +918,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? getSelectedEmailStudent()
       : null;
 
-    const subject = mode === "individual" && student
-      ? "Important Update from LTSUCare"
-      : "Important Update from LTSUCare";
+    const subject = "Important Update from LTSUCare";
 
     const greeting = student
       ? `Dear ${student.full_name || "Student"},`
@@ -953,7 +956,6 @@ Lamrin Tech Skills University Punjab`;
 
     if (!subjectInput || !messageInput) return;
 
-    // Do not overwrite a draft the Super Admin has started editing.
     if (!force && !emailTemplateIsDefault) return;
 
     const template = buildStudentEmailTemplate();
@@ -1265,31 +1267,32 @@ Lamrin Tech Skills University Punjab`;
 
   // =====================================================
   // STUDENT EMAIL CENTRE
+  // Only All Students and Individual Student.
   // =====================================================
 
   function updateRecipientGroups() {
     const mode = $("student-email-recipient")?.value;
 
-    if ($("student-email-department-group")) {
-      $("student-email-department-group").style.display =
-        mode === "department" ? "" : "none";
+    const individualGroup = $("student-email-individual-group");
+    const departmentGroup = $("student-email-department-group");
+
+    if (individualGroup) {
+      individualGroup.style.display =
+        mode === "individual" ? "" : "none";
     }
 
-    if ($("student-email-individual-group")) {
-      $("student-email-individual-group").style.display =
-        mode === "individual" ? "" : "none";
+    // Hide old department UI if it still exists in the page.
+    if (departmentGroup) {
+      departmentGroup.style.display = "none";
     }
 
     updateStudentEmailTemplate();
   }
 
-  $("student-email-recipient")?.addEventListener(
-    "change",
-    () => {
-      emailTemplateIsDefault = true;
-      updateRecipientGroups();
-    }
-  );
+  $("student-email-recipient")?.addEventListener("change", () => {
+    emailTemplateIsDefault = true;
+    updateRecipientGroups();
+  });
 
   $("student-email-form")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -1297,24 +1300,24 @@ Lamrin Tech Skills University Punjab`;
     const mode = $("student-email-recipient")?.value;
     const subject = $("student-email-subject")?.value.trim();
     const message = $("student-email-message")?.value.trim();
-    const department = $("student-email-department")?.value;
+
     const studentEmail = String($("student-email-address")?.value || "")
       .trim()
       .toLowerCase();
 
     const button = $("student-email-send-btn");
 
+    if (!["all", "individual"].includes(mode)) {
+      return setStatus(
+        "student-email-message-status",
+        "Please select All Students or Individual Student."
+      );
+    }
+
     if (!subject || !message) {
       return setStatus(
         "student-email-message-status",
         "Subject aur message required hain."
-      );
-    }
-
-    if (mode === "department" && !department) {
-      return setStatus(
-        "student-email-message-status",
-        "Department select karo."
       );
     }
 
@@ -1344,11 +1347,10 @@ Lamrin Tech Skills University Punjab`;
     setButtonLoading(button, true, "Sending...", "Send Email");
 
     try {
-      // Keep the existing Edge Function payload and action unchanged.
+      // Existing Edge Function action and payload pattern preserved.
       const result = await invokeEmailFunction({
         action: "send_student_email",
         recipient_mode: mode,
-        department: mode === "department" ? department : undefined,
         student_email: mode === "individual" ? studentEmail : undefined,
         subject,
         message
@@ -1443,18 +1445,14 @@ Lamrin Tech Skills University Punjab`;
     }
 
     if (!document.querySelector('[data-page="super-admin-email-section"]')) {
-      const sidebar = document.querySelector(".sidebar");
+      const button = document.createElement("button");
 
-      if (sidebar) {
-        const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nav-btn";
+      button.dataset.page = "super-admin-email-section";
+      button.textContent = "Complaint Email Centre";
 
-        button.type = "button";
-        button.className = "nav-btn";
-        button.dataset.page = "super-admin-email-section";
-        button.textContent = "Complaint Email Centre";
-
-        sidebar.insertBefore(button, $("logout-btn") || null);
-      }
+      insertSidebarNavButton(button);
     }
 
     $("sa-mail-status")?.addEventListener("change", renderComplaintEmailList);
@@ -1558,7 +1556,7 @@ Lamrin Tech Skills University Punjab`;
 
     if (tbody) {
       tbody.innerHTML =
-        `<tr><td colspan="5">Loading confidential messages...</td></tr>`;
+        `<tr><td colspan="6">Loading confidential messages...</td></tr>`;
     }
 
     const { data, error } = await db
@@ -1573,15 +1571,42 @@ Lamrin Tech Skills University Punjab`;
 
       if (tbody) {
         tbody.innerHTML =
-          `<tr><td colspan="5">Unable to load inbox: ${escapeHTML(error.message)}</td></tr>`;
+          `<tr><td colspan="6">Unable to load inbox: ${escapeHTML(error.message)}</td></tr>`;
       }
 
       confidentialComplaints = [];
+      confidentialSenders = {};
       updateConfidentialStats();
       return;
     }
 
     confidentialComplaints = data || [];
+    confidentialSenders = {};
+
+    // Load sender details for the Student column.
+    const userIds = [
+      ...new Set(
+        confidentialComplaints
+          .map(item => item.user_id)
+          .filter(Boolean)
+      )
+    ];
+
+    if (userIds.length) {
+      const { data: profiles, error: profileError } = await db
+        .from("profiles")
+        .select("id,full_name,email,student_id")
+        .in("id", userIds);
+
+      if (profileError) {
+        console.error("Confidential sender details:", profileError.message);
+      } else {
+        (profiles || []).forEach(profile => {
+          confidentialSenders[profile.id] = profile;
+        });
+      }
+    }
+
     renderConfidentialInbox();
     updateConfidentialStats();
   }
@@ -1610,20 +1635,26 @@ Lamrin Tech Skills University Punjab`;
     if (!tbody) return;
 
     tbody.innerHTML = confidentialComplaints.length
-      ? confidentialComplaints.map(complaint => `
-        <tr>
-          <td>${escapeHTML(complaint.complaint_id || complaint.id)}</td>
-          <td>${escapeHTML(complaint.title || complaint.category)}</td>
-          <td>${escapeHTML(complaint.status || "Submitted")}</td>
-          <td>${escapeHTML(formatDate(complaint.created_at))}</td>
-          <td>
-            <button type="button" data-confidential-view="${escapeHTML(complaint.id)}">
-              Open
-            </button>
-          </td>
-        </tr>
-      `).join("")
-      : `<tr><td colspan="5">No confidential messages found.</td></tr>`;
+      ? confidentialComplaints.map(complaint => {
+          const sender = confidentialSenders[complaint.user_id];
+          const studentName = sender?.full_name || "Student";
+
+          return `
+            <tr>
+              <td>${escapeHTML(complaint.complaint_id || complaint.id)}</td>
+              <td>${escapeHTML(studentName)}</td>
+              <td>${escapeHTML(complaint.title || complaint.category || "Confidential complaint")}</td>
+              <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+              <td>${escapeHTML(complaint.status || "Submitted")}</td>
+              <td>
+                <button type="button" data-confidential-view="${escapeHTML(complaint.id)}">
+                  Open
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("")
+      : `<tr><td colspan="6">No confidential messages found.</td></tr>`;
   }
 
   $("confidential-message-list")?.addEventListener("click", async event => {
@@ -1637,17 +1668,7 @@ Lamrin Tech Skills University Punjab`;
     if (!selectedConfidentialComplaint) return;
 
     const complaint = selectedConfidentialComplaint;
-    let sender = null;
-
-    if (complaint.user_id) {
-      const { data } = await db
-        .from("profiles")
-        .select("full_name,email,student_id,department")
-        .eq("id", complaint.user_id)
-        .maybeSingle();
-
-      sender = data;
-    }
+    const sender = confidentialSenders[complaint.user_id] || null;
 
     $("confidential-message-details")?.classList.remove("hidden");
 
@@ -1657,7 +1678,6 @@ Lamrin Tech Skills University Punjab`;
         <p><b>Student:</b> ${escapeHTML(sender?.full_name || "Student")}</p>
         <p><b>Email:</b> ${escapeHTML(sender?.email || "Not available")}</p>
         <p><b>Student ID:</b> ${escapeHTML(sender?.student_id || "—")}</p>
-        <p><b>Department:</b> ${escapeHTML(sender?.department || "—")}</p>
         <p><b>Title:</b> ${escapeHTML(complaint.title)}</p>
         <p><b>Category:</b> ${escapeHTML(complaint.category)}</p>
         <p><b>Location:</b> ${escapeHTML(complaint.location)}</p>
