@@ -1,32 +1,36 @@
 
-/* =====================================================
+/* =========================================================
    LTSUCARE ADMIN PORTAL
-   MODERN EMERALD TECH UI
-   ===================================================== */
+   PREMIUM EMERALD • MODERN GLASS • RESPONSIVE UI
+   ========================================================= */
 
 :root {
-    --primary: #168653;
-    --primary-dark: #09643d;
-    --primary-light: #e4f6eb;
-    --emerald: #0b5136;
-    --deep: #092c20;
-    --mint: #b9f2cf;
+    --primary: #128653;
+    --primary-dark: #08613c;
+    --primary-light: #e6f7ed;
+    --emerald: #073e2a;
+    --deep: #062b1e;
+    --mint: #baf2d0;
 
-    --text: #17372a;
-    --muted: #698174;
+    --text: #17392a;
+    --muted: #718477;
 
-    --background: #f2f8f3;
+    --background: #f3f8f4;
     --surface: #ffffff;
-    --border: #dcebe0;
+    --border: #e0ebe3;
 
     --success: #168653;
     --warning: #c58a24;
     --danger: #c54b4b;
 
-    --shadow: 0 12px 35px rgba(15, 73, 45, .09);
-    --shadow-hover: 0 18px 42px rgba(15, 73, 45, .16);
+    --shadow:
+        0 8px 28px rgba(13, 65, 39, .07);
+
+    --shadow-hover:
+        0 18px 42px rgba(13, 65, 39, .13);
 
     --radius: 18px;
+    --transition: .25s ease;
 }
 
 * {
@@ -41,34 +45,35 @@ html {
 body {
     margin: 0;
     min-height: 100vh;
+    overflow-x: hidden;
+
     color: var(--text);
     font-family: "Inter", "Segoe UI", Arial, sans-serif;
     line-height: 1.65;
-    overflow-x: hidden;
 
     background:
         radial-gradient(
-            circle at 8% 12%,
-            rgba(71, 181, 113, .15),
+            circle at 5% 5%,
+            rgba(69, 177, 111, .13),
             transparent 27%
         ),
         radial-gradient(
-            circle at 94% 35%,
-            rgba(88, 191, 133, .13),
+            circle at 95% 35%,
+            rgba(75, 186, 125, .11),
             transparent 28%
         ),
-        radial-gradient(
-            circle at 45% 95%,
-            rgba(130, 207, 155, .16),
-            transparent 32%
-        ),
-        linear-gradient(135deg, #f6faf5, #edf6ef 55%, #f8fbf8);
+        linear-gradient(
+            135deg,
+            #f7fbf7,
+            #eef6f0 55%,
+            #f8fbf8
+        );
 
     background-attachment: fixed;
     position: relative;
 }
 
-/* TECH GRID BACKGROUND */
+/* BACKGROUND GRID */
 
 body::before {
     content: "";
@@ -78,47 +83,80 @@ body::before {
     pointer-events: none;
 
     background-image:
-        linear-gradient(rgba(20, 120, 69, .035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(20, 120, 69, .035) 1px, transparent 1px);
+        linear-gradient(
+            rgba(20, 120, 69, .025) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(20, 120, 69, .025) 1px,
+            transparent 1px
+        );
 
-    background-size: 42px 42px;
+    background-size: 45px 45px;
 
     mask-image: linear-gradient(
         to bottom,
         black,
-        transparent 90%
+        transparent 85%
     );
 }
 
-/* FLOATING DECORATIVE ORBS */
+/* DECORATIVE LIGHT */
 
 body::after {
     content: "";
     position: fixed;
-    width: 330px;
-    height: 330px;
-    right: -160px;
+
+    width: 340px;
+    height: 340px;
+
+    right: -170px;
     top: 30%;
-    border-radius: 50%;
+
     z-index: -1;
     pointer-events: none;
 
+    border-radius: 50%;
+
     background: radial-gradient(
         circle,
-        rgba(50, 173, 105, .12),
-        rgba(50, 173, 105, 0) 70%
+        rgba(40, 170, 100, .12),
+        transparent 70%
     );
 
-    animation: floatOrb 10s ease-in-out infinite alternate;
+    animation: ambientFloat 12s ease-in-out infinite alternate;
 }
 
-@keyframes floatOrb {
+@keyframes ambientFloat {
     from {
         transform: translate3d(0, -20px, 0);
     }
 
     to {
         transform: translate3d(-35px, 35px, 0);
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes softPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(22, 134, 83, .08);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(22, 134, 83, 0);
     }
 }
 
@@ -147,21 +185,19 @@ a {
     color: var(--primary-dark);
 }
 
-/* ACCESSIBILITY */
-
-:focus-visible {
-    outline: 3px solid #21a66a;
-    outline-offset: 3px;
-}
-
 ::selection {
     background: #b8edca;
     color: #083c25;
 }
 
-/* =====================================================
+:focus-visible {
+    outline: 3px solid #25a66c;
+    outline-offset: 3px;
+}
+
+/* =========================================================
    HEADER
-   ===================================================== */
+   ========================================================= */
 
 .admin-header {
     position: relative;
@@ -173,9 +209,9 @@ a {
     align-items: center;
     gap: 20px;
 
-    padding: 23px 6%;
+    padding: 24px 6%;
 
-    color: white;
+    color: #fff;
 
     background:
         radial-gradient(
@@ -185,14 +221,15 @@ a {
         ),
         linear-gradient(
             115deg,
-            #082f20,
-            #0b5838 55%,
-            #148451
+            #062c1e,
+            #0a5436 55%,
+            #128653
         );
 
-    border-bottom: 1px solid rgba(255,255,255,.13);
+    border-bottom: 1px solid rgba(255,255,255,.12);
 
-    box-shadow: 0 10px 35px rgba(4, 52, 30, .22);
+    box-shadow:
+        0 12px 35px rgba(4, 52, 30, .20);
 }
 
 .admin-header::before,
@@ -201,29 +238,30 @@ a {
     position: absolute;
     z-index: -1;
     pointer-events: none;
+
     border: 1px solid rgba(255,255,255,.12);
     border-radius: 50%;
 }
 
 .admin-header::before {
-    width: 260px;
-    height: 260px;
-    right: 9%;
-    top: -180px;
+    width: 270px;
+    height: 270px;
+    right: 8%;
+    top: -190px;
 }
 
 .admin-header::after {
-    width: 170px;
-    height: 170px;
-    right: 20%;
-    bottom: -135px;
+    width: 180px;
+    height: 180px;
+    right: 22%;
+    bottom: -145px;
 }
 
 .brand {
     position: relative;
     z-index: 1;
 
-    font-size: 23px;
+    font-size: 24px;
     font-weight: 850;
     letter-spacing: .3px;
     line-height: 1.3;
@@ -233,9 +271,9 @@ a {
     display: block;
     margin-top: 5px;
 
-    color: #c3f4d4;
-    font-size: 12px;
-    font-weight: 600;
+    color: #c5f4d5;
+    font-size: 11px;
+    font-weight: 650;
     letter-spacing: 2px;
     text-transform: uppercase;
 }
@@ -244,56 +282,59 @@ a {
     position: relative;
     z-index: 1;
 
-    padding: 10px 17px;
+    padding: 10px 18px;
 
-    color: white;
+    color: #fff;
     text-decoration: none;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 750;
 
-    border: 1px solid rgba(255,255,255,.35);
-    border-radius: 10px;
-    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.30);
+    border-radius: 11px;
 
-    transition:
-        background .25s ease,
-        transform .25s ease,
-        border-color .25s ease;
+    background: rgba(255,255,255,.09);
+    backdrop-filter: blur(8px);
+
+    transition: var(--transition);
 }
 
 .home-link:hover {
-    background: rgba(255,255,255,.18);
-    border-color: rgba(255,255,255,.7);
+    background: rgba(255,255,255,.19);
+    border-color: rgba(255,255,255,.65);
     transform: translateY(-2px);
 }
 
-/* =====================================================
+/* =========================================================
    MAIN LAYOUT
-   ===================================================== */
+   ========================================================= */
 
 main {
     position: relative;
+
     width: 92%;
     max-width: 1320px;
+
     margin: 38px auto;
 }
 
 .welcome-section {
-    position: relative;
     text-align: center;
-    padding: 28px 15px 35px;
+
+    padding: 30px 15px 36px;
     margin-bottom: 22px;
+
+    animation: fadeUp .65s ease both;
 }
 
 .welcome-tag {
     display: inline-block;
 
-    padding: 7px 15px;
+    padding: 7px 16px;
 
-    color: var(--primary-dark);
-    background: rgba(220, 245, 226, .8);
+    color: #087443;
+    background: rgba(225, 246, 231, .9);
 
-    border: 1px solid #c9e9d2;
+    border: 1px solid #cce9d4;
     border-radius: 30px;
 
     font-size: 11px;
@@ -305,9 +346,9 @@ main {
     margin: 17px 0 8px;
 
     color: #103f2b;
-    font-size: clamp(27px, 4vw, 43px);
+    font-size: clamp(28px, 4vw, 44px);
     font-weight: 850;
-    letter-spacing: -1.2px;
+    letter-spacing: -1.3px;
     line-height: 1.2;
 }
 
@@ -319,9 +360,9 @@ main {
     font-size: 15px;
 }
 
-/* =====================================================
+/* =========================================================
    GLASS CARDS
-   ===================================================== */
+   ========================================================= */
 
 .auth-section {
     width: 100%;
@@ -336,25 +377,26 @@ main {
 
     padding: 29px;
 
-    background: rgba(255,255,255,.88);
-    border: 1px solid rgba(207, 229, 213, .9);
+    background: rgba(255,255,255,.91);
+
+    border: 1px solid rgba(213, 232, 218, .95);
     border-radius: var(--radius);
 
     box-shadow: var(--shadow);
 
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
 
     transition:
-        box-shadow .25s ease,
-        border-color .25s ease;
+        box-shadow var(--transition),
+        border-color var(--transition);
 }
 
 .auth-card:hover,
 .dashboard-panel:hover,
 .details-card:hover {
     box-shadow: var(--shadow-hover);
-    border-color: #c0dfc9;
+    border-color: #b9ddc4;
 }
 
 .auth-card h2,
@@ -370,14 +412,14 @@ main {
     color: var(--muted);
 }
 
-/* =====================================================
-   AUTHENTICATION TABS
-   ===================================================== */
+/* =========================================================
+   AUTH TABS
+   ========================================================= */
 
 .auth-tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 17px;
 }
 
 .auth-tab {
@@ -387,17 +429,14 @@ main {
     padding: 12px;
 
     color: #315a43;
-    background: rgba(255,255,255,.9);
+    background: #fff;
 
     border: 1px solid var(--border);
     border-radius: 11px;
 
     font-weight: 750;
 
-    transition:
-        background .25s ease,
-        color .25s ease,
-        transform .25s ease;
+    transition: var(--transition);
 }
 
 .auth-tab:hover {
@@ -410,18 +449,18 @@ main {
 
     background: linear-gradient(
         120deg,
-        #0d603b,
+        #0b603b,
         #15945a
     );
 
     border-color: transparent;
 
-    box-shadow: 0 7px 18px rgba(14, 116, 65, .2);
+    box-shadow: 0 7px 18px rgba(14, 116, 65, .20);
 }
 
-/* =====================================================
+/* =========================================================
    FORMS
-   ===================================================== */
+   ========================================================= */
 
 label {
     display: block;
@@ -445,11 +484,10 @@ textarea {
     color: #17372a;
     background: #fbfefb;
 
-    border: 1px solid #d6e7da;
+    border: 1px solid #d8e8dc;
     border-radius: 10px;
 
     outline: none;
-
     font-size: 14px;
 
     transition:
@@ -469,12 +507,14 @@ select:focus,
 textarea:focus {
     background: #fff;
     border-color: #15945a;
-    box-shadow: 0 0 0 4px rgba(21, 148, 90, .12);
+
+    box-shadow:
+        0 0 0 4px rgba(21, 148, 90, .11);
 }
 
 input::placeholder,
 textarea::placeholder {
-    color: #98aa9d;
+    color: #9aab9f;
 }
 
 textarea {
@@ -495,6 +535,7 @@ input[type="checkbox"] {
     min-height: 18px;
     height: 18px;
     padding: 0;
+
     accent-color: var(--primary);
 }
 
@@ -502,9 +543,9 @@ input[type="checkbox"]:focus {
     box-shadow: none;
 }
 
-/* =====================================================
+/* =========================================================
    BUTTON SYSTEM
-   ===================================================== */
+   ========================================================= */
 
 .primary-btn,
 .logout-btn {
@@ -529,7 +570,8 @@ input[type="checkbox"]:focus {
     font-size: 14px;
     font-weight: 800;
 
-    box-shadow: 0 7px 17px rgba(16, 132, 75, .17);
+    box-shadow:
+        0 7px 17px rgba(16, 132, 75, .17);
 
     transition:
         transform .2s ease,
@@ -543,15 +585,23 @@ input[type="checkbox"]:focus {
 }
 
 .logout-btn {
-    background: linear-gradient(120deg, #a53b3b, #d05b50);
-    box-shadow: 0 6px 16px rgba(165, 59, 59, .16);
+    background: linear-gradient(
+        120deg,
+        #a53b3b,
+        #d05b50
+    );
+
+    box-shadow:
+        0 6px 16px rgba(165, 59, 59, .16);
 }
 
 .primary-btn:hover,
 .logout-btn:hover {
     transform: translateY(-2px);
-    filter: brightness(1.04);
-    box-shadow: 0 11px 23px rgba(16, 132, 75, .22);
+    filter: brightness(1.05);
+
+    box-shadow:
+        0 11px 23px rgba(16, 132, 75, .22);
 }
 
 .primary-btn:active,
@@ -583,15 +633,16 @@ input[type="checkbox"]:focus {
     text-decoration: underline;
 }
 
-/* =====================================================
+/* =========================================================
    PASSWORD / APPROVAL WARNING
-   ===================================================== */
+   ========================================================= */
 
 .password-warning {
     padding: 16px;
     margin-top: 18px;
 
     background: #fff9e9;
+
     border: 1px solid #f0dfae;
     border-left: 4px solid #d49b2e;
 
@@ -608,12 +659,13 @@ input[type="checkbox"]:focus {
     font-size: 13px;
 }
 
-/* =====================================================
-   DASHBOARD HEADER
-   ===================================================== */
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
 .dashboard {
     margin-top: 35px;
+    animation: fadeUp .55s ease both;
 }
 
 .dashboard-heading {
@@ -623,7 +675,7 @@ input[type="checkbox"]:focus {
     flex-wrap: wrap;
     gap: 15px;
 
-    padding: 22px 25px;
+    padding: 24px 26px;
 
     color: white;
 
@@ -633,12 +685,17 @@ input[type="checkbox"]:focus {
             rgba(171,255,197,.15),
             transparent 30%
         ),
-        linear-gradient(115deg, #0a3b28, #0e7548);
+        linear-gradient(
+            115deg,
+            #073b28,
+            #0e7548
+        );
 
     border: 1px solid rgba(255,255,255,.13);
     border-radius: 17px;
 
-    box-shadow: 0 12px 30px rgba(8, 69, 39, .16);
+    box-shadow:
+        0 12px 30px rgba(8, 69, 39, .16);
 }
 
 .dashboard-heading h2 {
@@ -654,9 +711,9 @@ input[type="checkbox"]:focus {
     font-size: 13px;
 }
 
-/* =====================================================
-   STATISTICS CARDS
-   ===================================================== */
+/* =========================================================
+   STATISTICS
+   ========================================================= */
 
 .dashboard-stats {
     display: grid;
@@ -673,9 +730,10 @@ input[type="checkbox"]:focus {
     min-height: 155px;
     padding: 22px;
 
-    background: rgba(255,255,255,.93);
-    border: 1px solid #dcebe0;
-    border-radius: 15px;
+    background: rgba(255,255,255,.95);
+
+    border: 1px solid #e0ebe3;
+    border-radius: 16px;
 
     box-shadow: var(--shadow);
 
@@ -689,20 +747,26 @@ input[type="checkbox"]:focus {
     content: "";
     position: absolute;
 
-    width: 110px;
-    height: 110px;
+    width: 115px;
+    height: 115px;
 
-    right: -45px;
-    bottom: -50px;
+    right: -48px;
+    bottom: -53px;
 
-    border: 16px solid rgba(22, 134, 83, .08);
+    border: 17px solid rgba(22, 134, 83, .07);
     border-radius: 50%;
+
+    transition: transform .35s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    border-color: #a9d6b7;
+    border-color: #acd7b8;
     box-shadow: var(--shadow-hover);
+}
+
+.stat-card:hover::after {
+    transform: scale(1.15);
 }
 
 .stat-icon {
@@ -710,11 +774,12 @@ input[type="checkbox"]:focus {
     align-items: center;
     justify-content: center;
 
-    width: 43px;
-    height: 43px;
+    width: 44px;
+    height: 44px;
 
     background: #e5f6eb;
-    border-radius: 12px;
+    border: 1px solid #d4eddb;
+    border-radius: 13px;
 
     font-size: 21px;
 }
@@ -722,7 +787,7 @@ input[type="checkbox"]:focus {
 .stat-card h3 {
     margin: 12px 0 3px;
 
-    color: #698174;
+    color: #718477;
     font-size: 13px;
     font-weight: 750;
 }
@@ -736,9 +801,9 @@ input[type="checkbox"]:focus {
     line-height: 1.3;
 }
 
-/* =====================================================
-   DASHBOARD NAVIGATION
-   ===================================================== */
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
 
 .dashboard-navigation {
     display: flex;
@@ -748,7 +813,8 @@ input[type="checkbox"]:focus {
 
     padding: 12px;
 
-    background: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.94);
+
     border: 1px solid var(--border);
     border-radius: 14px;
 
@@ -770,10 +836,7 @@ input[type="checkbox"]:focus {
     font-size: 13px;
     font-weight: 750;
 
-    transition:
-        color .2s ease,
-        background .2s ease,
-        transform .2s ease;
+    transition: var(--transition);
 }
 
 .nav-btn:hover {
@@ -784,13 +847,20 @@ input[type="checkbox"]:focus {
 
 .nav-btn.active {
     color: white;
-    background: linear-gradient(120deg, #0b6940, #15945a);
-    box-shadow: 0 5px 13px rgba(11, 105, 64, .18);
+
+    background: linear-gradient(
+        120deg,
+        #0b6940,
+        #15945a
+    );
+
+    box-shadow:
+        0 5px 13px rgba(11, 105, 64, .18);
 }
 
-/* =====================================================
+/* =========================================================
    DASHBOARD PANELS
-   ===================================================== */
+   ========================================================= */
 
 .dashboard-panel {
     margin-bottom: 22px;
@@ -817,9 +887,9 @@ input[type="checkbox"]:focus {
     font-size: 13px;
 }
 
-/* =====================================================
+/* =========================================================
    FILTERS
-   ===================================================== */
+   ========================================================= */
 
 .filter-area {
     display: grid;
@@ -834,9 +904,9 @@ input[type="checkbox"]:focus {
     min-width: 0;
 }
 
-/* =====================================================
+/* =========================================================
    COMPLAINT TABLE
-   ===================================================== */
+   ========================================================= */
 
 .table-container {
     width: 100%;
@@ -845,7 +915,9 @@ input[type="checkbox"]:focus {
     background: white;
 
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 13px;
+
+    box-shadow: 0 4px 14px rgba(10, 65, 37, .035);
 }
 
 .complaint-table {
@@ -858,12 +930,12 @@ input[type="checkbox"]:focus {
 
 .complaint-table th,
 .complaint-table td {
-    padding: 14px 15px;
+    padding: 15px;
 
     text-align: left;
     vertical-align: middle;
 
-    border-bottom: 1px solid #e8f0e9;
+    border-bottom: 1px solid #e9f0ea;
     font-size: 13px;
 }
 
@@ -895,7 +967,7 @@ input[type="checkbox"]:focus {
 
 .complaint-table td button {
     min-height: 34px;
-    padding: 7px 13px;
+    padding: 7px 14px;
 
     color: white;
     background: #168653;
@@ -906,16 +978,17 @@ input[type="checkbox"]:focus {
     font-size: 12px;
     font-weight: 750;
 
-    transition: background .2s ease;
+    transition: var(--transition);
 }
 
 .complaint-table td button:hover {
     background: #09643d;
+    transform: translateY(-1px);
 }
 
-/* =====================================================
+/* =========================================================
    COMPLAINT DETAILS
-   ===================================================== */
+   ========================================================= */
 
 .details-card {
     margin-top: 22px;
@@ -930,9 +1003,10 @@ input[type="checkbox"]:focus {
 
 #complaint-detail-content,
 #confidential-complaint-detail-content {
-    padding: 17px;
+    padding: 18px;
 
     background: #f4faf5;
+
     border: 1px solid #dfede2;
     border-radius: 11px;
 
@@ -951,9 +1025,9 @@ input[type="checkbox"]:focus {
     margin-top: 20px;
 }
 
-/* =====================================================
-   CONFIDENTIAL SECTION
-   ===================================================== */
+/* =========================================================
+   CONFIDENTIAL COMPLAINTS
+   ========================================================= */
 
 #confidential-section {
     border-top: 3px solid #398b66;
@@ -967,9 +1041,9 @@ input[type="checkbox"]:focus {
     background: #f0f8f3;
 }
 
-/* =====================================================
+/* =========================================================
    EMAIL CENTRE
-   ===================================================== */
+   ========================================================= */
 
 #admin-email-list-area,
 #admin-confidential-email-list-area {
@@ -977,9 +1051,10 @@ input[type="checkbox"]:focus {
 }
 
 .email-centre-block {
-    padding: 21px;
+    padding: 22px;
 
     background: #f8fcf8;
+
     border: 1px solid #dcebe0;
     border-radius: 14px;
 }
@@ -1003,6 +1078,7 @@ input[type="checkbox"]:focus {
     margin: 14px 0;
 
     background: white;
+
     border: 1px solid var(--border);
     border-radius: 11px;
 }
@@ -1069,7 +1145,7 @@ input[type="checkbox"]:focus {
 
 .email-selection-actions button {
     min-height: 38px;
-    padding: 9px 14px;
+    padding: 9px 15px;
 
     color: #135438;
     background: #e9f5ec;
@@ -1080,9 +1156,7 @@ input[type="checkbox"]:focus {
     font-size: 12px;
     font-weight: 750;
 
-    transition:
-        background .2s ease,
-        transform .2s ease;
+    transition: var(--transition);
 }
 
 .email-selection-actions button:hover {
@@ -1095,20 +1169,25 @@ input[type="checkbox"]:focus {
 #recovery-result,
 #admin-pin-message {
     margin-top: 12px;
+
     white-space: pre-line;
     overflow-wrap: anywhere;
+
     font-size: 13px;
 }
 
-/* =====================================================
+/* =========================================================
    ADMIN PROFILE
-   ===================================================== */
+   ========================================================= */
 
 .profile-details {
-    padding: 22px;
+    padding: 23px;
 
-    background:
-        linear-gradient(135deg, #f0f8f1, #f9fcf9);
+    background: linear-gradient(
+        135deg,
+        #f0f8f1,
+        #f9fcf9
+    );
 
     border: 1px solid #dcebe0;
     border-radius: 13px;
@@ -1117,7 +1196,7 @@ input[type="checkbox"]:focus {
 }
 
 .profile-details p {
-    padding: 10px 0;
+    padding: 11px 0;
     margin: 0;
 
     border-bottom: 1px solid #dcebe0;
@@ -1135,13 +1214,14 @@ input[type="checkbox"]:focus {
     color: #185438;
 }
 
-/* =====================================================
-   DYNAMIC RECOVERY PIN MODAL
-   ===================================================== */
+/* =========================================================
+   RECOVERY PIN MODAL
+   ========================================================= */
 
 #admin-pin-setup-panel {
-    backdrop-filter: blur(9px);
-    -webkit-backdrop-filter: blur(9px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: fadeUp .25s ease both;
 }
 
 #admin-pin-setup-panel > div {
@@ -1149,6 +1229,8 @@ input[type="checkbox"]:focus {
     max-width: 440px;
 
     padding: 29px !important;
+
+    background: #fff;
 
     border: 1px solid #cfe8d5;
     border-radius: 19px !important;
@@ -1165,12 +1247,21 @@ input[type="checkbox"]:focus {
     font-size: 13px;
 }
 
+#admin-pin-setup-panel input {
+    margin-bottom: 12px;
+}
+
 #admin-pin-setup-panel button {
     width: 100%;
     min-height: 44px;
 
     color: white;
-    background: linear-gradient(120deg, #0b7545, #19a365);
+
+    background: linear-gradient(
+        120deg,
+        #0b7545,
+        #19a365
+    );
 
     border: 0;
     border-radius: 9px;
@@ -1178,23 +1269,23 @@ input[type="checkbox"]:focus {
     font-weight: 800;
 }
 
-/* =====================================================
+/* =========================================================
    FOOTER
-   ===================================================== */
+   ========================================================= */
 
 footer {
     position: relative;
     overflow: hidden;
 
     margin-top: 50px;
-    padding: 27px 15px;
+    padding: 28px 15px;
 
     color: #e8f8ed;
     text-align: center;
 
     background: linear-gradient(
         110deg,
-        #082f20,
+        #062f20,
         #0c6540
     );
 
@@ -1206,9 +1297,9 @@ footer p {
     font-size: 12px;
 }
 
-/* =====================================================
+/* =========================================================
    SCROLLBARS
-   ===================================================== */
+   ========================================================= */
 
 .table-container::-webkit-scrollbar,
 #mail-complaint-list::-webkit-scrollbar,
@@ -1230,17 +1321,9 @@ footer p {
     background: #f0f7f1;
 }
 
-/* =====================================================
-   ZYRA CHATBOT POPUP
-   ===================================================== */
-
-zapier-interfaces-chatbot-embed {
-    z-index: 9999;
-}
-
-/* =====================================================
-   TABLET RESPONSIVE
-   ===================================================== */
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
 
 @media (max-width: 900px) {
     main {
@@ -1264,9 +1347,9 @@ zapier-interfaces-chatbot-embed {
     }
 }
 
-/* =====================================================
-   MOBILE RESPONSIVE
-   ===================================================== */
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
 
 @media (max-width: 600px) {
     body {
@@ -1404,7 +1487,9 @@ zapier-interfaces-chatbot-embed {
     }
 }
 
-/* SMALL MOBILE */
+/* =========================================================
+   EXTRA SMALL MOBILE
+   ========================================================= */
 
 @media (max-width: 360px) {
     .dashboard-stats {
@@ -1424,9 +1509,9 @@ zapier-interfaces-chatbot-embed {
     }
 }
 
-/* =====================================================
+/* =========================================================
    REDUCED MOTION ACCESSIBILITY
-   ===================================================== */
+   ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
     *,
