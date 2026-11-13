@@ -16,10 +16,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   let selectedPersonalComplaint = null;
   let selectedConfidentialComplaint = null;
 
-  let emailStats = {
-    accepted: 0,
-    failed: 0
-  };
+  let emailStats = { accepted: 0, failed: 0 };
+
+  // Track whether the email draft is still an automatically generated template.
+  let emailTemplateIsDefault = true;
 
   if (!db) {
     alert("Supabase connection missing. Check supabase-config.js");
@@ -213,14 +213,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Delegated click handler also works for dynamically created nav buttons.
   document.addEventListener("click", event => {
     const button = event.target.closest(".nav-btn");
-
     if (!button) return;
 
     const targetId = button.dataset.page || button.dataset.section;
-
     if (!targetId) return;
 
     event.preventDefault();
@@ -388,7 +385,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   $("dashboard")?.addEventListener("click", async event => {
     const button = event.target.closest("[data-sa-action]");
-
     if (!button) return;
 
     const action = button.dataset.saAction;
@@ -417,18 +413,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { data, error } = await db.functions.invoke(
         "super-admin-approval",
         {
-          body: {
-            request_id: requestId,
-            action
-          }
+          body: { request_id: requestId, action }
         }
       );
 
       if (error) throw new Error(error.message);
-
-      if (!data?.success) {
-        throw new Error(data?.error || "Request failed.");
-      }
+      if (!data?.success) throw new Error(data?.error || "Request failed.");
 
       setStatus(
         "sa-registration-message",
@@ -522,7 +512,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       if (error) throw error;
-
       await verifySuperAdmin(data.user);
     } catch (error) {
       showMessage("Login failed: " + error.message);
@@ -558,10 +547,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     adminRequests = data || [];
-
     renderAdminRequests();
     updatePendingRequestCount();
-
     await loadApprovedAdmins();
   }
 
@@ -589,15 +576,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             <td>${escapeHTML(request.reason)}</td>
             <td>${escapeHTML(formatDate(request.created_at))}</td>
             <td>
-              <button type="button"
-                data-approve="${escapeHTML(request.id)}">
-                Approve
-              </button>
-
-              <button type="button"
-                data-reject="${escapeHTML(request.id)}">
-                Reject
-              </button>
+              <button type="button" data-approve="${escapeHTML(request.id)}">Approve</button>
+              <button type="button" data-reject="${escapeHTML(request.id)}">Reject</button>
             </td>
           </tr>
         `).join("")
@@ -621,7 +601,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadApprovedAdmins() {
     const tbody = $("approved-admin-list");
-
     if (!tbody) return;
 
     const { data, error } = await db
@@ -715,7 +694,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (requestError) throw requestError;
 
         showMessage("Admin successfully approved.");
-
         await loadAdminRequests();
         await loadAdminCount();
       } catch (error) {
@@ -754,7 +732,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (error) throw error;
 
         showMessage("Admin request rejected.");
-
         await loadAdminRequests();
       } catch (error) {
         showMessage("Reject error: " + error.message);
@@ -788,56 +765,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // =====================================================
-  // STUDENTS
+  // STUDENTS AND EMAIL RECIPIENT DROPDOWN
   // =====================================================
 
-  async function loadStudents() {
-    const tbody = $("student-list");
+  function populateStudentEmailOptions() {
+    const select = $("student-email-address");
+    if (!select) return;
 
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6">Loading students...</td></tr>`;
+    const previousValue = String(select.value || "").toLowerCase();
+
+    const availableStudents = students.filter(student =>
+      String(student.email || "").trim()
+    );
+
+    select.innerHTML = `
+      <option value="">Select a registered student</option>
+      ${availableStudents.map(student => {
+        const email = String(student.email).trim().toLowerCase();
+        const name = student.full_name || "Student";
+        const studentId = student.student_id || "ID unavailable";
+
+        return `
+          <option value="${escapeHTML(email)}">
+            ${escapeHTML(name)} — ${escapeHTML(studentId)} — ${escapeHTML(email)}
+          </option>
+        `;
+      }).join("")}
+    `;
+
+    if (
+      previousValue &&
+      availableStudents.some(student =>
+        String(student.email).trim().toLowerCase() === previousValue
+      )
+    ) {
+      select.value = previousValue;
     }
 
-    const { data, error } = await db
-      .from("profiles")
-      .select("id,full_name,email,student_id,department,role")
-      .eq("role", "student")
-      .order("full_name", { ascending: true })
-      .limit(1000);
-
-    if (error) {
-      console.error("Student list:", error.message);
-
-      if (tbody) {
-        tbody.innerHTML =
-          `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
-      }
-
-      students = [];
-      return;
+    if (!availableStudents.length) {
+      select.innerHTML =
+        `<option value="">No registered student emails found</option>`;
     }
-
-    students = data || [];
-
-    if (tbody) {
-      tbody.innerHTML = students.length
-        ? students.map(student => `
-          <tr>
-            <td>${escapeHTML(student.student_id || "—")}</td>
-            <td>${escapeHTML(student.full_name || "—")}</td>
-            <td>${escapeHTML(student.email || "—")}</td>
-            <td>${escapeHTML(student.department || "—")}</td>
-          </tr>
-        `).join("")
-        : `<tr><td colspan="6">No students found.</td></tr>`;
-    }
-
-    populateDepartmentOptions();
   }
 
   function populateDepartmentOptions() {
     const select = $("student-email-department");
-
     if (!select) return;
 
     const previous = select.value;
@@ -860,6 +832,149 @@ document.addEventListener("DOMContentLoaded", async () => {
       select.value = previous;
     }
   }
+
+  async function loadStudents() {
+    const tbody = $("student-list");
+
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6">Loading students...</td></tr>`;
+    }
+
+    const emailSelect = $("student-email-address");
+
+    if (emailSelect && !emailSelect.options.length) {
+      emailSelect.innerHTML =
+        `<option value="">Loading registered students...</option>`;
+    }
+
+    const { data, error } = await db
+      .from("profiles")
+      .select("id,full_name,email,student_id,department,role")
+      .eq("role", "student")
+      .order("full_name", { ascending: true })
+      .limit(1000);
+
+    if (error) {
+      console.error("Student list:", error.message);
+
+      if (tbody) {
+        tbody.innerHTML =
+          `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
+      }
+
+      if (emailSelect) {
+        emailSelect.innerHTML =
+          `<option value="">Unable to load students</option>`;
+      }
+
+      students = [];
+      return;
+    }
+
+    students = data || [];
+
+    if (tbody) {
+      tbody.innerHTML = students.length
+        ? students.map(student => `
+          <tr>
+            <td>${escapeHTML(student.student_id || "—")}</td>
+            <td>${escapeHTML(student.full_name || "—")}</td>
+            <td>${escapeHTML(student.email || "—")}</td>
+            <td>${escapeHTML(student.department || "—")}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="6">No students found.</td></tr>`;
+    }
+
+    populateDepartmentOptions();
+    populateStudentEmailOptions();
+    updateStudentEmailTemplate();
+  }
+
+  // =====================================================
+  // EMAIL TEMPLATE AUTO-FILL
+  // =====================================================
+
+  function getSelectedEmailStudent() {
+    const email = String($("student-email-address")?.value || "")
+      .trim()
+      .toLowerCase();
+
+    if (!email) return null;
+
+    return students.find(student =>
+      String(student.email || "").trim().toLowerCase() === email
+    ) || null;
+  }
+
+  function buildStudentEmailTemplate() {
+    const mode = $("student-email-recipient")?.value || "all";
+    const student = mode === "individual"
+      ? getSelectedEmailStudent()
+      : null;
+
+    const subject = mode === "individual" && student
+      ? "Important Update from LTSUCare"
+      : "Important Update from LTSUCare";
+
+    const greeting = student
+      ? `Dear ${student.full_name || "Student"},`
+      : "Dear Student,";
+
+    const studentDetails = student
+      ? `
+Student Name: ${student.full_name || "Not available"}
+Student ID: ${student.student_id || "Not available"}
+Registered Email: ${student.email || "Not available"}
+
+`
+      : "";
+
+    const message =
+`${greeting}
+
+${studentDetails}We hope you are doing well.
+
+[Write your announcement or update here.]
+
+For any assistance, please contact the appropriate university office.
+
+Regards,
+Super Admin Office
+LTSUCare
+Lamrin Tech Skills University Punjab`;
+
+    return { subject, message };
+  }
+
+  function updateStudentEmailTemplate(force = false) {
+    const subjectInput = $("student-email-subject");
+    const messageInput = $("student-email-message");
+
+    if (!subjectInput || !messageInput) return;
+
+    // Do not overwrite a draft the Super Admin has started editing.
+    if (!force && !emailTemplateIsDefault) return;
+
+    const template = buildStudentEmailTemplate();
+
+    subjectInput.value = template.subject;
+    messageInput.value = template.message;
+    emailTemplateIsDefault = true;
+  }
+
+  $("student-email-subject")?.addEventListener("input", () => {
+    emailTemplateIsDefault = false;
+  });
+
+  $("student-email-message")?.addEventListener("input", () => {
+    emailTemplateIsDefault = false;
+  });
+
+  $("student-email-address")?.addEventListener("change", () => {
+    emailTemplateIsDefault = true;
+    updateStudentEmailTemplate(true);
+  });
 
   // =====================================================
   // NORMAL COMPLAINTS
@@ -891,7 +1006,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderComplaints() {
     const tbody = $("complaint-list");
-
     if (!tbody) return;
 
     tbody.innerHTML = complaints.length
@@ -903,8 +1017,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${escapeHTML(complaint.status)}</td>
           <td>${escapeHTML(formatDate(complaint.created_at))}</td>
           <td>
-            <button type="button"
-              data-super-view="${escapeHTML(complaint.id)}">
+            <button type="button" data-super-view="${escapeHTML(complaint.id)}">
               View
             </button>
           </td>
@@ -915,7 +1028,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderRecentComplaints() {
     const tbody = $("recent-complaints");
-
     if (!tbody) return;
 
     tbody.innerHTML = complaints.slice(0, 5).length
@@ -938,18 +1050,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       complaints.filter(complaint => {
         const status = String(complaint.status || "").toLowerCase();
 
-        return [
-          "pending",
-          "submitted",
-          "under review"
-        ].includes(status);
+        return ["pending", "submitted", "under review"].includes(status);
       }).length
     );
   }
 
   $("complaint-list")?.addEventListener("click", event => {
     const button = event.target.closest("[data-super-view]");
-
     if (!button) return;
 
     selectedComplaint = complaints.find(
@@ -1006,9 +1113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     showMessage("Complaint successfully updated.");
-
     $("super-complaint-details")?.classList.add("hidden");
-
     selectedComplaint = null;
 
     await loadComplaints();
@@ -1048,13 +1153,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     myPersonalComplaints = data || [];
-
     renderMyPersonalComplaints();
   }
 
   function renderMyPersonalComplaints() {
     const tbody = $("my-personal-complaint-list");
-
     if (!tbody) return;
 
     tbody.innerHTML = myPersonalComplaints.length
@@ -1066,8 +1169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${escapeHTML(complaint.status)}</td>
           <td>${escapeHTML(formatDate(complaint.created_at))}</td>
           <td>
-            <button type="button"
-              data-my-personal-view="${escapeHTML(complaint.id)}">
+            <button type="button" data-my-personal-view="${escapeHTML(complaint.id)}">
               View / Update
             </button>
           </td>
@@ -1078,7 +1180,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   $("my-personal-complaint-list")?.addEventListener("click", event => {
     const button = event.target.closest("[data-my-personal-view]");
-
     if (!button) return;
 
     selectedPersonalComplaint = myPersonalComplaints.find(
@@ -1152,7 +1253,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       showMessage("Your personal complaint has been updated.");
 
       $("my-personal-complaint-details")?.classList.add("hidden");
-
       selectedPersonalComplaint = null;
 
       await loadMyPersonalComplaints();
@@ -1179,11 +1279,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       $("student-email-individual-group").style.display =
         mode === "individual" ? "" : "none";
     }
+
+    updateStudentEmailTemplate();
   }
 
   $("student-email-recipient")?.addEventListener(
     "change",
-    updateRecipientGroups
+    () => {
+      emailTemplateIsDefault = true;
+      updateRecipientGroups();
+    }
   );
 
   $("student-email-form")?.addEventListener("submit", async event => {
@@ -1193,8 +1298,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const subject = $("student-email-subject")?.value.trim();
     const message = $("student-email-message")?.value.trim();
     const department = $("student-email-department")?.value;
-    const studentEmail = $("student-email-address")
-      ?.value.trim().toLowerCase();
+    const studentEmail = String($("student-email-address")?.value || "")
+      .trim()
+      .toLowerCase();
 
     const button = $("student-email-send-btn");
 
@@ -1215,7 +1321,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (mode === "individual" && !studentEmail) {
       return setStatus(
         "student-email-message-status",
-        "Student email enter karo."
+        "Student dropdown se student select karo."
+      );
+    }
+
+    if (
+      mode === "individual" &&
+      !students.some(student =>
+        String(student.email || "").trim().toLowerCase() === studentEmail
+      )
+    ) {
+      return setStatus(
+        "student-email-message-status",
+        "Selected email registered student list mein nahi mila."
       );
     }
 
@@ -1226,6 +1344,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setButtonLoading(button, true, "Sending...", "Send Email");
 
     try {
+      // Keep the existing Edge Function payload and action unchanged.
       const result = await invokeEmailFunction({
         action: "send_student_email",
         recipient_mode: mode,
@@ -1246,7 +1365,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(
         "student-email-message-status",
         summary,
-        result.failed === 0
+        Number(result.failed || 0) === 0
       );
 
       const history = $("student-email-history");
@@ -1267,12 +1386,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       $("student-email-form")?.reset();
 
+      emailTemplateIsDefault = true;
       updateRecipientGroups();
+      updateStudentEmailTemplate(true);
     } catch (error) {
       emailStats.failed++;
-
       updateEmailStats();
-
       setStatus("student-email-message-status", error.message);
     } finally {
       setButtonLoading(button, false, "Sending...", "Send Email");
@@ -1295,7 +1414,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       section.innerHTML = `
         <div class="content-box">
           <h2>Complaint Update Email Centre</h2>
-
           <p>Select complaints to send status updates to students.</p>
 
           <label for="sa-mail-status">Filter by status</label>
@@ -1311,22 +1429,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div id="sa-mail-complaints"></div>
 
           <label for="sa-mail-subject">Email subject</label>
+          <input id="sa-mail-subject" value="Update on your LTSUCare complaint">
 
-          <input
-            id="sa-mail-subject"
-            value="Update on your LTSUCare complaint"
-          >
-
-          <label for="sa-mail-remarks">
-            Remarks for selected students
-          </label>
-
+          <label for="sa-mail-remarks">Remarks for selected students</label>
           <textarea id="sa-mail-remarks" rows="4"></textarea>
 
-          <button type="button" id="sa-mail-send">
-            Send Complaint Updates
-          </button>
-
+          <button type="button" id="sa-mail-send">Send Complaint Updates</button>
           <p id="sa-mail-result" role="status"></p>
         </div>
       `;
@@ -1334,9 +1442,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       $("dashboard")?.appendChild(section);
     }
 
-    if (!document.querySelector(
-      '[data-page="super-admin-email-section"]'
-    )) {
+    if (!document.querySelector('[data-page="super-admin-email-section"]')) {
       const sidebar = document.querySelector(".sidebar");
 
       if (sidebar) {
@@ -1351,20 +1457,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    $("sa-mail-status")?.addEventListener(
-      "change",
-      renderComplaintEmailList
-    );
-
-    $("sa-mail-send")?.addEventListener(
-      "click",
-      sendSelectedComplaintEmails
-    );
+    $("sa-mail-status")?.addEventListener("change", renderComplaintEmailList);
+    $("sa-mail-send")?.addEventListener("click", sendSelectedComplaintEmails);
   }
 
   function renderComplaintEmailList() {
     const list = $("sa-mail-complaints");
-
     if (!list) return;
 
     const status = $("sa-mail-status")?.value || "";
@@ -1376,12 +1474,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     list.innerHTML = filtered.length
       ? filtered.map(complaint => `
         <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
-          <input
-            type="checkbox"
-            class="sa-mail-check"
-            value="${escapeHTML(complaint.id)}"
-          >
-
+          <input type="checkbox" class="sa-mail-check" value="${escapeHTML(complaint.id)}">
           ${escapeHTML(complaint.complaint_id)} —
           ${escapeHTML(complaint.title || complaint.category || "Complaint")}
           (${escapeHTML(complaint.status)})
@@ -1396,10 +1489,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ].map(input => input.value);
 
     if (!selected.length) {
-      return setStatus(
-        "sa-mail-result",
-        "Kam se kam ek complaint select karo."
-      );
+      return setStatus("sa-mail-result", "Kam se kam ek complaint select karo.");
     }
 
     const remarks = $("sa-mail-remarks")?.value.trim() || "";
@@ -1409,12 +1499,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       `Selected ${selected.length} complaint update emails bhejne hain?`
     )) return;
 
-    setButtonLoading(
-      button,
-      true,
-      "Sending...",
-      "Send Complaint Updates"
-    );
+    setButtonLoading(button, true, "Sending...", "Send Complaint Updates");
 
     let successCount = 0;
     let failedCount = 0;
@@ -1442,16 +1527,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           successCount++;
         } catch (error) {
           failedCount++;
-
-          errors.push(
-            `${complaint.complaint_id}: ${error.message}`
-          );
+          errors.push(`${complaint.complaint_id}: ${error.message}`);
         }
       }
 
       emailStats.accepted += successCount;
       emailStats.failed += failedCount;
-
       updateEmailStats();
 
       setStatus(
@@ -1461,12 +1542,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         failedCount === 0
       );
     } finally {
-      setButtonLoading(
-        button,
-        false,
-        "Sending...",
-        "Send Complaint Updates"
-      );
+      setButtonLoading(button, false, "Sending...", "Send Complaint Updates");
     }
   }
 
@@ -1501,14 +1577,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       confidentialComplaints = [];
-
       updateConfidentialStats();
-
       return;
     }
 
     confidentialComplaints = data || [];
-
     renderConfidentialInbox();
     updateConfidentialStats();
   }
@@ -1527,7 +1600,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       "confidential-resolved-count",
       confidentialComplaints.filter(x => {
         const status = String(x.status || "").toLowerCase();
-
         return status === "solved" || status === "resolved";
       }).length
     );
@@ -1535,7 +1607,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderConfidentialInbox() {
     const tbody = $("confidential-message-list");
-
     if (!tbody) return;
 
     tbody.innerHTML = confidentialComplaints.length
@@ -1546,8 +1617,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${escapeHTML(complaint.status || "Submitted")}</td>
           <td>${escapeHTML(formatDate(complaint.created_at))}</td>
           <td>
-            <button type="button"
-              data-confidential-view="${escapeHTML(complaint.id)}">
+            <button type="button" data-confidential-view="${escapeHTML(complaint.id)}">
               Open
             </button>
           </td>
@@ -1556,133 +1626,113 @@ document.addEventListener("DOMContentLoaded", async () => {
       : `<tr><td colspan="5">No confidential messages found.</td></tr>`;
   }
 
-  $("confidential-message-list")?.addEventListener(
-    "click",
-    async event => {
-      const button = event.target.closest("[data-confidential-view]");
+  $("confidential-message-list")?.addEventListener("click", async event => {
+    const button = event.target.closest("[data-confidential-view]");
+    if (!button) return;
 
-      if (!button) return;
+    selectedConfidentialComplaint = confidentialComplaints.find(
+      x => String(x.id) === button.dataset.confidentialView
+    );
 
-      selectedConfidentialComplaint = confidentialComplaints.find(
-        x => String(x.id) === button.dataset.confidentialView
-      );
+    if (!selectedConfidentialComplaint) return;
 
-      if (!selectedConfidentialComplaint) return;
+    const complaint = selectedConfidentialComplaint;
+    let sender = null;
 
-      const complaint = selectedConfidentialComplaint;
-      let sender = null;
+    if (complaint.user_id) {
+      const { data } = await db
+        .from("profiles")
+        .select("full_name,email,student_id,department")
+        .eq("id", complaint.user_id)
+        .maybeSingle();
 
-      if (complaint.user_id) {
-        const { data } = await db
-          .from("profiles")
-          .select("full_name,email,student_id,department")
-          .eq("id", complaint.user_id)
-          .maybeSingle();
-
-        sender = data;
-      }
-
-      $("confidential-message-details")?.classList.remove("hidden");
-
-      if ($("confidential-message-content")) {
-        $("confidential-message-content").innerHTML = `
-          <p><b>Complaint ID:</b> ${escapeHTML(complaint.complaint_id || complaint.id)}</p>
-          <p><b>Student:</b> ${escapeHTML(sender?.full_name || "Student")}</p>
-          <p><b>Email:</b> ${escapeHTML(sender?.email || "Not available")}</p>
-          <p><b>Student ID:</b> ${escapeHTML(sender?.student_id || "—")}</p>
-          <p><b>Department:</b> ${escapeHTML(sender?.department || "—")}</p>
-          <p><b>Title:</b> ${escapeHTML(complaint.title)}</p>
-          <p><b>Category:</b> ${escapeHTML(complaint.category)}</p>
-          <p><b>Location:</b> ${escapeHTML(complaint.location)}</p>
-          <p><b>Description:</b></p>
-          <p style="white-space:pre-wrap">${escapeHTML(complaint.description)}</p>
-          <p><b>Status:</b> ${escapeHTML(complaint.status)}</p>
-          <p><b>Submitted:</b> ${escapeHTML(formatDate(complaint.created_at))}</p>
-        `;
-      }
-
-      if ($("confidential-reply-subject")) {
-        $("confidential-reply-subject").value =
-          `Private response - ${complaint.complaint_id || "LTSUCare complaint"}`;
-      }
-
-      if ($("confidential-reply-message")) {
-        $("confidential-reply-message").value = "";
-      }
-
-      setStatus("confidential-reply-status", "");
+      sender = data;
     }
-  );
 
-  $("confidential-message-reply-form")?.addEventListener(
-    "submit",
-    async event => {
-      event.preventDefault();
+    $("confidential-message-details")?.classList.remove("hidden");
 
-      if (!selectedConfidentialComplaint) {
-        return setStatus(
-          "confidential-reply-status",
-          "Pehle inbox se complaint open karo."
-        );
-      }
-
-      const subject = $("confidential-reply-subject")?.value.trim();
-      const message = $("confidential-reply-message")?.value.trim();
-
-      const button = $("confidential-message-reply-form")
-        ?.querySelector('[type="submit"]');
-
-      if (!subject || !message) {
-        return setStatus(
-          "confidential-reply-status",
-          "Subject aur reply message required hain."
-        );
-      }
-
-      if (!confirm(
-        "Kya aap is confidential message ka private email reply bhejna chahte hain?"
-      )) return;
-
-      setButtonLoading(
-        button,
-        true,
-        "Sending reply...",
-        "Send Reply"
-      );
-
-      try {
-        const result = await invokeEmailFunction({
-          action: "confidential_reply",
-          complaint_uuid: selectedConfidentialComplaint.id,
-          subject,
-          message
-        });
-
-        emailStats.accepted++;
-
-        updateEmailStats();
-
-        setStatus(
-          "confidential-reply-status",
-          result.message || "Reply accepted by Brevo.",
-          true
-        );
-      } catch (error) {
-        emailStats.failed++;
-
-        updateEmailStats();
-
-        setStatus("confidential-reply-status", error.message);
-      } finally {
-        setButtonLoading(
-          button,
-          false,
-          "Sending reply...",
-          "Send Reply"
-        );
-      }
+    if ($("confidential-message-content")) {
+      $("confidential-message-content").innerHTML = `
+        <p><b>Complaint ID:</b> ${escapeHTML(complaint.complaint_id || complaint.id)}</p>
+        <p><b>Student:</b> ${escapeHTML(sender?.full_name || "Student")}</p>
+        <p><b>Email:</b> ${escapeHTML(sender?.email || "Not available")}</p>
+        <p><b>Student ID:</b> ${escapeHTML(sender?.student_id || "—")}</p>
+        <p><b>Department:</b> ${escapeHTML(sender?.department || "—")}</p>
+        <p><b>Title:</b> ${escapeHTML(complaint.title)}</p>
+        <p><b>Category:</b> ${escapeHTML(complaint.category)}</p>
+        <p><b>Location:</b> ${escapeHTML(complaint.location)}</p>
+        <p><b>Description:</b></p>
+        <p style="white-space:pre-wrap">${escapeHTML(complaint.description)}</p>
+        <p><b>Status:</b> ${escapeHTML(complaint.status)}</p>
+        <p><b>Submitted:</b> ${escapeHTML(formatDate(complaint.created_at))}</p>
+      `;
     }
-  );
+
+    if ($("confidential-reply-subject")) {
+      $("confidential-reply-subject").value =
+        `Private response - ${complaint.complaint_id || "LTSUCare complaint"}`;
+    }
+
+    if ($("confidential-reply-message")) {
+      $("confidential-reply-message").value = "";
+    }
+
+    setStatus("confidential-reply-status", "");
+  });
+
+  $("confidential-message-reply-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!selectedConfidentialComplaint) {
+      return setStatus(
+        "confidential-reply-status",
+        "Pehle inbox se complaint open karo."
+      );
+    }
+
+    const subject = $("confidential-reply-subject")?.value.trim();
+    const message = $("confidential-reply-message")?.value.trim();
+
+    const button = $("confidential-message-reply-form")
+      ?.querySelector('[type="submit"]');
+
+    if (!subject || !message) {
+      return setStatus(
+        "confidential-reply-status",
+        "Subject aur reply message required hain."
+      );
+    }
+
+    if (!confirm(
+      "Kya aap is confidential message ka private email reply bhejna chahte hain?"
+    )) return;
+
+    setButtonLoading(button, true, "Sending reply...", "Send Reply");
+
+    try {
+      const result = await invokeEmailFunction({
+        action: "confidential_reply",
+        complaint_uuid: selectedConfidentialComplaint.id,
+        subject,
+        message
+      });
+
+      emailStats.accepted++;
+      updateEmailStats();
+
+      setStatus(
+        "confidential-reply-status",
+        result.message || "Reply accepted by Brevo.",
+        true
+      );
+    } catch (error) {
+      emailStats.failed++;
+      updateEmailStats();
+      setStatus("confidential-reply-status", error.message);
+    } finally {
+      setButtonLoading(button, false, "Sending reply...", "Send Reply");
+    }
+  });
 
   // =====================================================
   // EMAIL ANALYTICS
@@ -1692,7 +1742,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateEmailStats();
 
     const chart = $("email-performance-chart");
-
     if (!chart) return;
 
     const total = emailStats.accepted + emailStats.failed;
@@ -1732,7 +1781,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadActivityLogs() {
     const tbody = $("activity-list");
-
     if (!tbody) return;
 
     const { data, error } = await db
@@ -1744,7 +1792,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) {
       tbody.innerHTML =
         `<tr><td colspan="4">Activity logs unavailable.</td></tr>`;
-
       return;
     }
 
