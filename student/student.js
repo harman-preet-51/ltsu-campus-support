@@ -188,9 +188,20 @@ document.addEventListener("DOMContentLoaded", () => {
         authSection.classList.add("hidden");
         dashboard.classList.remove("hidden");
 
+        // Display student's name
         document.getElementById("dashboard-student-name").textContent =
             `Welcome, ${profile.full_name || "Student"}`;
 
+        // DISPLAY THE EXISTING STUDENT ID
+        const studentIdDisplay =
+            document.getElementById("dashboard-student-id");
+
+        if (studentIdDisplay) {
+            studentIdDisplay.textContent =
+                profile.student_id || "Not assigned yet";
+        }
+
+        // Load student's course and semester
         document.getElementById("complaint-course").value =
             profile.course || "";
 
