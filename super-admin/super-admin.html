@@ -389,7 +389,7 @@
                 <div class="content-box">
                     <span class="section-eyebrow">STUDENT DATABASE</span>
                     <h3>Student Management</h3>
-                    <p>View registered students and their academic information.</p>
+                    <p>View registered students.</p>
 
                     <div class="table-container">
                         <table>
@@ -398,12 +398,10 @@
                                     <th>Student ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Department</th>
-                                    <th>Course</th>
                                 </tr>
                             </thead>
                             <tbody id="student-list">
-                                <tr><td colspan="5">Loading students...</td></tr>
+                                <tr><td colspan="3">Loading students...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -503,17 +501,8 @@
                             <label for="student-email-recipient">Recipients</label>
                             <select id="student-email-recipient" required>
                                 <option value="all">All Registered Students</option>
-                                <option value="department">Students by Department</option>
                                 <option value="individual">Individual Student</option>
                             </select>
-
-                            <div id="student-email-department-group"
-                                class="email-conditional-field hidden">
-                                <label for="student-email-department">Select Department</label>
-                                <select id="student-email-department">
-                                    <option value="">Select Department</option>
-                                </select>
-                            </div>
 
                             <div id="student-email-individual-group"
                                 class="email-conditional-field hidden">
