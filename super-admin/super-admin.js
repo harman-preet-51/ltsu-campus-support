@@ -2,8 +2,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const db = window.supabaseClient;
   const $ = id => document.getElementById(id);
-
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhM-icfed2rd2xA_aFwIFTpXGQourymAtY4xPnVV5eWFpk6yc5mDYv6_Dg3pXtLG_XTw/exec";
+  const EMAIL_FUNCTION = "ltsu-campus-email";
 
   let currentUser = null;
   let currentProfile = null;
@@ -11,9 +10,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   let superAdminRequests = [];
   let complaints = [];
   let myPersonalComplaints = [];
+  let confidentialComplaints = [];
+  let students = [];
   let selectedComplaint = null;
   let selectedPersonalComplaint = null;
-  let emailCentreEventsBound = false;
+  let selectedConfidentialComplaint = null;
+
+  // Session-only counts. These are NOT delivery confirmations.
+  let emailStats = {
+    accepted: 0,
+    failed: 0
+  };
 
   if (!db) {
     alert("Supabase connection missing. Check supabase-config.js");
@@ -36,14 +43,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!value) return "—";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "—";
-    return date.toLocaleDateString("en-IN");
+    return date.toLocaleString("en-IN");
   }
 
-  // ============== SUPER ADMIN REGISTRATION PAGE LINK ==============
+  function setText(id, value) {
+    if ($(id)) $(id).textContent = value ?? "—";
+  }
+
+  function setStatus(id, message, success = false) {
+    const element = $(id);
+    if (!element) return;
+
+    element.textContent = message;
+    element.style.color = success ? "#16865b" : "#c0392b";
+  }
+
+  function setButtonLoading(button, loading, loadingText, normalText) {
+    if (!button) return;
+    button.disabled = loading;
+    button.textContent = loading ? loadingText : normalText;
+  }
+
+  async function invokeEmailFunction(payload) {
+    const { data, error } = await db.functions.invoke(
+      EMAIL_FUNCTION,
+      { body: payload }
+    );
+
+    if (error) {
+      let message = error.message || "Email request failed.";
+
+      if (error.context && typeof error.context.json === "function") {
+        try {
+          const details = await error.context.json();
+          if (details?.error) message = details.error;
+        } catch (_) {}
+      }
+
+      throw new Error(message);
+    }
+
+    if (!data || data.success !== true) {
+      throw new Error(data?.error || data?.message || "Email request failed.");
+    }
+
+    return data;
+  }
+
+  function updateEmailStats() {
+    setText("email-sent-count", emailStats.accepted);
+    setText("super-email-sent", emailStats.accepted);
+    setText("analytics-total-sent", emailStats.accepted);
+    setText("analytics-successful", emailStats.accepted);
+    setText("super-email-failed", emailStats.failed);
+    setText("analytics-failed", emailStats.failed);
+
+    // No backend quota or delivery-event integration yet.
+    setText("super-email-delivered", "Not available");
+    setText("analytics-remaining-quota", "Not available");
+
+    const history = $("email-analytics-list");
+    if (history && !history.children.length) {
+      history.innerHTML = `
+        <tr>
+          <td colspan="5">
+            Session email counts only. Persistent Brevo delivery analytics
+            are not connected yet.
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // =====================================================
+  // REGISTRATION LINK
+  // =====================================================
 
   function addRegistrationLink() {
     const forgotButton = $("forgot-password-btn");
-
     if (!forgotButton || $("super-admin-register-link")) return;
 
     const link = document.createElement("a");
@@ -53,7 +130,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     link.style.display = "block";
     link.style.marginTop = "12px";
     link.style.textAlign = "center";
-    link.style.color = "#5636a5";
+    link.style.color = "#16865b";
     link.style.fontWeight = "600";
 
     forgotButton.insertAdjacentElement("afterend", link);
@@ -61,100 +138,72 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   addRegistrationLink();
 
-  // ============== SUPER ADMIN REGISTRATION REQUESTS ==============
+  // =====================================================
+  // SUPER ADMIN REGISTRATION REQUESTS
+  // =====================================================
 
   function createSuperAdminRequestsSection() {
     const dashboard = $("dashboard");
     const sidebar = document.querySelector(".sidebar");
-
     if (!dashboard || !sidebar) return;
 
     if (!document.querySelector('[data-page="super-admin-requests"]')) {
-      const navButton = document.createElement("button");
-
-      navButton.type = "button";
-      navButton.className = "nav-btn";
-      navButton.dataset.page = "super-admin-requests";
-      navButton.textContent = "Super Admin Requests";
-
-      sidebar.insertBefore(navButton, $("logout-btn") || null);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nav-btn";
+      button.dataset.page = "super-admin-requests";
+      button.textContent = "Super Admin Requests";
+      sidebar.insertBefore(button, $("logout-btn") || null);
     }
 
     if (!$("super-admin-requests")) {
       const section = document.createElement("section");
-
       section.id = "super-admin-requests";
       section.className = "page-section hidden";
 
       section.innerHTML = `
         <div class="content-box">
           <h2>Super Admin Registration Requests</h2>
-
-          <p>
-            Review new Super Admin applications.
-            Applicants can access the dashboard only after approval.
-          </p>
+          <p>Review new Super Admin applications.</p>
 
           <h3>Pending Requests</h3>
-
-          <div style="overflow-x:auto;">
+          <div style="overflow-x:auto">
             <table>
               <thead>
                 <tr>
-                  <th>Full Name</th>
-                  <th>Email</th>
-                  <th>Phone Number</th>
-                  <th>Applied On</th>
-                  <th>Action</th>
+                  <th>Name</th><th>Email</th><th>Phone</th>
+                  <th>Applied</th><th>Action</th>
                 </tr>
               </thead>
               <tbody id="sa-registration-pending">
-                <tr>
-                  <td colspan="5">Loading requests...</td>
-                </tr>
+                <tr><td colspan="5">Loading...</td></tr>
               </tbody>
             </table>
           </div>
 
-          <h3 style="margin-top:25px;">Approved Requests</h3>
-
-          <div style="overflow-x:auto;">
+          <h3>Approved Requests</h3>
+          <div style="overflow-x:auto">
             <table>
               <thead>
                 <tr>
-                  <th>Full Name</th>
-                  <th>Email</th>
-                  <th>Phone Number</th>
-                  <th>Reviewed On</th>
-                  <th>Status</th>
+                  <th>Name</th><th>Email</th><th>Phone</th>
+                  <th>Reviewed</th><th>Status</th>
                 </tr>
               </thead>
-              <tbody id="sa-registration-approved">
-                <tr>
-                  <td colspan="5">Loading...</td>
-                </tr>
-              </tbody>
+              <tbody id="sa-registration-approved"></tbody>
             </table>
           </div>
 
-          <h3 style="margin-top:25px;">Rejected Requests</h3>
-
-          <div style="overflow-x:auto;">
+          <h3>Rejected Requests</h3>
+          <div style="overflow-x:auto">
             <table>
               <thead>
                 <tr>
-                  <th>Full Name</th>
-                  <th>Email</th>
-                  <th>Phone Number</th>
-                  <th>Reviewed On</th>
-                  <th>Status</th>
+                  <th>Name</th><th>Email</th><th>Phone</th>
+                  <th>Reviewed</th><th>Status</th>
                 </tr>
               </thead>
-              <tbody id="sa-registration-rejected">
-                <tr>
-                  <td colspan="5">Loading...</td>
-                </tr>
-              </tbody>
+              <tbody id="sa-registration-rejected"></tbody>
             </table>
           </div>
 
@@ -167,112 +216,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderSuperAdminRegistrationRequests() {
-    const pendingBody = $("sa-registration-pending");
-    const approvedBody = $("sa-registration-approved");
-    const rejectedBody = $("sa-registration-rejected");
+    const pending = superAdminRequests.filter(x => x.status === "pending");
+    const approved = superAdminRequests.filter(x => x.status === "approved");
+    const rejected = superAdminRequests.filter(x => x.status === "rejected");
 
-    const pending = superAdminRequests.filter(item =>
-      item.status === "pending"
-    );
+    const renderRows = (items, actions = false) => items.length
+      ? items.map(item => `
+          <tr>
+            <td>${escapeHTML(item.full_name)}</td>
+            <td>${escapeHTML(item.email)}</td>
+            <td>${escapeHTML(item.phone)}</td>
+            <td>${escapeHTML(formatDate(actions ? item.created_at : item.reviewed_at))}</td>
+            <td>
+              ${actions ? `
+                <button type="button" data-sa-action="approve"
+                  data-request-id="${escapeHTML(item.id)}">Approve</button>
+                <button type="button" data-sa-action="reject"
+                  data-request-id="${escapeHTML(item.id)}">Reject</button>
+              ` : escapeHTML(item.status)}
+            </td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="5">No requests found.</td></tr>`;
 
-    const approved = superAdminRequests.filter(item =>
-      item.status === "approved"
-    );
-
-    const rejected = superAdminRequests.filter(item =>
-      item.status === "rejected"
-    );
-
-    if (pendingBody) {
-      pendingBody.innerHTML = pending.length
-        ? pending.map(item => `
-            <tr>
-              <td>${escapeHTML(item.full_name)}</td>
-              <td>${escapeHTML(item.email)}</td>
-              <td>${escapeHTML(item.phone)}</td>
-              <td>${escapeHTML(formatDate(item.created_at))}</td>
-              <td>
-                <button
-                  type="button"
-                  data-sa-action="approve"
-                  data-request-id="${escapeHTML(item.id)}"
-                >Approve</button>
-
-                <button
-                  type="button"
-                  data-sa-action="reject"
-                  data-request-id="${escapeHTML(item.id)}"
-                >Reject</button>
-              </td>
-            </tr>
-          `).join("")
-        : `<tr><td colspan="5">No pending Super Admin requests.</td></tr>`;
+    if ($("sa-registration-pending")) {
+      $("sa-registration-pending").innerHTML = renderRows(pending, true);
+    }
+    if ($("sa-registration-approved")) {
+      $("sa-registration-approved").innerHTML = renderRows(approved);
+    }
+    if ($("sa-registration-rejected")) {
+      $("sa-registration-rejected").innerHTML = renderRows(rejected);
     }
 
-    if (approvedBody) {
-      approvedBody.innerHTML = approved.length
-        ? approved.map(item => `
-            <tr>
-              <td>${escapeHTML(item.full_name)}</td>
-              <td>${escapeHTML(item.email)}</td>
-              <td>${escapeHTML(item.phone)}</td>
-              <td>${escapeHTML(formatDate(item.reviewed_at))}</td>
-              <td>Approved</td>
-            </tr>
-          `).join("")
-        : `<tr><td colspan="5">No approved requests.</td></tr>`;
-    }
-
-    if (rejectedBody) {
-      rejectedBody.innerHTML = rejected.length
-        ? rejected.map(item => `
-            <tr>
-              <td>${escapeHTML(item.full_name)}</td>
-              <td>${escapeHTML(item.email)}</td>
-              <td>${escapeHTML(item.phone)}</td>
-              <td>${escapeHTML(formatDate(item.reviewed_at))}</td>
-              <td>Rejected</td>
-            </tr>
-          `).join("")
-        : `<tr><td colspan="5">No rejected requests.</td></tr>`;
-    }
-
-    const navButton = document.querySelector(
-      '[data-page="super-admin-requests"]'
-    );
-
-    if (navButton) {
-      navButton.textContent =
-        `Super Admin Requests (${pending.length})`;
-    }
+    const nav = document.querySelector('[data-page="super-admin-requests"]');
+    if (nav) nav.textContent = `Super Admin Requests (${pending.length})`;
   }
 
   async function loadSuperAdminRegistrationRequests() {
-    const pendingBody = $("sa-registration-pending");
-
-    if (pendingBody) {
-      pendingBody.innerHTML =
-        `<tr><td colspan="5">Loading requests...</td></tr>`;
-    }
-
     const { data, error } = await db
       .from("super_admin_requests")
       .select("id,user_id,full_name,email,phone,status,created_at,reviewed_at")
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Super Admin requests error:", error.message);
-
-      if (pendingBody) {
-        pendingBody.innerHTML = `
-          <tr>
-            <td colspan="5">
-              Could not load requests: ${escapeHTML(error.message)}
-            </td>
-          </tr>
-        `;
-      }
-
+      console.error("Super Admin requests:", error.message);
+      setStatus("sa-registration-message", error.message);
       return;
     }
 
@@ -282,17 +271,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   $("dashboard")?.addEventListener("click", async event => {
     const button = event.target.closest("[data-sa-action]");
-
     if (!button) return;
 
-    const requestId = button.dataset.requestId;
     const action = button.dataset.saAction;
+    const requestId = button.dataset.requestId;
 
     if (!["approve", "reject"].includes(action)) return;
 
-    const request = superAdminRequests.find(item =>
-      String(item.id) === String(requestId)
-    );
+    const request = superAdminRequests.find(x => String(x.id) === String(requestId));
 
     if (!request || request.status !== "pending") {
       showMessage("This request is no longer pending.");
@@ -300,92 +286,38 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const actionText = action === "approve" ? "approve" : "reject";
-
-    const confirmation = confirm(
-      `Are you sure you want to ${actionText} this registration?\n\n` +
-      `Name: ${request.full_name}\n` +
-      `Email: ${request.email}\n` +
-      `Phone: ${request.phone}`
-    );
-
-    if (!confirmation) return;
-
-    button.disabled = true;
-    const oldText = button.textContent;
-
-    button.textContent =
-      action === "approve" ? "Approving..." : "Rejecting...";
+    if (!confirm(
+      `Are you sure you want to ${action} this registration?\n\n` +
+      `${request.full_name}\n${request.email}`
+    )) return;
 
     const message = $("sa-registration-message");
-
-    if (message) message.textContent = "";
+    button.disabled = true;
 
     try {
-      const { data, error } = await db.functions.invoke(
-        "super-admin-approval",
-        {
-          body: {
-            request_id: requestId,
-            action
-          }
-        }
-      );
+      const { data, error } = await db.functions.invoke("super-admin-approval", {
+        body: { request_id: requestId, action }
+      });
 
-      if (error) {
-        let errorMessage = error.message || "Request review failed.";
-
-        if (error.context && typeof error.context.json === "function") {
-          try {
-            const details = await error.context.json();
-
-            if (details?.error) {
-              errorMessage = details.error;
-            }
-          } catch (_) {}
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      if (!data || data.success !== true) {
-        throw new Error(
-          data?.error || "Request could not be processed."
-        );
-      }
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || "Request failed.");
 
       if (message) {
-        message.textContent =
-          data.message || `Request ${actionText}d successfully.`;
-
-        message.style.color = "green";
+        message.textContent = data.message || `Request ${action}d successfully.`;
+        message.style.color = "#16865b";
       }
 
       await loadSuperAdminRegistrationRequests();
-
     } catch (error) {
-      console.error("Super Admin approval error:", error);
-
-      if (message) {
-        message.textContent =
-          error.message || "Could not process request.";
-
-        message.style.color = "red";
-      } else {
-        showMessage(error.message);
-      }
-
-      await loadSuperAdminRegistrationRequests();
-
+      setStatus("sa-registration-message", error.message);
     } finally {
-      if (button.isConnected) {
-        button.disabled = false;
-        button.textContent = oldText;
-      }
+      if (button.isConnected) button.disabled = false;
     }
   });
 
-  // ================= SUPER ADMIN LOGIN =================
+  // =====================================================
+  // LOGIN AND SESSION
+  // =====================================================
 
   async function verifySuperAdmin(user) {
     const { data, error } = await db
@@ -396,11 +328,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (error || !data || data.role !== "super_admin" || data.is_active !== true) {
       await db.auth.signOut();
-
-      showMessage(
-        "Super Admin access denied. Active Super Admin account required."
-      );
-
+      showMessage("Super Admin access denied. Active Super Admin account required.");
       return false;
     }
 
@@ -422,10 +350,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadAdminCount(),
       loadStudentCount(),
       loadComplaints(),
-      loadMyPersonalComplaints()
+      loadMyPersonalComplaints(),
+      loadStudents(),
+      loadConfidentialInbox()
     ]);
 
     await loadActivityLogs();
+    loadSuperAdminProfile();
+    updateEmailStats();
 
     return true;
   }
@@ -442,40 +374,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Logging in...";
-    }
+    setButtonLoading(button, true, "Logging in...", "Login");
 
     try {
-      const { data, error } = await db.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        showMessage("Login failed: " + error.message);
-        return;
-      }
-
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
       await verifySuperAdmin(data.user);
-
+    } catch (error) {
+      showMessage("Login failed: " + error.message);
     } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Login";
-      }
+      setButtonLoading(button, false, "Logging in...", "Login");
     }
   });
 
-  // ================= ADMIN MANAGEMENT =================
+  // =====================================================
+  // ADMIN MANAGEMENT
+  // =====================================================
 
   async function loadAdminRequests() {
-    const pending = $("pending-admin-list");
-
-    if (pending) {
-      pending.innerHTML = `<tr><td colspan="8">Loading admin requests...</td></tr>`;
-    }
+    const tbody = $("pending-admin-list");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8">Loading...</td></tr>`;
 
     const { data, error } = await db
       .from("admin_requests")
@@ -483,19 +401,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      if (pending) {
-        pending.innerHTML = `<tr><td colspan="8">Error: ${escapeHTML(error.message)}</td></tr>`;
-      }
-
-      console.error("Admin requests error:", error.message);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8">${escapeHTML(error.message)}</td></tr>`;
+      console.error(error);
       return;
     }
 
     adminRequests = data || [];
-
     renderAdminRequests();
     updatePendingRequestCount();
-
     await loadApprovedAdmins();
   }
 
@@ -503,55 +416,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pendingBody = $("pending-admin-list");
     const rejectedBody = $("rejected-admin-list");
 
-    const pendingRequests = adminRequests.filter(request =>
-      String(request.status || "").toLowerCase() === "pending"
-    );
-
-    const rejectedRequests = adminRequests.filter(request =>
-      String(request.status || "").toLowerCase() === "rejected"
-    );
+    const pending = adminRequests.filter(x => String(x.status).toLowerCase() === "pending");
+    const rejected = adminRequests.filter(x => String(x.status).toLowerCase() === "rejected");
 
     if (pendingBody) {
-      pendingBody.innerHTML = pendingRequests.length
-        ? pendingRequests.map(request => `
-            <tr>
-              <td>${escapeHTML(request.full_name)}</td>
-              <td>${escapeHTML(request.username || "Missing")}</td>
-              <td>${escapeHTML(request.email)}</td>
-              <td>${escapeHTML(request.contact_number)}</td>
-              <td>${escapeHTML(request.department)}</td>
-              <td>${escapeHTML(request.reason)}</td>
-              <td>${escapeHTML(formatDate(request.created_at))}</td>
-              <td>
-                <button type="button" data-approve="${escapeHTML(request.id)}">Approve</button>
-                <button type="button" data-reject="${escapeHTML(request.id)}">Reject</button>
-              </td>
-            </tr>
-          `).join("")
+      pendingBody.innerHTML = pending.length
+        ? pending.map(request => `
+          <tr>
+            <td>${escapeHTML(request.full_name)}</td>
+            <td>${escapeHTML(request.username || "Missing")}</td>
+            <td>${escapeHTML(request.email)}</td>
+            <td>${escapeHTML(request.contact_number)}</td>
+            <td>${escapeHTML(request.department)}</td>
+            <td>${escapeHTML(request.reason)}</td>
+            <td>${escapeHTML(formatDate(request.created_at))}</td>
+            <td>
+              <button type="button" data-approve="${escapeHTML(request.id)}">Approve</button>
+              <button type="button" data-reject="${escapeHTML(request.id)}">Reject</button>
+            </td>
+          </tr>
+        `).join("")
         : `<tr><td colspan="8">No pending admin requests.</td></tr>`;
     }
 
     if (rejectedBody) {
-      rejectedBody.innerHTML = rejectedRequests.length
-        ? rejectedRequests.map(request => `
-            <tr>
-              <td>${escapeHTML(request.full_name)}</td>
-              <td>${escapeHTML(request.username || "—")}</td>
-              <td>${escapeHTML(request.email)}</td>
-              <td>${escapeHTML(request.department)}</td>
-              <td>${escapeHTML(formatDate(request.reviewed_at || request.created_at))}</td>
-            </tr>
-          `).join("")
+      rejectedBody.innerHTML = rejected.length
+        ? rejected.map(request => `
+          <tr>
+            <td>${escapeHTML(request.full_name)}</td>
+            <td>${escapeHTML(request.username || "—")}</td>
+            <td>${escapeHTML(request.email)}</td>
+            <td>${escapeHTML(request.department)}</td>
+            <td>${escapeHTML(formatDate(request.reviewed_at || request.created_at))}</td>
+          </tr>
+        `).join("")
         : `<tr><td colspan="5">No rejected requests.</td></tr>`;
     }
   }
 
   async function loadApprovedAdmins() {
     const tbody = $("approved-admin-list");
-
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="5">Loading approved admins...</td></tr>`;
-    }
+    if (!tbody) return;
 
     const { data, error } = await db
       .from("profiles")
@@ -560,38 +465,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       .order("full_name", { ascending: true });
 
     if (error) {
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="5">Error: ${escapeHTML(error.message)}</td></tr>`;
-      }
-
+      tbody.innerHTML = `<tr><td colspan="5">${escapeHTML(error.message)}</td></tr>`;
       return;
     }
 
-    if (!tbody) return;
-
-    const admins = data || [];
-
-    tbody.innerHTML = admins.length
-      ? admins.map(admin => `
-          <tr>
-            <td>${escapeHTML(admin.full_name)}</td>
-            <td>${escapeHTML(admin.username || "Not assigned")}</td>
-            <td>${escapeHTML(admin.email)}</td>
-            <td>${escapeHTML(admin.department)}</td>
-            <td>${admin.is_active ? "Active" : "Inactive"}</td>
-          </tr>
-        `).join("")
+    tbody.innerHTML = data?.length
+      ? data.map(admin => `
+        <tr>
+          <td>${escapeHTML(admin.full_name)}</td>
+          <td>${escapeHTML(admin.username || "Not assigned")}</td>
+          <td>${escapeHTML(admin.email)}</td>
+          <td>${escapeHTML(admin.department)}</td>
+          <td>${admin.is_active ? "Active" : "Inactive"}</td>
+        </tr>
+      `).join("")
       : `<tr><td colspan="5">No approved admins found.</td></tr>`;
   }
 
   function updatePendingRequestCount() {
-    const count = adminRequests.filter(request =>
-      String(request.status || "").toLowerCase() === "pending"
-    ).length;
-
-    if ($("pending-admin-count")) {
-      $("pending-admin-count").textContent = count;
-    }
+    setText(
+      "pending-admin-count",
+      adminRequests.filter(x => String(x.status).toLowerCase() === "pending").length
+    );
   }
 
   $("admins")?.addEventListener("click", async event => {
@@ -599,35 +494,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rejectButton = event.target.closest("[data-reject]");
 
     if (approveButton) {
-      const request = adminRequests.find(item =>
-        String(item.id) === approveButton.dataset.approve
-      );
-
+      const request = adminRequests.find(x => String(x.id) === approveButton.dataset.approve);
       if (!request) return;
 
       if (String(request.status).toLowerCase() !== "pending") {
-        showMessage("Ye request ab pending nahi hai.");
+        showMessage("This request is no longer pending.");
         return;
       }
 
       if (!request.user_id) {
-        showMessage("Request ke saath User ID nahi mili. Approval possible nahi hai.");
+        showMessage("Request ke saath User ID nahi mili.");
         return;
       }
 
       const username = String(request.username || "").trim().toLowerCase();
-
       if (!username) {
-        showMessage("Username missing hai. Applicant se username ke saath dobara request submit karvao.");
+        showMessage("Username missing hai.");
         return;
       }
 
-      if (!confirm("Kya aap is Admin request ko approve karna chahte hain?\n\nUsername: " + username)) {
-        return;
-      }
+      if (!confirm(`Approve this Admin?\nUsername: ${username}`)) return;
 
       approveButton.disabled = true;
-      approveButton.textContent = "Approving...";
 
       try {
         const { error: profileError } = await db
@@ -640,10 +528,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           })
           .eq("id", request.user_id);
 
-        if (profileError) {
-          showMessage("Profile approval error: " + profileError.message);
-          return;
-        }
+        if (profileError) throw profileError;
 
         const { error: requestError } = await db
           .from("admin_requests")
@@ -654,43 +539,30 @@ document.addEventListener("DOMContentLoaded", async () => {
           })
           .eq("id", request.id);
 
-        if (requestError) {
-          showMessage("Profile activate ho gaya, lekin request status update nahi hua. Error: " + requestError.message);
-          await loadAdminRequests();
-          return;
-        }
+        if (requestError) throw requestError;
 
-        showMessage("Admin successfully approved!\nUsername: " + username);
-
+        showMessage("Admin successfully approved.");
         await loadAdminRequests();
         await loadAdminCount();
-
+      } catch (error) {
+        showMessage("Approval error: " + error.message);
       } finally {
-        if (approveButton.isConnected) {
-          approveButton.disabled = false;
-          approveButton.textContent = "Approve";
-        }
+        if (approveButton.isConnected) approveButton.disabled = false;
       }
     }
 
     if (rejectButton) {
-      const request = adminRequests.find(item =>
-        String(item.id) === rejectButton.dataset.reject
-      );
-
+      const request = adminRequests.find(x => String(x.id) === rejectButton.dataset.reject);
       if (!request) return;
 
       if (String(request.status).toLowerCase() !== "pending") {
-        showMessage("Ye request ab pending nahi hai.");
+        showMessage("This request is no longer pending.");
         return;
       }
 
-      if (!confirm("Kya aap is Admin request ko reject karna chahte hain?")) {
-        return;
-      }
+      if (!confirm("Reject this Admin request?")) return;
 
       rejectButton.disabled = true;
-      rejectButton.textContent = "Rejecting...";
 
       try {
         const { error } = await db
@@ -702,25 +574,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           })
           .eq("id", request.id);
 
-        if (error) {
-          showMessage("Reject error: " + error.message);
-          return;
-        }
+        if (error) throw error;
 
         showMessage("Admin request rejected.");
-
         await loadAdminRequests();
-
+      } catch (error) {
+        showMessage("Reject error: " + error.message);
       } finally {
-        if (rejectButton.isConnected) {
-          rejectButton.disabled = false;
-          rejectButton.textContent = "Reject";
-        }
+        if (rejectButton.isConnected) rejectButton.disabled = false;
       }
     }
   });
 
-  // ================= COUNTS =================
+  // =====================================================
+  // DASHBOARD COUNTS
+  // =====================================================
 
   async function loadAdminCount() {
     const { count, error } = await db
@@ -729,9 +597,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .eq("role", "admin")
       .eq("is_active", true);
 
-    if (!error && $("admin-count")) {
-      $("admin-count").textContent = count ?? 0;
-    }
+    if (!error) setText("admin-count", count ?? 0);
   }
 
   async function loadStudentCount() {
@@ -740,12 +606,69 @@ document.addEventListener("DOMContentLoaded", async () => {
       .select("*", { count: "exact", head: true })
       .eq("role", "student");
 
-    if (!error && $("student-count")) {
-      $("student-count").textContent = count ?? 0;
-    }
+    if (!error) setText("student-count", count ?? 0);
   }
 
-  // ================= NORMAL COMPLAINTS =================
+  // =====================================================
+  // STUDENTS
+  // =====================================================
+
+  async function loadStudents() {
+    const tbody = $("student-list");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6">Loading students...</td></tr>`;
+
+    const { data, error } = await db
+      .from("profiles")
+      .select("id,full_name,email,student_id,department,role")
+      .eq("role", "student")
+      .order("full_name", { ascending: true })
+      .limit(1000);
+
+    if (error) {
+      console.error("Student list:", error.message);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
+      students = [];
+      return;
+    }
+
+    students = data || [];
+
+    if (tbody) {
+      tbody.innerHTML = students.length
+        ? students.map(student => `
+          <tr>
+            <td>${escapeHTML(student.student_id || "—")}</td>
+            <td>${escapeHTML(student.full_name || "—")}</td>
+            <td>${escapeHTML(student.email || "—")}</td>
+            <td>${escapeHTML(student.department || "—")}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="6">No students found.</td></tr>`;
+    }
+
+    populateDepartmentOptions();
+  }
+
+  function populateDepartmentOptions() {
+    const select = $("student-email-department");
+    if (!select) return;
+
+    const previous = select.value;
+    const departments = [...new Set(
+      students.map(x => String(x.department || "").trim()).filter(Boolean)
+    )].sort();
+
+    select.innerHTML = `<option value="">Select department</option>` +
+      departments.map(department =>
+        `<option value="${escapeHTML(department)}">${escapeHTML(department)}</option>`
+      ).join("");
+
+    if (departments.includes(previous)) select.value = previous;
+  }
+
+  // =====================================================
+  // NORMAL COMPLAINTS
+  // =====================================================
 
   async function loadComplaints() {
     const { data, error } = await db
@@ -758,17 +681,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       complaints = [];
     } else {
       complaints = (data || []).filter(complaint =>
-        !(
-          complaint.recipient_type === "super_admin" &&
-          complaint.is_confidential === true
-        )
+        !(complaint.recipient_type === "super_admin" && complaint.is_confidential === true)
       );
     }
 
     renderComplaints();
     renderRecentComplaints();
     updateComplaintStats();
-    renderEmailCentre();
+    renderComplaintEmailList();
   }
 
   function renderComplaints() {
@@ -777,17 +697,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     tbody.innerHTML = complaints.length
       ? complaints.map(complaint => `
-          <tr>
-            <td>${escapeHTML(complaint.complaint_id)}</td>
-            <td>${escapeHTML(complaint.category)}</td>
-            <td>${escapeHTML(complaint.title || complaint.description)}</td>
-            <td>${escapeHTML(complaint.status)}</td>
-            <td>${escapeHTML(formatDate(complaint.created_at))}</td>
-            <td>
-              <button type="button" data-super-view="${escapeHTML(complaint.id)}">View</button>
-            </td>
-          </tr>
-        `).join("")
+        <tr>
+          <td>${escapeHTML(complaint.complaint_id)}</td>
+          <td>${escapeHTML(complaint.category)}</td>
+          <td>${escapeHTML(complaint.title || complaint.description)}</td>
+          <td>${escapeHTML(complaint.status)}</td>
+          <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+          <td><button type="button" data-super-view="${escapeHTML(complaint.id)}">View</button></td>
+        </tr>
+      `).join("")
       : `<tr><td colspan="6">No complaints available.</td></tr>`;
   }
 
@@ -795,44 +713,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tbody = $("recent-complaints");
     if (!tbody) return;
 
-    const recent = complaints.slice(0, 5);
-
-    tbody.innerHTML = recent.length
-      ? recent.map(complaint => `
-          <tr>
-            <td>${escapeHTML(complaint.complaint_id)}</td>
-            <td>${escapeHTML(complaint.category)}</td>
-            <td>${escapeHTML(complaint.status)}</td>
-            <td>${escapeHTML(formatDate(complaint.created_at))}</td>
-          </tr>
-        `).join("")
+    tbody.innerHTML = complaints.slice(0, 5).length
+      ? complaints.slice(0, 5).map(complaint => `
+        <tr>
+          <td>${escapeHTML(complaint.complaint_id)}</td>
+          <td>${escapeHTML(complaint.category)}</td>
+          <td>${escapeHTML(complaint.status)}</td>
+          <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+        </tr>
+      `).join("")
       : `<tr><td colspan="4">No complaints available yet.</td></tr>`;
   }
 
   function updateComplaintStats() {
-    if ($("total-count")) {
-      $("total-count").textContent = complaints.length;
-    }
+    setText("total-count", complaints.length);
 
-    if ($("pending-count")) {
-      $("pending-count").textContent = complaints.filter(complaint => {
-        const status = String(complaint.status || "").toLowerCase();
-
-        return status === "pending" ||
-          status === "submitted" ||
-          status === "under review";
-      }).length;
-    }
+    setText("pending-count", complaints.filter(complaint => {
+      const status = String(complaint.status || "").toLowerCase();
+      return ["pending", "submitted", "under review"].includes(status);
+    }).length);
   }
 
   $("complaint-list")?.addEventListener("click", event => {
     const button = event.target.closest("[data-super-view]");
     if (!button) return;
 
-    selectedComplaint = complaints.find(complaint =>
-      String(complaint.id) === button.dataset.superView
-    );
-
+    selectedComplaint = complaints.find(x => String(x.id) === button.dataset.superView);
     if (!selectedComplaint) return;
 
     $("super-complaint-details")?.classList.remove("hidden");
@@ -848,58 +754,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
     }
 
-    if ($("super-update-status")) {
-      $("super-update-status").value = selectedComplaint.status || "Submitted";
-    }
-
-    if ($("super-resolution-notes")) {
-      $("super-resolution-notes").value = selectedComplaint.notes || "";
-    }
+    if ($("super-update-status")) $("super-update-status").value = selectedComplaint.status || "Submitted";
+    if ($("super-resolution-notes")) $("super-resolution-notes").value = selectedComplaint.notes || "";
   });
 
   $("super-complaint-update-form")?.addEventListener("submit", async event => {
     event.preventDefault();
-
-    if (!selectedComplaint) {
-      showMessage("Pehle complaint select karo.");
-      return;
-    }
+    if (!selectedComplaint) return showMessage("Pehle complaint select karo.");
 
     const status = $("super-update-status")?.value;
     const notes = $("super-resolution-notes")?.value.trim() || "";
 
     const { error } = await db
       .from("complaints")
-      .update({
-        status,
-        notes,
-        updated_at: new Date().toISOString()
-      })
+      .update({ status, notes, updated_at: new Date().toISOString() })
       .eq("id", selectedComplaint.id);
 
-    if (error) {
-      showMessage("Complaint update error: " + error.message);
-      return;
-    }
+    if (error) return showMessage("Complaint update error: " + error.message);
 
     showMessage("Complaint successfully updated.");
-
     $("super-complaint-details")?.classList.add("hidden");
-
     selectedComplaint = null;
-
     await loadComplaints();
   });
 
-  // ================= MY PERSONAL COMPLAINTS =================
+  // =====================================================
+  // MY PERSONAL COMPLAINTS
+  // =====================================================
 
   async function loadMyPersonalComplaints() {
     const tbody = $("my-personal-complaint-list");
-
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6">Loading your personal complaints...</td></tr>`;
-    }
-
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
     if (!currentUser) return;
 
     const { data, error } = await db
@@ -911,18 +796,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Personal complaints error:", error.message);
-
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="6">Unable to load personal complaints. ${escapeHTML(error.message)}</td></tr>`;
-      }
-
+      console.error("Personal complaints:", error.message);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
       myPersonalComplaints = [];
       return;
     }
 
     myPersonalComplaints = data || [];
-
     renderMyPersonalComplaints();
   }
 
@@ -932,20 +812,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     tbody.innerHTML = myPersonalComplaints.length
       ? myPersonalComplaints.map(complaint => `
-          <tr>
-            <td>${escapeHTML(complaint.complaint_id)}</td>
-            <td>${escapeHTML(complaint.category)}</td>
-            <td>${escapeHTML(complaint.title)}</td>
-            <td>${escapeHTML(complaint.status)}</td>
-            <td>${escapeHTML(formatDate(complaint.created_at))}</td>
-            <td>
-              <button
-                type="button"
-                data-my-personal-view="${escapeHTML(complaint.id)}"
-              >View / Update</button>
-            </td>
-          </tr>
-        `).join("")
+        <tr>
+          <td>${escapeHTML(complaint.complaint_id)}</td>
+          <td>${escapeHTML(complaint.category)}</td>
+          <td>${escapeHTML(complaint.title)}</td>
+          <td>${escapeHTML(complaint.status)}</td>
+          <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+          <td><button type="button" data-my-personal-view="${escapeHTML(complaint.id)}">View / Update</button></td>
+        </tr>
+      `).join("")
       : `<tr><td colspan="6">You have no personal complaints.</td></tr>`;
   }
 
@@ -953,10 +828,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const button = event.target.closest("[data-my-personal-view]");
     if (!button) return;
 
-    selectedPersonalComplaint = myPersonalComplaints.find(complaint =>
-      String(complaint.id) === button.dataset.myPersonalView
+    selectedPersonalComplaint = myPersonalComplaints.find(
+      x => String(x.id) === button.dataset.myPersonalView
     );
-
     if (!selectedPersonalComplaint) return;
 
     $("my-personal-complaint-details")?.classList.remove("hidden");
@@ -973,91 +847,152 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
     }
 
-    if ($("my-personal-status")) {
-      $("my-personal-status").value = selectedPersonalComplaint.status || "Submitted";
-    }
-
-    if ($("my-personal-notes")) {
-      $("my-personal-notes").value = selectedPersonalComplaint.notes || "";
-    }
+    if ($("my-personal-status")) $("my-personal-status").value = selectedPersonalComplaint.status || "Submitted";
+    if ($("my-personal-notes")) $("my-personal-notes").value = selectedPersonalComplaint.notes || "";
   });
 
   $("my-personal-update-form")?.addEventListener("submit", async event => {
     event.preventDefault();
 
     if (!selectedPersonalComplaint || !currentUser) {
-      showMessage("Pehle apni personal complaint select karo.");
-      return;
+      return showMessage("Pehle apni personal complaint select karo.");
     }
 
     const status = $("my-personal-status")?.value;
     const notes = $("my-personal-notes")?.value.trim() || "";
     const button = $("my-personal-update-form")?.querySelector('[type="submit"]');
 
-    if (!status) {
-      showMessage("Complaint status select karo.");
-      return;
-    }
-
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Updating...";
-    }
+    setButtonLoading(button, true, "Updating...", "Update Complaint");
 
     try {
       const { data, error } = await db
         .from("complaints")
-        .update({
-          status,
-          notes,
-          updated_at: new Date().toISOString()
-        })
+        .update({ status, notes, updated_at: new Date().toISOString() })
         .eq("id", selectedPersonalComplaint.id)
         .eq("user_id", currentUser.id)
         .eq("recipient_type", "super_admin")
         .eq("is_confidential", true)
         .select("id");
 
-      if (error) {
-        showMessage("Personal complaint update error: " + error.message);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        showMessage("Complaint update nahi hui. Security permission ya complaint ownership check karo.");
-        return;
-      }
+      if (error) throw error;
+      if (!data?.length) throw new Error("Security permission ya complaint ownership check failed.");
 
       showMessage("Your personal complaint has been updated.");
-
       $("my-personal-complaint-details")?.classList.add("hidden");
-
       selectedPersonalComplaint = null;
-
       await loadMyPersonalComplaints();
-
+    } catch (error) {
+      showMessage("Update error: " + error.message);
     } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Update Complaint";
-      }
+      setButtonLoading(button, false, "Updating...", "Update Complaint");
     }
   });
 
-  // ================= EMAIL CENTRE =================
+  // =====================================================
+  // STUDENT EMAIL CENTRE
+  // =====================================================
 
-  function createEmailCentre() {
-    let section = $("super-admin-email-section");
+  function updateRecipientGroups() {
+    const mode = $("student-email-recipient")?.value;
 
-    if (!section) {
-      section = document.createElement("section");
+    if ($("student-email-department-group")) {
+      $("student-email-department-group").style.display =
+        mode === "department" ? "" : "none";
+    }
+
+    if ($("student-email-individual-group")) {
+      $("student-email-individual-group").style.display =
+        mode === "individual" ? "" : "none";
+    }
+  }
+
+  $("student-email-recipient")?.addEventListener("change", updateRecipientGroups);
+
+  $("student-email-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const mode = $("student-email-recipient")?.value;
+    const subject = $("student-email-subject")?.value.trim();
+    const message = $("student-email-message")?.value.trim();
+    const department = $("student-email-department")?.value;
+    const studentEmail = $("student-email-address")?.value.trim().toLowerCase();
+    const button = $("student-email-send-btn");
+
+    if (!subject || !message) {
+      return setStatus("student-email-message-status", "Subject aur message required hain.");
+    }
+
+    if (mode === "department" && !department) {
+      return setStatus("student-email-message-status", "Department select karo.");
+    }
+
+    if (mode === "individual" && !studentEmail) {
+      return setStatus("student-email-message-status", "Student email enter karo.");
+    }
+
+    if (!confirm("Kya aap selected student recipient(s) ko email bhejna chahte hain?")) return;
+
+    setButtonLoading(button, true, "Sending...", "Send Email");
+
+    try {
+      const result = await invokeEmailFunction({
+        action: "send_student_email",
+        recipient_mode: mode,
+        department: mode === "department" ? department : undefined,
+        student_email: mode === "individual" ? studentEmail : undefined,
+        subject,
+        message
+      });
+
+      emailStats.accepted += Number(result.sent || 0);
+      emailStats.failed += Number(result.failed || 0);
+      updateEmailStats();
+
+      const summary =
+        `Process completed. Total: ${result.total}, accepted by Brevo: ${result.sent}, failed: ${result.failed}.`;
+
+      setStatus("student-email-message-status", summary, result.failed === 0);
+
+      const history = $("student-email-history");
+      if (history) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${escapeHTML(formatDate(new Date().toISOString()))}</td>
+          <td>${escapeHTML(mode)}</td>
+          <td>${escapeHTML(subject)}</td>
+          <td>${escapeHTML(result.sent)}</td>
+          <td>${escapeHTML(result.failed)}</td>
+        `;
+        history.prepend(row);
+      }
+
+      $("student-email-form")?.reset();
+      updateRecipientGroups();
+    } catch (error) {
+      emailStats.failed++;
+      updateEmailStats();
+      setStatus("student-email-message-status", error.message);
+    } finally {
+      setButtonLoading(button, false, "Sending...", "Send Email");
+    }
+  });
+
+  updateRecipientGroups();
+
+  // =====================================================
+  // COMPLAINT EMAIL CENTRE (EXISTING FEATURE)
+  // =====================================================
+
+  function createComplaintEmailCentre() {
+    if (!$("super-admin-email-section")) {
+      const section = document.createElement("section");
       section.id = "super-admin-email-section";
       section.className = "page-section hidden";
 
       section.innerHTML = `
         <div class="content-box">
-          <h2>Student Complaint Email Centre</h2>
-          <p>Select complaints to send individual emails to students.</p>
+          <h2>Complaint Update Email Centre</h2>
+          <p>Select complaints to send status updates to students.</p>
 
           <label for="sa-mail-status">Filter by status</label>
           <select id="sa-mail-status">
@@ -1074,9 +1009,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           <input id="sa-mail-subject" value="Update on your LTSUCare complaint">
 
           <label for="sa-mail-remarks">Remarks for selected students</label>
-          <textarea id="sa-mail-remarks" rows="4" placeholder="Write resolution details or update"></textarea>
+          <textarea id="sa-mail-remarks" rows="4"></textarea>
 
-          <button type="button" id="sa-mail-send">Send Email to Selected Students</button>
+          <button type="button" id="sa-mail-send">Send Complaint Updates</button>
           <p id="sa-mail-result" role="status"></p>
         </div>
       `;
@@ -1086,130 +1021,294 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!document.querySelector('[data-page="super-admin-email-section"]')) {
       const nav = document.querySelector(".sidebar");
-
       if (nav) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "nav-btn";
         button.dataset.page = "super-admin-email-section";
-        button.textContent = "Student Emails";
-
-        nav.insertBefore(button, $("logout-btn"));
+        button.textContent = "Complaint Email Centre";
+        nav.insertBefore(button, $("logout-btn") || null);
       }
     }
 
-    if (!emailCentreEventsBound) {
-      $("sa-mail-status")?.addEventListener("change", renderEmailList);
-      $("sa-mail-send")?.addEventListener("click", sendSelectedEmails);
-
-      emailCentreEventsBound = true;
-    }
+    $("sa-mail-status")?.addEventListener("change", renderComplaintEmailList);
+    $("sa-mail-send")?.addEventListener("click", sendSelectedComplaintEmails);
   }
 
-  function renderEmailCentre() {
-    createEmailCentre();
-    renderEmailList();
-  }
-
-  function renderEmailList() {
+  function renderComplaintEmailList() {
     const list = $("sa-mail-complaints");
     if (!list) return;
 
     const status = $("sa-mail-status")?.value || "";
-
-    const filtered = complaints.filter(complaint =>
-      !status || complaint.status === status
-    );
+    const filtered = complaints.filter(x => !status || x.status === status);
 
     list.innerHTML = filtered.length
       ? filtered.map(complaint => `
-          <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
-            <input
-              type="checkbox"
-              class="sa-mail-check"
-              value="${escapeHTML(complaint.complaint_id)}"
-            >
-            ${escapeHTML(complaint.complaint_id)} —
-            ${escapeHTML(complaint.title || complaint.category || "Complaint")}
-            (${escapeHTML(complaint.status)})
-          </label>
-        `).join("")
+        <label style="display:block;padding:10px;border-bottom:1px solid #ddd">
+          <input type="checkbox" class="sa-mail-check" value="${escapeHTML(complaint.id)}">
+          ${escapeHTML(complaint.complaint_id)} —
+          ${escapeHTML(complaint.title || complaint.category || "Complaint")}
+          (${escapeHTML(complaint.status)})
+        </label>
+      `).join("")
       : "<p>No complaints found.</p>";
   }
 
-  async function sendSelectedEmails() {
-    const selected = [
-      ...document.querySelectorAll(".sa-mail-check:checked")
-    ].map(input => input.value);
+  async function sendSelectedComplaintEmails() {
+    const selected = [...document.querySelectorAll(".sa-mail-check:checked")]
+      .map(input => input.value);
 
-    if (!selected.length) {
-      showMessage("Kam se kam ek complaint select karo.");
-      return;
-    }
+    if (!selected.length) return setStatus("sa-mail-result", "Kam se kam ek complaint select karo.");
 
-    const { data } = await db.auth.getSession();
-    const accessToken = data.session?.access_token;
-
-    if (!accessToken) {
-      showMessage("Login session expired. Dobara login karo.");
-      return;
-    }
-
-    const remarksText = $("sa-mail-remarks")?.value.trim() || "";
-    const remarks = {};
-
-    selected.forEach(id => {
-      remarks[id] = remarksText;
-    });
-
+    const remarks = $("sa-mail-remarks")?.value.trim() || "";
     const button = $("sa-mail-send");
-    const resultElement = $("sa-mail-result");
 
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Sending...";
-    }
+    if (!confirm(`Selected ${selected.length} complaint update emails bhejne hain?`)) return;
+
+    setButtonLoading(button, true, "Sending...", "Send Complaint Updates");
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
 
     try {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify({
-          type: "resolution_email",
-          accessToken,
-          complaintIds: selected,
-          remarks,
-          subject: $("sa-mail-subject")?.value.trim()
-        })
-      });
+      for (const complaintUuid of selected) {
+        const complaint = complaints.find(x => String(x.id) === String(complaintUuid));
+        if (!complaint) {
+          failedCount++;
+          continue;
+        }
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message || "Email sending failed");
+        try {
+          await invokeEmailFunction({
+            action: "complaint_progress",
+            complaint_uuid: complaint.id,
+            progress_level: complaint.status || "Submitted",
+            resolution_details: remarks
+          });
+          successCount++;
+        } catch (error) {
+          failedCount++;
+          errors.push(`${complaint.complaint_id}: ${error.message}`);
+        }
       }
 
-      if (resultElement) {
-        resultElement.textContent =
-          "Email request accepted. Selected complaints: " + selected.length;
-      }
+      emailStats.accepted += successCount;
+      emailStats.failed += failedCount;
+      updateEmailStats();
 
-    } catch (error) {
-      if (resultElement) {
-        resultElement.textContent = "Error: " + error.message;
-      }
-
+      setStatus(
+        "sa-mail-result",
+        `Brevo accepted: ${successCount}. Failed: ${failedCount}.` +
+          (errors.length ? " " + errors.slice(0, 3).join(" | ") : ""),
+        failedCount === 0
+      );
     } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Send Email to Selected Students";
-      }
+      setButtonLoading(button, false, "Sending...", "Send Complaint Updates");
     }
   }
 
-  // ================= ACTIVITY LOGS =================
+  createComplaintEmailCentre();
+  renderComplaintEmailList();
+
+  // =====================================================
+  // CONFIDENTIAL INBOX
+  // =====================================================
+
+  async function loadConfidentialInbox() {
+    const tbody = $("confidential-message-list");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5">Loading confidential messages...</td></tr>`;
+
+    const { data, error } = await db
+      .from("complaints")
+      .select("id,complaint_id,user_id,category,title,location,description,status,notes,created_at,updated_at,recipient_type,is_confidential")
+      .eq("recipient_type", "super_admin")
+      .eq("is_confidential", true)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Confidential inbox error:", error.message);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="5">Unable to load inbox: ${escapeHTML(error.message)}</td></tr>`;
+      confidentialComplaints = [];
+      updateConfidentialStats();
+      return;
+    }
+
+    confidentialComplaints = data || [];
+    renderConfidentialInbox();
+    updateConfidentialStats();
+  }
+
+  function updateConfidentialStats() {
+    setText("confidential-total-count", confidentialComplaints.length);
+    setText(
+      "confidential-unread-count",
+      confidentialComplaints.filter(x =>
+        String(x.status || "").toLowerCase() === "submitted"
+      ).length
+    );
+    setText(
+      "confidential-resolved-count",
+      confidentialComplaints.filter(x =>
+        String(x.status || "").toLowerCase() === "solved" ||
+        String(x.status || "").toLowerCase() === "resolved"
+      ).length
+    );
+  }
+
+  function renderConfidentialInbox() {
+    const tbody = $("confidential-message-list");
+    if (!tbody) return;
+
+    tbody.innerHTML = confidentialComplaints.length
+      ? confidentialComplaints.map(complaint => `
+        <tr>
+          <td>${escapeHTML(complaint.complaint_id || complaint.id)}</td>
+          <td>${escapeHTML(complaint.title || complaint.category)}</td>
+          <td>${escapeHTML(complaint.status || "Submitted")}</td>
+          <td>${escapeHTML(formatDate(complaint.created_at))}</td>
+          <td>
+            <button type="button" data-confidential-view="${escapeHTML(complaint.id)}">
+              Open
+            </button>
+          </td>
+        </tr>
+      `).join("")
+      : `<tr><td colspan="5">No confidential messages found.</td></tr>`;
+  }
+
+  $("confidential-message-list")?.addEventListener("click", async event => {
+    const button = event.target.closest("[data-confidential-view]");
+    if (!button) return;
+
+    selectedConfidentialComplaint = confidentialComplaints.find(
+      x => String(x.id) === button.dataset.confidentialView
+    );
+
+    if (!selectedConfidentialComplaint) return;
+
+    const complaint = selectedConfidentialComplaint;
+    let sender = null;
+
+    if (complaint.user_id) {
+      const { data } = await db
+        .from("profiles")
+        .select("full_name,email,student_id,department")
+        .eq("id", complaint.user_id)
+        .maybeSingle();
+
+      sender = data;
+    }
+
+    if ($("confidential-message-details")) {
+      $("confidential-message-details").classList.remove("hidden");
+    }
+
+    if ($("confidential-message-content")) {
+      $("confidential-message-content").innerHTML = `
+        <p><b>Complaint ID:</b> ${escapeHTML(complaint.complaint_id || complaint.id)}</p>
+        <p><b>Student:</b> ${escapeHTML(sender?.full_name || "Student")}</p>
+        <p><b>Email:</b> ${escapeHTML(sender?.email || "Not available")}</p>
+        <p><b>Student ID:</b> ${escapeHTML(sender?.student_id || "—")}</p>
+        <p><b>Department:</b> ${escapeHTML(sender?.department || "—")}</p>
+        <p><b>Title:</b> ${escapeHTML(complaint.title)}</p>
+        <p><b>Category:</b> ${escapeHTML(complaint.category)}</p>
+        <p><b>Location:</b> ${escapeHTML(complaint.location)}</p>
+        <p><b>Description:</b></p>
+        <p style="white-space:pre-wrap">${escapeHTML(complaint.description)}</p>
+        <p><b>Status:</b> ${escapeHTML(complaint.status)}</p>
+        <p><b>Submitted:</b> ${escapeHTML(formatDate(complaint.created_at))}</p>
+      `;
+    }
+
+    if ($("confidential-reply-subject")) {
+      $("confidential-reply-subject").value =
+        `Private response - ${complaint.complaint_id || "LTSUCare complaint"}`;
+    }
+
+    if ($("confidential-reply-message")) {
+      $("confidential-reply-message").value = "";
+    }
+
+    setStatus("confidential-reply-status", "");
+  });
+
+  $("confidential-message-reply-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!selectedConfidentialComplaint) {
+      return setStatus("confidential-reply-status", "Pehle inbox se complaint open karo.");
+    }
+
+    const subject = $("confidential-reply-subject")?.value.trim();
+    const message = $("confidential-reply-message")?.value.trim();
+    const button = $("confidential-message-reply-form")?.querySelector('[type="submit"]');
+
+    if (!subject || !message) {
+      return setStatus("confidential-reply-status", "Subject aur reply message required hain.");
+    }
+
+    if (!confirm("Kya aap is confidential message ka private email reply bhejna chahte hain?")) return;
+
+    setButtonLoading(button, true, "Sending reply...", "Send Reply");
+
+    try {
+      const result = await invokeEmailFunction({
+        action: "confidential_reply",
+        complaint_uuid: selectedConfidentialComplaint.id,
+        subject,
+        message
+      });
+
+      emailStats.accepted++;
+      updateEmailStats();
+
+      setStatus(
+        "confidential-reply-status",
+        result.message || "Reply accepted by Brevo.",
+        true
+      );
+    } catch (error) {
+      emailStats.failed++;
+      updateEmailStats();
+      setStatus("confidential-reply-status", error.message);
+    } finally {
+      setButtonLoading(button, false, "Sending reply...", "Send Reply");
+    }
+  });
+
+  // =====================================================
+  // EMAIL ANALYTICS CHART
+  // =====================================================
+
+  function renderEmailAnalytics() {
+    updateEmailStats();
+
+    const chart = $("email-performance-chart");
+    if (!chart) return;
+
+    const total = emailStats.accepted + emailStats.failed;
+    const acceptedPercent = total ? Math.round(emailStats.accepted / total * 100) : 0;
+    const failedPercent = total ? 100 - acceptedPercent : 0;
+
+    chart.innerHTML = `
+      <div style="padding:12px 0">
+        <p>Brevo accepted in this session: ${emailStats.accepted}</p>
+        <div style="height:12px;background:#e8eee9;border-radius:20px;overflow:hidden">
+          <div style="height:100%;width:${acceptedPercent}%;background:#20a36b"></div>
+        </div>
+        <p>Failed in this session: ${emailStats.failed}</p>
+        <div style="height:12px;background:#e8eee9;border-radius:20px;overflow:hidden">
+          <div style="height:100%;width:${failedPercent}%;background:#d97777"></div>
+        </div>
+        <small>Session-only statistics. Not confirmed delivery or daily quota.</small>
+      </div>
+    `;
+  }
+
+  // =====================================================
+  // ACTIVITY LOGS
+  // =====================================================
 
   async function loadActivityLogs() {
     const tbody = $("activity-list");
@@ -1226,19 +1325,36 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    tbody.innerHTML = data && data.length
+    tbody.innerHTML = data?.length
       ? data.map(log => `
-          <tr>
-            <td>${escapeHTML(log.action)}</td>
-            <td>${escapeHTML(log.actor_id)}</td>
-            <td>${escapeHTML(log.target)}</td>
-            <td>${escapeHTML(formatDate(log.created_at))}</td>
-          </tr>
-        `).join("")
+        <tr>
+          <td>${escapeHTML(log.action)}</td>
+          <td>${escapeHTML(log.actor_id)}</td>
+          <td>${escapeHTML(log.target)}</td>
+          <td>${escapeHTML(formatDate(log.created_at))}</td>
+        </tr>
+      `).join("")
       : `<tr><td colspan="4">No activity records found.</td></tr>`;
   }
 
-  // ================= NAVIGATION =================
+  // =====================================================
+  // PROFILE / SETTINGS
+  // =====================================================
+
+  function loadSuperAdminProfile() {
+    if (!$("super-admin-profile") || !currentProfile) return;
+
+    $("super-admin-profile").innerHTML = `
+      <p><b>Name:</b> ${escapeHTML(currentProfile.full_name || "—")}</p>
+      <p><b>Email:</b> ${escapeHTML(currentProfile.email || "—")}</p>
+      <p><b>Role:</b> Super Admin</p>
+      <p><b>Account Status:</b> Active</p>
+    `;
+  }
+
+  // =====================================================
+  // NAVIGATION
+  // =====================================================
 
   document.addEventListener("click", event => {
     const button = event.target.closest(".nav-btn");
@@ -1261,88 +1377,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     button.classList.add("active");
 
-    if (targetId === "my-personal-complaints") {
-      loadMyPersonalComplaints();
-    }
-
-    if (targetId === "super-admin-requests") {
-      loadSuperAdminRegistrationRequests();
-    }
+    if (targetId === "my-personal-complaints") loadMyPersonalComplaints();
+    if (targetId === "super-admin-requests") loadSuperAdminRegistrationRequests();
+    if (targetId === "confidential-email") loadConfidentialInbox();
+    if (targetId === "students") loadStudents();
+    if (targetId === "email-analytics") renderEmailAnalytics();
   });
 
-  // ================= LOGOUT =================
+  // =====================================================
+  // LOGOUT / FORGOT PASSWORD
+  // =====================================================
 
   $("logout-btn")?.addEventListener("click", async () => {
     await db.auth.signOut();
     window.location.reload();
   });
 
-  // ================= FORGOT PASSWORD =================
-
   $("forgot-password-btn")?.addEventListener("click", () => {
-    window.location.href =
-      "/ltsu-campus-support/super-admin/reset-password.html";
+    window.location.href = "/ltsu-campus-support/super-admin/reset-password.html";
   });
 
-  // ================= AI HELPER =================
+  // =====================================================
+  // LEGACY LOCAL AI HELPER REMOVED
+  // RagmyAI widget is loaded by the HTML script.
+  // =====================================================
 
-  $("ai-button")?.addEventListener("click", () => {
-    $("ai-window")?.classList.remove("hidden");
-  });
-
-  $("ai-close")?.addEventListener("click", () => {
-    $("ai-window")?.classList.add("hidden");
-  });
-
-  function sendAIMessage() {
-    const input = $("ai-input");
-    const messages = $("ai-messages");
-
-    if (!input || !messages || !input.value.trim()) return;
-
-    const question = input.value.trim();
-    const lower = question.toLowerCase();
-
-    let answer = "Please check the relevant section of your Super Admin dashboard.";
-
-    if (lower.includes("request")) {
-      answer = "Admin Management section mein pending requests check karein.";
-    } else if (lower.includes("approve")) {
-      answer = "Admin Management mein request ke saamne Approve button dabayein.";
-    } else if (lower.includes("complaint")) {
-      answer = "Complaints section mein available complaints check karein.";
-    } else if (lower.includes("email")) {
-      answer = "Student Emails section mein complaints select karke email bhejein.";
-    } else if (lower.includes("student")) {
-      answer = "Students section mein student records check karein.";
-    } else if (lower.includes("personal")) {
-      answer = "My Personal Complaints section mein apni confidential complaints check karein.";
-    } else if (lower.includes("super admin")) {
-      answer = "Super Admin Requests section mein new Super Admin applications review karein.";
-    }
-
-    const userMessage = document.createElement("p");
-    userMessage.innerHTML = "<b>You:</b> " + escapeHTML(question);
-
-    const botMessage = document.createElement("p");
-    botMessage.innerHTML = "<b>Assistant:</b> " + escapeHTML(answer);
-
-    messages.appendChild(userMessage);
-    messages.appendChild(botMessage);
-
-    input.value = "";
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  $("ai-send")?.addEventListener("click", sendAIMessage);
-
-  $("ai-input")?.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      sendAIMessage();
-    }
-  });
-
-  // ================= RESTORE EXISTING SESSION =================
+  // =====================================================
+  // RESTORE SESSION
+  // =====================================================
 
   const { data } = await db.auth.getSession();
 
