@@ -171,16 +171,42 @@ document.addEventListener("DOMContentLoaded", () => {
     async function openDashboard(user) {
         currentUser = user;
 
-        const { data: profile, error } = await db
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single();
+        let profile = null;
+        let profileError = null;
 
-        if (error) {
-            console.error("Profile loading error:", error);
-            alert("Unable to load your student profile.");
-            return;
+        // Allow the database trigger a few moments to create the profile.
+        for (let attempt = 1; attempt <= 6; attempt++) {
+            const result = await db
+                .from("profiles")
+                .select("*")
+                .eq("id", user.id)
+                .maybeSingle();
+
+            profile = result.data;
+            profileError = result.error;
+
+            if (profileError) {
+                console.error("Profile loading attempt:", attempt, profileError);
+            }
+
+            if (profile) {
+                // If the trigger is still generating the Student ID, retry.
+                if (profile.student_id) break;
+            }
+
+            if (attempt < 6) {
+                await new Promise(resolve => setTimeout(resolve, 700));
+            }
+        }
+
+        if (profileError && !profile) {
+            throw new Error("Unable to load your student profile. Please try again.");
+        }
+
+        if (!profile) {
+            throw new Error(
+                "Your account was created, but your student profile was not found. Please contact the administrator."
+            );
         }
 
         currentProfile = profile;
@@ -188,11 +214,11 @@ document.addEventListener("DOMContentLoaded", () => {
         authSection.classList.add("hidden");
         dashboard.classList.remove("hidden");
 
-        // Display student's name
+        // Display student's name.
         document.getElementById("dashboard-student-name").textContent =
-            `Welcome, ${profile.full_name || "Student"}`;
+            `Welcome, ${profile.full_name || user.user_metadata?.full_name || "Student"}`;
 
-        // DISPLAY THE EXISTING STUDENT ID
+        // Display Student ID from the database.
         const studentIdDisplay =
             document.getElementById("dashboard-student-id");
 
@@ -201,12 +227,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 profile.student_id || "Not assigned yet";
         }
 
-        // Load student's course and semester
+        // Load student's course and semester.
         document.getElementById("complaint-course").value =
-            profile.course || "";
+            profile.course || user.user_metadata?.course || "";
 
         document.getElementById("complaint-semester").value =
-            profile.semester || "";
+            profile.semester || user.user_metadata?.semester || "";
 
         await loadAdminDirectory();
 
@@ -216,6 +242,8 @@ document.addEventListener("DOMContentLoaded", () => {
             behavior: "smooth",
             block: "start"
         });
+
+        return profile;
     }
 
     // ==========================================
@@ -228,7 +256,11 @@ document.addEventListener("DOMContentLoaded", () => {
         clearMessage(registerMessage);
 
         if (!db) {
-            showMessage(registerMessage, "Supabase connection is unavailable.", "error");
+            showMessage(
+                registerMessage,
+                "Supabase connection is unavailable.",
+                "error"
+            );
             return;
         }
 
@@ -241,17 +273,42 @@ document.addEventListener("DOMContentLoaded", () => {
         const pin = document.getElementById("create-pin").value;
         const confirmPin = document.getElementById("confirm-pin").value;
 
+        if (!name || !email || !mobile || !course || !semester) {
+            showMessage(
+                registerMessage,
+                "Please fill in all required fields.",
+                "error"
+            );
+            return;
+        }
+
         if (pin.length < 6) {
-            showMessage(registerMessage, "PIN must contain at least 6 characters.", "error");
+            showMessage(
+                registerMessage,
+                "PIN must contain at least 6 characters.",
+                "error"
+            );
             return;
         }
 
         if (pin !== confirmPin) {
-            showMessage(registerMessage, "PINs do not match.", "error");
+            showMessage(
+                registerMessage,
+                "PINs do not match.",
+                "error"
+            );
             return;
         }
 
-        showMessage(registerMessage, "Creating your account...", "info");
+        const submitButton = registerForm.querySelector('[type="submit"]');
+
+        if (submitButton) submitButton.disabled = true;
+
+        showMessage(
+            registerMessage,
+            "Creating your account...",
+            "info"
+        );
 
         try {
             const { data, error } = await db.auth.signUp({
@@ -269,13 +326,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (error) throw error;
 
+            if (!data || !data.user) {
+                throw new Error(
+                    "Supabase did not return a user account. Please try again."
+                );
+            }
+
+            let session = data.session;
+
+            // With Confirm email OFF, Supabase normally returns a session
+            // immediately. If it does not, try signing in once.
+            if (!session) {
+                const { data: loginData, error: loginError } =
+                    await db.auth.signInWithPassword({
+                        email,
+                        password: pin
+                    });
+
+                if (loginError) {
+                    throw new Error(
+                        "Your account may have been created, but automatic login was unsuccessful. " +
+                        "Please check that Confirm email is OFF in Supabase. " +
+                        loginError.message
+                    );
+                }
+
+                session = loginData.session;
+            }
+
+            if (!session) {
+                throw new Error(
+                    "Account created, but an active login session was not returned. Please try logging in."
+                );
+            }
+
             showMessage(
                 registerMessage,
-                "Registration submitted successfully. Please check your email if verification is required.",
-                "success"
+                "Account created! Loading your Student ID...",
+                "info"
             );
 
+            const profile = await openDashboard(data.user);
+
             registerForm.reset();
+
+            if (profile.student_id) {
+                showMessage(
+                    registerMessage,
+                    "Registration successful! Your Student ID is now visible on your dashboard.",
+                    "success"
+                );
+            } else {
+                showMessage(
+                    registerMessage,
+                    "Your account is active, but a Student ID has not been assigned. Please contact the administrator.",
+                    "error"
+                );
+            }
 
         } catch (error) {
             console.error("Registration error:", error);
@@ -285,6 +392,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 error.message || "Registration failed. Please try again.",
                 "error"
             );
+
+        } finally {
+            if (submitButton) submitButton.disabled = false;
         }
     });
 
@@ -298,14 +408,24 @@ document.addEventListener("DOMContentLoaded", () => {
         clearMessage(loginMessage);
 
         if (!db) {
-            showMessage(loginMessage, "Supabase connection is unavailable.", "error");
+            showMessage(
+                loginMessage,
+                "Supabase connection is unavailable.",
+                "error"
+            );
             return;
         }
 
-        const studentId = document.getElementById("login-student-id").value.trim();
+        const studentId =
+            document.getElementById("login-student-id").value.trim();
+
         const pin = document.getElementById("login-pin").value;
 
         showMessage(loginMessage, "Logging in...", "info");
+
+        const submitButton = loginForm.querySelector('[type="submit"]');
+
+        if (submitButton) submitButton.disabled = true;
 
         try {
             const { data, error } = await db.functions.invoke("student-login", {
@@ -328,7 +448,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (sessionError) throw sessionError;
 
-            const { data: userData, error: userError } = await db.auth.getUser();
+            const { data: userData, error: userError } =
+                await db.auth.getUser();
 
             if (userError) throw userError;
 
@@ -342,6 +463,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 error.message || "Login failed. Please check your Student ID and PIN.",
                 "error"
             );
+
+        } finally {
+            if (submitButton) submitButton.disabled = false;
         }
     });
 
@@ -385,7 +509,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const extension = file.name.split(".").pop();
-        const filePath = `${currentUser.id}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+        const filePath =
+            `${currentUser.id}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
         const { data, error } = await db.storage
             .from(STORAGE_BUCKET)
@@ -406,7 +532,11 @@ document.addEventListener("DOMContentLoaded", () => {
         clearMessage(complaintMessage);
 
         if (!currentUser || !currentProfile) {
-            showMessage(complaintMessage, "Please log in again.", "error");
+            showMessage(
+                complaintMessage,
+                "Please log in again.",
+                "error"
+            );
             return;
         }
 
@@ -414,15 +544,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedAdmin = recipientAdminId.value;
 
         if (recipient === "specific_admin" && !selectedAdmin) {
-            showMessage(complaintMessage, "Please select an Admin.", "error");
+            showMessage(
+                complaintMessage,
+                "Please select an Admin.",
+                "error"
+            );
             return;
         }
 
-        const file = document.getElementById("complaint-media").files[0];
+        const file =
+            document.getElementById("complaint-media").files[0];
 
         let uploadedPath = null;
 
-        showMessage(complaintMessage, "Submitting your complaint...", "info");
+        const submitButton = complaintForm.querySelector('[type="submit"]');
+
+        if (submitButton) submitButton.disabled = true;
+
+        showMessage(
+            complaintMessage,
+            "Submitting your complaint...",
+            "info"
+        );
 
         try {
             if (file) {
@@ -440,7 +583,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 status: "Submitted",
                 escalated: false,
                 recipient_type: recipient,
-                recipient_admin_id: recipient === "specific_admin" ? selectedAdmin : null,
+                recipient_admin_id:
+                    recipient === "specific_admin" ? selectedAdmin : null,
                 is_confidential: recipient !== "all_admins"
             };
 
@@ -483,6 +627,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 error.message || "Unable to submit complaint. Please try again.",
                 "error"
             );
+
+        } finally {
+            if (submitButton) submitButton.disabled = false;
         }
     });
 
@@ -493,6 +640,11 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadComplaintHistory() {
         complaintHistory.innerHTML = "<p>Loading your complaints...</p>";
 
+        if (!currentUser) {
+            complaintHistory.innerHTML = "<p>Please log in again.</p>";
+            return;
+        }
+
         const { data, error } = await db
             .from("complaints")
             .select("*")
@@ -501,12 +653,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (error) {
             console.error("Complaint history error:", error);
-            complaintHistory.innerHTML = "<p>Unable to load complaint history.</p>";
+            complaintHistory.innerHTML =
+                "<p>Unable to load complaint history.</p>";
             return;
         }
 
         if (!data || data.length === 0) {
-            complaintHistory.innerHTML = "<p>No complaint records are available yet.</p>";
+            complaintHistory.innerHTML =
+                "<p>No complaint records are available yet.</p>";
             return;
         }
 
@@ -563,15 +717,32 @@ document.addEventListener("DOMContentLoaded", () => {
         clearMessage(feedbackMessageStatus);
 
         if (!currentUser || !currentProfile) {
-            showMessage(feedbackMessageStatus, "Please log in again.", "error");
+            showMessage(
+                feedbackMessageStatus,
+                "Please log in again.",
+                "error"
+            );
             return;
         }
 
-        const complaintId = document.getElementById("feedback-complaint-id").value.trim();
-        const rating = document.getElementById("feedback-rating").value;
-        const feedback = document.getElementById("feedback-message").value.trim();
+        const complaintId =
+            document.getElementById("feedback-complaint-id").value.trim();
 
-        showMessage(feedbackMessageStatus, "Sending your feedback...", "info");
+        const rating =
+            document.getElementById("feedback-rating").value;
+
+        const feedback =
+            document.getElementById("feedback-message").value.trim();
+
+        const submitButton = feedbackForm.querySelector('[type="submit"]');
+
+        if (submitButton) submitButton.disabled = true;
+
+        showMessage(
+            feedbackMessageStatus,
+            "Sending your feedback...",
+            "info"
+        );
 
         try {
             const response = await fetch(FEEDBACK_SCRIPT_URL, {
@@ -592,7 +763,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const result = await response.json();
 
             if (!result.success) {
-                throw new Error(result.message || "Feedback email could not be sent.");
+                throw new Error(
+                    result.message || "Feedback email could not be sent."
+                );
             }
 
             showMessage(
@@ -611,6 +784,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 error.message || "Unable to submit feedback. Please try again.",
                 "error"
             );
+
+        } finally {
+            if (submitButton) submitButton.disabled = false;
         }
     });
 
@@ -653,7 +829,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function restoreSession() {
         if (!db) {
-            console.error("Supabase client not found. Check supabase-config.js.");
+            console.error(
+                "Supabase client not found. Check supabase-config.js."
+            );
             return;
         }
 
@@ -665,7 +843,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (data.session?.user) {
-            await openDashboard(data.session.user);
+            try {
+                await openDashboard(data.session.user);
+            } catch (dashboardError) {
+                console.error("Dashboard restore error:", dashboardError);
+            }
         }
     }
 
